@@ -1,0 +1,104 @@
+#!/bin/bash
+
+#$ -S /bin/bash
+#$ -pe smp 56
+#$ -q JM,UI
+#$ -cwd
+#$ -j y
+#$ -ckpt user
+#$ -N ancient_dna_imputation_phasing_v54
+#$ -m eas
+#$ -M lucas-casten@uiowa.edu
+
+##  qsub -t 1-22:1 /Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/code/impute_ancient_genomes_v54.array.job
+
+## this script will impute all of the AADR samples using BEAGLE 5
+## below is a reference pipeline we could use IF we had genotype probabilities (we don't because we're using SNP array data), they also use BEAGLE 5 for imputation 
+## this pipeline was described here: https://www.nature.com/articles/s41598-020-75387-w#data-availability; repository: https://github.com/ryhui/imputation-pipeline
+
+##############################
+#### PLINK pre-processing ####
+##############################
+## convert to chromosome level VCF and do basic QC
+PLINK="/Dedicated/jmichaelson-wdata/lcasten/tools/plink"
+PLINK2="/Dedicated/jmichaelson-wdata/lcasten/qc_imputation/imputation/bin/plink2"
+
+BFILE="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/v54.1.p1_1240K_public/plink/v54.1.p1_1240K_public"
+KP="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/ancient_DNA/data/unrelated_merged_ancient_european_samples.fam.rel.id"
+# KP="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/low_missingness_migration_samples_v54.1.p1_1240K_public.fam"
+# FRQ="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/v54.1.p1_1240K_public/plink/migration/allele_frequencies"
+VCFIN="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/v54.1.p1_1240K_public/plink/vcf/chr${SGE_TASK_ID}"
+
+REF="/Dedicated/jmichaelson-wdata/lcasten/tools/beagle/ref_data_1kg/chr${SGE_TASK_ID}.1kg.phase3.v5a.vcf.gz"
+REFUC="/Users/lcasten/temp/$(basename ${REF%.gz})"
+
+## uncompress VCF so we can standardize AADR to 1000 Genomes reference alleles
+# gunzip $REF -c > ${REFUC}
+
+## convert to chromosome level VCF that is normed to 1000 Genomes
+$PLINK --bfile $BFILE --chr $SGE_TASK_ID --keep $KP --recode vcf --a2-allele $REFUC 4 3 '#' --out $VCFIN #  --keep $KP
+
+# head $VCFIN.vcf | cut -f 1-10
+
+###########################
+#### imputation set up ####
+###########################
+## java executable 
+BEAGLE4="/Dedicated/jmichaelson-wdata/lcasten/tools/beagle/beagle.27Jan18.7e1.jar"
+JAR="/Dedicated/jmichaelson-wdata/lcasten/tools/beagle/beagle.28Jun21.220.jar"
+
+## files to use/make
+TMP="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/v54.1.p1_1240K_public/plink/vcf/tmp_chr${SGE_TASK_ID}.vcf.gz"
+REF="/Dedicated/jmichaelson-wdata/lcasten/tools/beagle/ref_data_1kg/chr${SGE_TASK_ID}.1kg.phase3.v5a.vcf.gz"
+MAP="/Dedicated/jmichaelson-wdata/lcasten/tools/beagle/plink.GRCh37.map/plink.chr${SGE_TASK_ID}.GRCh37.map"
+# DROP="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/drop_samples.txt"
+CHR="chr${SGE_TASK_ID}"
+VCFOUT="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/v54.1.p1_1240K_public/plink/vcf/imputed_chr${SGE_TASK_ID}"
+VCFQC="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/v54.1.p1_1240K_public/plink/vcf/qc/imputed_chr${SGE_TASK_ID}.vcf.gz"
+
+# cd /Dedicated/jmichaelson-wdata/lcasten/tools/beagle
+
+## download 1000 genomes reference data
+# cd ref_data_1kg
+# wget https://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/b37.vcf/chr${SGE_TASK_ID}.1kg.phase3.v5a.vcf.gz
+# wget https://bochet.gcc.biostat.washington.edu/beagle/1000_Genomes_phase3_v5a/b37.vcf/chr${SGE_TASK_ID}.1kg.phase3.v5a.vcf.gz.tbi
+
+## reformat missing genos and chromosome annotation
+conda activate genoProcessing
+cat ${VCFIN}.vcf | perl -pe "s/\s\.:/\t.\/.:/g" | awk '{gsub(/^chr/,""); print}' | bgzip -c > $TMP
+
+# zcat $TMP | head | cut -f 1-10
+
+#######################
+#### phase/impute #####
+#######################
+## create conda env
+# conda create --name impute 
+# conda activate impute
+# conda install openjdk=8
+
+##
+conda activate impute
+## "-Xmx505g" is how many GBs of memory Java can use
+java -Djava.io.tmpdir=/Users/lcasten/temp/ -Xmx510g -jar $JAR gt=${TMP} ref=${REF} out=${VCFOUT} map=${MAP} nthreads=16 chrom=${SGE_TASK_ID} gp=true
+# zcat $VCFOUT.vcf.gz | grep -v "^#" | head | cut -f 1-10
+
+#####################
+## Quality control ##
+#####################
+## filter out poorly imputed SNPs
+module load stack/2022.2
+module load bcftools
+module load tabix
+## exclude variants with imputation R2 < 90%
+tabix -p vcf -f $VCFOUT.vcf.gz
+bcftools view -i 'DR2>=0.9' $VCFOUT.vcf.gz -Ov | bcftools +setGT -- -t q -n ./. -e 'MAX(FORMAT/GP)>=0.99' | bgzip -c > $VCFQC 
+tabix -p vcf -f $VCFQC
+
+#######################################################
+## convert imputed genos back to PLINK binary format ##
+#######################################################
+DAT="/Dedicated/jmichaelson-wdata/lcasten/tools/ref_data/allen_ancient_dna_resource/v54.1.p1_1240K_public/plink/imputed/chr${SGE_TASK_ID}"
+$PLINK --vcf $VCFQC --double-id --keep-allele-order --make-bed --out $DAT
+#### done ####
+# rm $TMP

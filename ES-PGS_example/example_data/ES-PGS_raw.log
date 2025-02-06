@@ -1,0 +1,95 @@
+PRSice 2.3.5 (2021-09-20) 
+https://github.com/choishingwan/PRSice
+(C) 2016-2020 Shing Wan (Sam) Choi and Paul F. O'Reilly
+GNU General Public License v3
+If you use PRSice in any published work, please cite:
+Choi SW, O'Reilly PF.
+PRSice-2: Polygenic Risk Score Software for Biobank-Scale Data.
+GigaScience 8, no. 7 (July 1, 2019)
+2024-12-18 18:05:33
+/wdata/lcasten/tools/PRSice/PRSice_linux \
+    --a1 A1 \
+    --a2 A2 \
+    --bar-levels 1 \
+    --base /wdata/lcasten/sli_wgs/polygenic_neanderthal_introgression/sumstats/cogPerf.tsv \
+    --bed data/HAQERs.bed:HAQERs,data/complement_HAQERs.bed:complement_HAQERs,data/HARs.bed:HARs,data/complement_HARs.bed:complement_HARs \
+    --binary-target T \
+    --bp BP \
+    --chr CHR \
+    --clump-kb 1000kb \
+    --clump-p 1.000000 \
+    --clump-r2 0.100000 \
+    --fastscore  \
+    --ld /wdata/lcasten/sli_wgs/prs/1000_genomes_EUR_merge/merged.1000_genomes_EUR.SLI_WGS.qc \
+    --ld-keep /wdata/lcasten/sli_wgs/prs/1000_genomes_EUR_merge/LD_keep_samples.txt \
+    --ld-type bed \
+    --maf 0.01 \
+    --no-regress  \
+    --num-auto 22 \
+    --out data/ES-PGS_raw \
+    --pvalue P \
+    --seed 3006403554 \
+    --snp SNP \
+    --stat BETA \
+    --target /wdata/lcasten/sli_wgs/prs/1000_genomes_EUR_merge/merged.1000_genomes_EUR.SLI_WGS.qc \
+    --thread 10
+
+Initializing Genotype file: 
+/wdata/lcasten/sli_wgs/prs/1000_genomes_EUR_merge/merged.1000_genomes_EUR.SLI_WGS.qc 
+(bed) 
+
+Start processing cogPerf 
+================================================== 
+
+Base file: 
+/wdata/lcasten/sli_wgs/polygenic_neanderthal_introgression/sumstats/cogPerf.tsv 
+Header of file is: 
+SNP	CHR	BP	A1	A2	freq	BETA	SE	P 
+
+7707053 variant(s) observed in base file, with: 
+1154718 ambiguous variant(s) excluded 
+6552335 total variant(s) included from base file 
+
+Loading Genotype info from target 
+================================================== 
+
+853 people (0 male(s), 0 female(s)) observed 
+853 founder(s) included 
+
+1715702 variant(s) not found in previous data 
+1 variant(s) with mismatch information 
+6003962 variant(s) included 
+
+Initializing Genotype file: 
+/wdata/lcasten/sli_wgs/prs/1000_genomes_EUR_merge/merged.1000_genomes_EUR.SLI_WGS.qc 
+(bed) 
+
+Loading Genotype info from reference 
+================================================== 
+
+853 people (0 male(s), 0 female(s)) observed 
+503 founder(s) included 
+
+1715703 variant(s) not found in previous data 
+6003962 variant(s) included 
+
+Calculate MAF and perform filtering on target SNPs 
+================================================== 
+
+6003962 variant(s) included 
+
+Start processing gene set information 
+================================================== 
+
+Loading data/HAQERs.bed:HAQERs (BED) 
+
+Loading data/complement_HAQERs.bed:complement_HAQERs (BED) 
+
+Loading data/HARs.bed:HARs (BED) 
+
+Loading data/complement_HARs.bed:complement_HARs (BED) 
+
+A total of 4 regions plus the base region are included 
+
+Start performing clumping 
+

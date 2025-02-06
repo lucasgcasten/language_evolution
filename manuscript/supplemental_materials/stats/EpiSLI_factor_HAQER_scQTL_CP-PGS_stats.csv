@@ -1,0 +1,4 @@
+factor,cp_pgs.HAQER_scQTL,estimate,statistic,p.value,parameter,conf.low,conf.high,method,alternative,"cp_pgs.HAQER_scQTL == ""all_Jerber_scQTLs"""
+F1,all,0.1439369449372095,2.7133635212769542,0.006991694121810618,348,0.03970624221193811,0.24506895336325535,Pearson's product-moment correlation,two.sided,FALSE
+F2,all,0.12099500743073403,2.273838221931164,0.023584274344387268,348,0.016372853184889312,0.22299637260790456,Pearson's product-moment correlation,two.sided,FALSE
+F3,all,-0.05144285259673948,-0.9609262956599216,0.3372564078658381,348,-0.15543445979066708,0.053676436393115756,Pearson's product-moment correlation,two.sided,FALSE

@@ -1,0 +1,31 @@
+#!/bin/bash
+ 
+#$ -q JM,UI,CCOM
+#$ -pe smp 12
+#$ -cwd
+#$ -N EpiSLI_subset_to_HARs
+#$ -M lucas-casten@uiowa.edu
+#$ -m eas
+
+module load bcftools
+
+## read_tsv('/wdata/lcasten/sli_wgs/prs/gene_sets/HARs.bed', col_names = FALSE) %>% mutate(X2 = X2 - 10000, X3 = X3 + 10000) %>% write_tsv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HARs_plus_10Kb_flanks.bed', col_names = FALSE)
+
+HAR10Kb="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HARs_plus_10Kb_flanks.bed"
+VCF="/Dedicated/jmichaelson-sdata/SLI_WGS/callsets/ensemble/vcfdb_vcfanno/sli.seq.merge.norm.vep.vcfanno.vcf.gz"
+VCFHAR="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAR.sli.seq.merge.norm.vep.vcfanno.hg19.vcf.gz"
+KEEP="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/samples.fam"
+
+## subset and index VCF
+bcftools view -R $HAR10Kb $VCF -Oz -o ${VCFHAR%.vcf.gz}.10Kb_flank.vcf.gz
+tabix -p vcf ${VCFHAR%.vcf.gz}.10Kb_flank.vcf.gz
+
+## convert to PLINK format for easy analysis
+PLINK="/Dedicated/jmichaelson-wdata/lcasten/tools/plink"
+#     --keep-allele-order \
+
+$PLINK --vcf ${VCFHAR%.vcf.gz}.10Kb_flank.vcf.gz \
+    --min-ac 1 \
+    --keep $KEEP \
+    --geno 0.02 \
+    --make-bed --out ${VCFHAR%.vcf.gz}.10Kb_flank

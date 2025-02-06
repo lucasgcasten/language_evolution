@@ -1,0 +1,3 @@
+pheno,x,selection_coefficient,statistic,p.value,conf.low,conf.high,method,n
+sample_age_log,cp_pgs.background_HAQER,0.1614413071785762,6.301823700727388,3.869290394150907e-10,0.210564059880271,0.11150533050573307,Pearson's product-moment correlation,1486
+sample_age_log,cp_pgs.HAQER,-0.056917378788253425,-2.196172511379069,0.0282338533249833,-0.00608360555064572,-0.10745774209244824,Pearson's product-moment correlation,1486

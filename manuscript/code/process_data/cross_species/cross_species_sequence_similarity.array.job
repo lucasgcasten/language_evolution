@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#$ -S /bin/bash
+#$ -pe smp 2
+#$ -q JM,UI
+#$ -cwd
+#$ -j y
+#$ -ckpt user
+#$ -N cross_species_seq_sim
+#$ -m eas
+#$ -M lucas-casten@uiowa.edu
+
+## qsub -t 1-22:1 /Dedicated/jmichaelson-genome/Zoonomia/cross_species_sequence_similarity.array.job
+
+conda activate biopython
+python /Dedicated/jmichaelson-genome/Zoonomia/cross_species_sequence_similarity.447_way.py $SGE_TASK_ID
+python /Dedicated/jmichaelson-genome/Zoonomia/cross_species_sequence_similarity.HAR.447_way.py $SGE_TASK_ID
