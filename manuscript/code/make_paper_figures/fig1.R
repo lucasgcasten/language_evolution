@@ -44,7 +44,7 @@ fig1 <- plot_a +
                                             legend.title = element_text(size = 12))) + 
          wrap_elements(tab2) +
          p_pgs +  
-         plot_layout(design = layout) + plot_annotation(tag_levels = 'A') & 
+         plot_layout(design = layout) + plot_annotation(tag_levels = 'a') & 
          theme(plot.tag = element_text(size = 24, face = 'bold'),
                axis.text = element_text(size = 12),
                axis.title = element_text(size = 14),
