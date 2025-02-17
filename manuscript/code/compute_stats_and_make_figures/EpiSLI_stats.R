@@ -164,8 +164,8 @@ for(evo in coi){
       bdat <- tmp2 %>% 
         select(IID, factor_val, matches('complement'))
 
-      baseline <- lm(factor_val ~ . - IID, data = bdat)
-      baseline_plus_anno <- lm(factor_val ~ . - IID, data = tmp2)
+      baseline <- lm(factor_val ~ ., data = bdat[,-1])
+      baseline_plus_anno <- lm(factor_val ~ ., data = tmp2[,-1])
       baseline_rsq = summary(baseline)$r.squared
       baseline_plus_anno_rsq = summary(baseline_plus_anno)$r.squared
       baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
@@ -221,19 +221,19 @@ p_es_pgs_forest <- es_pgs_res %>%
     filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
     mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
     ggplot(aes(x = mod_clean, y = annotation_beta, color = sig)) +
-    geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.2) +
-    geom_point(size = 3.5, aes(shape = sig)) +
+    geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5) +
+    geom_point(size = 5, aes(shape = sig)) +
     scale_shape_manual(values = c(1, 16)) +
     geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
     xlab('ES-PGS model') +
     ylab('Effect on core language (F1)') +
     scale_color_manual(values = c('grey75', 'black')) +
     theme_classic() +  
-    theme(axis.text = element_text(size = 12),
-         axis.text.x = element_text(angle = 15, hjust = 1),
-          axis.title = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          legend.title = element_text(size = 14),
+    theme(axis.text = element_text(size = 18),
+          axis.text.x = element_text(angle = 18, hjust = 1),
+          axis.title = element_text(size = 20),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 20),
           legend.position = 'none') +
     guides(shape = 'none')
 p_es_pgs_forest %>%
