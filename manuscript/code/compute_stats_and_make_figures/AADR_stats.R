@@ -66,7 +66,7 @@ print(sel_results)
 ## save results
 write.csv(sel_results[sel_results$x != 'intercept',], 
           file = "manuscript/supplemental_materials/stats/AADR_HAQER_ES-PGS_polygenic_selection_results.csv", 
-          col.names = TRUE, row.names = FALSE)
+          quote = FALSE, row.names = FALSE)
 
 ###############################
 ## polygenic selection figure
@@ -118,7 +118,7 @@ p_sel %>%
 ## ---------------------------------------------------
 cl <- c("#762776", "#e04468", "#dcc699") ## color palette (HAQER, HAR, RAND)
 ## read in PGS data
-df <- read_csv('/wdata/lcasten/sli_wgs/neanderthal_analysis/raw_ES-PGS_data.csv') %>% 
+df <- read_csv('manuscript/supplemental_materials/archaic_human_data.csv') %>% 
     filter(type != "EpiSLI") %>% ## drop EpiSLI samples 
     mutate(cp_pgs.background = scale(cp_pgs.background)[,1],
            cp_pgs.HAQER = scale(cp_pgs.HAQER)[,1])

@@ -42,17 +42,14 @@ abcd_es_pgs <- read_csv('manuscript/supplemental_materials/stats/ABCD_HAQER_ES-P
 abcd_es_pgs_csec <- read_csv('manuscript/supplemental_materials/stats/ABCD_c-section_HAQER_ES-PGS_results.csv')
 
 #####################
-## AADR
+## AADR + archaic
 #####################
 ## data
 aadr <- read_csv('manuscript/supplemental_materials/AADR_data.csv')
-aadr_imp <- read_csv('manuscript/supplemental_materials/AADR_imputed_data_no_neanderthals.csv')
 ## polygenic selection
 aadr_sel <- read_csv('manuscript/supplemental_materials/stats/AADR_HAQER_ES-PGS_polygenic_selection_results.csv')
-aadr_sel_imp <- read_csv('manuscript/supplemental_materials/stats/AADR_imputed_no_neanderthals_HAQER_ES-PGS_polygenic_selection_results.csv')
-aadr_sel_gathered <- bind_rows(aadr_sel, aadr_sel_imp)
-## polygenic correlation
-aadr_pgs_corr <- read_csv('manuscript/supplemental_materials/stats/AADR_ES-PGS_polygenic_correlation_results.csv')
+## archaic human ES-PGS with 1000 Genomes + EpiSLI
+nean_pgs <- read_csv("manuscript/supplemental_materials/archaic_human_data.csv")
 
 #####################
 ## Cross species
@@ -72,6 +69,21 @@ tfbs_sel <- read_csv('manuscript/supplemental_materials/stats/TFBS_reversion_cor
 ## EpiSLI TFBS selection + language ability convergence
 tfbs_conv <- read_csv('manuscript/supplemental_materials/stats/TFBS_TF_family_binding_convergence_results.csv')
 
+#####################
+## EpiSLI WGS stats
+#####################
+## raw table vals to make into df
+# 	        Mean	0.00%	25.00%	50.00%	75.00%	100.00%
+# Coverage	31.95	22	29	31	35	43
+# Insert-size	384.5	260.5	361.8	395.2	411.3	526.7
+episli_wgs_cov <- data.frame("Mean" = c(31.95, 384.5), 
+            "p0" = c(22, 260.5), 
+            "p25" = c(29, 361.8), 
+            "p50" = c(31, 395.2), 
+            "p75" = c(35, 411.3), 
+            "p100" = c(43, 526.7))
+rownames(episli_wgs_cov) <- c("Coverage", "Insert-size")
+
 ####################################################
 ## gather data and write to huge excel spreadsheet
 ####################################################
@@ -86,11 +98,11 @@ export(list(SupplementaryTable1 = ph,
             SupplementaryTable8 = abcd_es_pgs, 
             SupplementaryTable9 = abcd_es_pgs_csec, 
             SupplementaryTable10 = aadr, 
-            SupplementaryTable11 = aadr_imp, 
-            SupplementaryTable12 = aadr_sel_gathered, 
-            SupplementaryTable13 = aadr_pgs_corr, 
-            SupplementaryTable14 = cs_dat, 
-            SupplementaryTable15 = scqtl_enr, 
-            SupplementaryTable16 = tfbs_sel, 
-            SupplementaryTable17 = tfbs_conv),
+            SupplementaryTable11 = aadr_sel, 
+            SupplementaryTable12 = nean_pgs, 
+            SupplementaryTable13 = cs_dat, 
+            SupplementaryTable14 = scqtl_enr, 
+            SupplementaryTable15 = tfbs_sel, 
+            SupplementaryTable16 = tfbs_conv,
+            SupplementaryTable17 = episli_wgs_cov),
         out)
