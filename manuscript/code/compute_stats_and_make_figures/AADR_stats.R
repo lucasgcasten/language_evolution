@@ -4,6 +4,7 @@
 ######################
 ## load packages
 ######################
+library(tidyverse)
 library(data.table)
 library(Matrix)
 library(gaston)
@@ -92,18 +93,18 @@ p_sel <- data %>%
            sel_bg_lab = sel_bg_lab) %>%
     ggplot(aes(x = -1 * round(sample_age_GRM_adj), y = value, color = pgs)) +
     geom_smooth(method = 'lm', size = 1.5, alpha = .2) +
-    geom_text(aes(x = -8000, y = -3, label = sel_bg_lab), check_overlap = TRUE, size = 4, color = 'grey50') +
-    geom_text(aes(x = -8000, y = 1, label = sel_haq_lab), check_overlap = TRUE, size = 4, color = '#762776') +
+    geom_text(aes(x = -8000, y = -3, label = sel_bg_lab), check_overlap = TRUE, size = 6, color = 'grey50') +
+    geom_text(aes(x = -8000, y = 1, label = sel_haq_lab), check_overlap = TRUE, size = 6, color = '#762776') +
     xlab('Years ago') +
     ylab('CP-PGS') +
     scale_color_manual(values = c('grey70', "#762776")) +
     theme_classic() +
     labs(color = NULL) +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
+    theme(axis.text = element_text(size = 16),
+          axis.title = element_text(size = 18),
+          strip.text = element_text(size = 18),
+          legend.text = element_text(size = 16),
+          plot.title = element_text(size = 18, hjust = .5),
           legend.position = 'bottom') +
     scale_x_continuous(breaks = c(seq(-20000, -5000, 5000), -100), labels = c('20,000', '15,000', '10,000', '5,000', '100')) +
     labs(color = 'CP-PGS:')
@@ -118,7 +119,7 @@ p_sel %>%
 ## ---------------------------------------------------
 cl <- c("#762776", "#e04468", "#dcc699") ## color palette (HAQER, HAR, RAND)
 ## read in PGS data
-df <- read_csv('manuscript/supplemental_materials/archaic_human_data.csv') %>% 
+df <- read_csv('manuscript/supplemental_materials/neanderthal_1000Genomes_raw_ES-PGS_data.csv') %>% 
     filter(type != "EpiSLI") %>% ## drop EpiSLI samples 
     mutate(cp_pgs.background = scale(cp_pgs.background)[,1],
            cp_pgs.HAQER = scale(cp_pgs.HAQER)[,1])
@@ -138,10 +139,10 @@ p_nean_haq <- kg_df %>%
     xlab('HAQER CP-PGS') +
     ylab('Density') +
     theme_classic() +
-    theme(axis.text = element_text(size = 10),
-          axis.title = element_text(size = 10),
-          strip.text = element_text(size = 12),
-          legend.text = element_text(size = 10),
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
           legend.position = 'bottom') +
     geom_vline(data = tmp, aes(xintercept = cp_pgs.HAQER, color = type), size = 1, linetype = 'dashed') +
     scale_color_manual(name = NULL, values = c("Neanderthals and Denisovan" = "black")) +
@@ -156,10 +157,10 @@ p_nean_bg <- kg_df %>%
     xlab('Background CP-PGS') +
     ylab('Density') +
     theme_classic() +
-    theme(axis.text = element_text(size = 10),
-          axis.title = element_text(size = 10),
-          strip.text = element_text(size = 12),
-          legend.text = element_text(size = 10),
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
           legend.position = 'bottom') +
     geom_vline(data = tmp, aes(xintercept = cp_pgs.background, color = type), size = 1, linetype = 'dashed') +
     scale_color_manual(name = NULL, values = c("Neanderthals and Denisovan" = "black")) +

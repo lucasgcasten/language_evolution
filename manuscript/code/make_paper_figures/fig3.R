@@ -19,12 +19,12 @@ fig3 <- p_sel +
         p_nean_haq +
         p_nean_bg +
         plot_layout(design = layout) + plot_annotation(tag_levels = 'a') & 
-        theme(plot.tag = element_text(size = 24, face = 'bold'),
-               axis.text = element_text(size = 12),
-               axis.title = element_text(size = 14),
-               legend.text = element_text(size = 12),
-               legend.title = element_text(size = 14),
-               strip.text = element_text(size = 14))
+        theme(plot.tag = element_text(size = 24, face = 'bold')) #,
+       #         axis.text = element_text(size = 12),
+       #         axis.title = element_text(size = 14),
+       #         legend.text = element_text(size = 12),
+       #         legend.title = element_text(size = 14),
+       #         strip.text = element_text(size = 14))
 
 ## save figure
 ggsave(fig3, 
