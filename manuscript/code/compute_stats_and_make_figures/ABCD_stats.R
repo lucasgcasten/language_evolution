@@ -150,6 +150,32 @@ p_sib_bw %>%
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 5, height = 4.5)
 
+## scatterplot with just background CP-PGS
+abcd_sib_bw_lab <- abcd_sib_bw_es_pgs_res %>%
+    filter(x == 'sib_diff_cp_pgs.background_HAQER') %>% 
+    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nN = ', n, ' sibling pairs'))
+p_sib_bw_bg <- abcd_df %>% 
+    mutate(sib_diff_resid = scale(resid(lm(sib_diff ~  sib_diff_cp_pgs.HAQER + age_diff + premature_diff + as.factor(sex_female_diff))))[,1]) %>% 
+    mutate(abcd_sib_bw_lab = abcd_sib_bw_lab$lab) %>%
+    ggplot(aes(x = sib_diff_resid, y = sib_diff_cp_pgs.background_HAQER)) +
+    geom_point(size = 0.5, color = "grey75") +
+    geom_smooth(method = 'lm', size = 1.5, color = "grey75") +
+    geom_text(aes(x = 0, y = 3, label = abcd_sib_bw_lab), check_overlap = TRUE, size = 4, color = "grey50") +
+    xlab('Sib. difference in birth weight') +
+    ylab('Sib. difference in background CP-PGS') +
+    theme_classic() +
+    labs(color = NULL) +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          plot.title = element_text(size = 14, hjust = .5),
+          legend.position = 'bottom')
+p_sib_bw_bg %>% 
+    ggsave(filename = 'manuscript/figures/ABCD_sibling_birth_weight_background_ES-PGS.png',
+           device = 'png', dpi = 300, bg = 'white', 
+           units = 'in', width = 5, height = 4.5)
+
 ## show best fit lines for both HAQER + background on same figure
 abcd_sib_bw_bg_lab <- abcd_sib_bw_es_pgs_res %>%
     filter(x == 'sib_diff_cp_pgs.background_HAQER') %>% 
@@ -281,6 +307,8 @@ p_abcd_icv_growth  %>%
     write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_ICV_growth.rds')  
 p_sib_bw %>%
     write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_birth_weight.rds')
+p_sib_bw_bg %>%
+    write_rds('manuscript/figures/R_plot_objects/ABCD_background-CP-PGS_sibling_birth_weight.rds')
 p_bw_lines %>% 
     write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_birth_weight_lines.rds')
 p_paired_bg %>% 

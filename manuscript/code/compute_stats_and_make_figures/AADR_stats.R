@@ -72,6 +72,7 @@ write.csv(sel_results[sel_results$x != 'intercept',],
 ###############################
 ## polygenic selection figure
 ###############################
+library(tidyverse)
 ## get GRM residual age value and convert to a "raw age" so we can better visualize what LMM is testing
 mn <- mean(data$age)
 sdev <- sd(data$age)

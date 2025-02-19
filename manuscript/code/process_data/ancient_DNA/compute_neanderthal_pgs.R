@@ -201,6 +201,53 @@ prset %>%
     cor()
 
 
+## ============================================================================================
+## compute ES-PGS for HAQERs excluding alleles w/ any missingness in archaic humans
+## ============================================================================================
+## get betas
+tail(names(wd_df))
+wd_nean_mat <- as.data.frame(wd) %>% 
+    filter(IID %in% c("AltaiNea_AltaiNea", "Chagyrskaya-Phalanx_Chagyrskaya-Phalanx", "DenisovaPinky_DenisovaPinky", "Vindija33.19_Vindija33.19"))
+rownames(wd_nean_mat) <- wd_nean_mat$IID 
+wd_nean_mat$IID <- NULL
+wd_no_msg <- t(wd_nean_mat)
+wd_no_msg <- wd_no_msg[rowSums(is.na(wd_no_msg)) == 0,]
+haq_snp_no_msg_nean <- rownames(wd_no_msg)  
+haq_rsid_no_msg <- wd_df$snp[wd_df$HAQER == 1 & wd_df$snp %in% haq_snp_no_msg_nean]
+betas_haq_no_msg <- wd_df$BETA[wd_df$HAQER == 1 & wd_df$snp %in% haq_snp_no_msg_nean]
+
+## get genotypes
+genos_haq_no_msg <- wd_df %>%
+    filter(snp %in% haq_rsid_no_msg) %>%
+    select(matches('^NA|^HG|^sample|^Deni|Vind|Altai|Chagyr')) %>% 
+    as.data.frame()
+
+## PGS calculation
+haq_pgs_no_msg <- data.frame(IID = colnames(genos_haq_no_msg)) %>% 
+    mutate(pgs = NA) %>% 
+    as_tibble()
+
+for(i in 1:nrow(haq_pgs_no_msg)) {
+    if(i %% 25 == 0) {
+        message(i, '/', nrow(haq_pgs_no_msg))
+    }
+    s = haq_pgs_no_msg$IID[i]
+    tpgs <- sum(genos_haq_no_msg[,s] * betas_haq_no_msg)
+    haq_pgs_no_msg$pgs[i] <- tpgs
+}
+
+haq_pgs_no_msg$pgs <- scale(haq_pgs_no_msg$pgs)[,1]
+
+## check that the manual PGS is the same as what we get from PRSet in 1000 Genomes + EpiSLI
+prset <- read_table('/wdata/lcasten/sli_wgs/prs/pathway_prs/cogPerf.human_evolution_complement.all_score')
+
+prset %>% 
+    select(IID, HAQER_1) %>% 
+    inner_join(haq_pgs_no_msg) %>% 
+    select(-IID) %>% 
+    cor()
+
+
 ## ================================
 ## gather PGS
 ## ================================
@@ -214,15 +261,21 @@ haq_pgs_clean <- haq_pgs %>%
     rename(cp_pgs.HAQER = pgs) %>% 
     mutate(type = case_when(str_detect(IID, 'sample') ~ 'EpiSLI',
                             str_c(IID, '_', IID) %in% nean_df$IID ~ 'Neanderthals and Denisovan',
-                            TRUE ~ '1000 Genomes'))                  
+                            TRUE ~ '1000 Genomes'))
+
+haq_pgs_no_msg_clean <- haq_pgs_no_msg %>%
+    rename(cp_pgs.HAQER_no_missingness_archaic_subset = pgs) %>% 
+    mutate(type = case_when(str_detect(IID, 'sample') ~ 'EpiSLI',
+                            str_c(IID, '_', IID) %in% nean_df$IID ~ 'Neanderthals and Denisovan',
+                            TRUE ~ '1000 Genomes'))  
 
 pgs_wd <- gw_pgs_clean %>% 
-    inner_join(haq_pgs_clean) %>% 
+    inner_join(haq_pgs_clean) %>%  
+    inner_join(haq_pgs_no_msg_clean) %>%
     relocate(type, .after = IID)
 
 ## plot distributions across samples
 pgs_wd %>% 
-    # filter(type != 'EpiSLI') %>%
     pivot_longer(cols = matches('cp_pgs')) %>% 
     group_by(name) %>% 
     mutate(z = scale(value)[,1]) %>% 
@@ -307,6 +360,18 @@ sd_kg <- sd(resid_tmp[td$type == '1000 Genomes'])
 resid_z <- (resid_tmp - mean_kg) / sd_kg
 td$cp_pgs.HAQER_resid <- resid_z
 
+### repeat for HAQER CP-PGS using only SNPs genotyped in all archaic samples (exclude variants missing in ANY neanderthal)
+mod <- lm(cp_pgs.HAQER_no_missingness_archaic_subset ~ PC1 + PC2 + PC3 + PC4 + PC5, data = kg_pgs)
+prd <- predict(mod, td)
+resid_tmp <- td$cp_pgs.HAQER_no_missingness_archaic_subset - prd
+mean_kg <- mean(resid_tmp[td$type == '1000 Genomes'])
+sd_kg <- sd(resid_tmp[td$type == '1000 Genomes'])
+resid_z <- (resid_tmp - mean_kg) / sd_kg
+td$cp_pgs.HAQER_no_missingness_archaic_subset_resid <- resid_z
+tail(td) %>% 
+    select(-matches('PC')) %>% 
+    select(matches('resid'))
+
 ### repeat for background
 mod <- lm(cp_pgs.background ~ PC1 + PC2 + PC3 + PC4 + PC5, data = kg_pgs)
 prd <- predict(mod, td)
@@ -322,10 +387,12 @@ td %>%
 
 ## save data
 td %>% 
-    select() %>% 
+    rename(cp_pgs.HAQER_SNPs_with_no_archaic_missingness = cp_pgs.HAQER_no_missingness_archaic_subset, cp_pgs.HAQER_SNPs_with_no_archaic_missingness_resid = cp_pgs.HAQER_no_missingness_archaic_subset_resid) %>%
     write_csv("/wdata/lcasten/sli_wgs/neanderthal_analysis/ES-PGS_data.csv")
 
+
 td %>% 
+    rename(cp_pgs.HAQER_SNPs_with_no_archaic_missingness = cp_pgs.HAQER_no_missingness_archaic_subset, cp_pgs.HAQER_SNPs_with_no_archaic_missingness_resid = cp_pgs.HAQER_no_missingness_archaic_subset_resid) %>%
     write_csv("manuscript/supplemental_materials/archaic_human_data.csv")
 
 ##
