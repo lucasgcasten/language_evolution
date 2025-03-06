@@ -22,7 +22,7 @@ tmp <- tribble(~Factor, ~Description,
   'F3', 'Nonverbal IQ', 
   'F4', 'Early language', 
   'F5', 'Talkativeness', 
-  'F6', 'Following directions', 
+  'F6', 'Instruction comprehension', 
   'F7', 'Vocabulary')
 
 
@@ -56,5 +56,5 @@ fig1 <- plot_a +
 ggsave(fig1, 
        filename = 'manuscript/figures/paper_figures/fig1.pdf', 
        device = 'pdf', 
-       units = 'in', width = 14, height = 14,
+       units = 'in', width = 14.25, height = 14.25,
        dpi = 300)

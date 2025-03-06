@@ -26,6 +26,8 @@ ph <- read_csv('manuscript/supplemental_materials/EpiSLI_pheno_data.csv')
 pgs <- read_csv('manuscript/supplemental_materials/EpiSLI_LDpred2-PGS_data.csv')
 es_pgs <- read_csv('manuscript/supplemental_materials/EpiSLI_ES-PGS_data.csv')
 fact_dat <- read_rds("manuscript/supplemental_materials/EpiSLI_factor_analysis_data.rds")$coef[[7]] ## read in 7 factor solution loadings
+binned_sfs_comp <- read_csv("manuscript/supplemental_materials/EpiSLI_SFS_data.csv")
+fstat_dat <- read_csv("manuscript/supplemental_materials/EpiSLI_F_statistics_data.csv")
 
 #######################################
 ## association between factors + CBCL
@@ -241,6 +243,55 @@ p_es_pgs_forest %>%
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 8, height = 7)
 
+## forest plot including SPARK
+es_pgs_res_spark <- read_csv('manuscript/supplemental_materials/stats/SPARK_sent_rep_factor_ES-PGS_results.csv') %>% 
+  mutate(cohort = 'SPARK')
+p_es_pgs_forest_spark_episli <- es_pgs_res %>% 
+    group_by(factor) %>%
+    filter(factor == 'F1') %>% 
+    mutate(cohort = 'EpiSLI') %>% 
+    bind_rows(es_pgs_res_spark) %>%
+    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
+                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
+                                 model == 'LinAR_Homininae' ~ 'Homininae',
+                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
+                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
+                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
+                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
+                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                 model == 'HAQER' ~ 'HAQERs',
+                                 model == 'HAR' ~ 'HARs',
+                                 TRUE ~ NA_character_)) %>% 
+    drop_na(mod_clean) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
+    filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
+    mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
+    ggplot(aes(x = mod_clean, y = annotation_beta, color = cohort, group = cohort)) +
+    geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5, position = position_dodge2(width = .3)) +
+    geom_point(size = 5, aes(shape = sig), position = position_dodge2(width = .3)) +
+    scale_shape_manual(values = c(1, 16)) +
+    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    xlab('ES-PGS model') +
+    ylab('Effect on core language') +
+    # scale_color_manual(values = c('', '')) +
+    scale_color_brewer(palette = "Paired") +
+    theme_classic() +  
+    theme(axis.text = element_text(size = 18),
+          axis.text.x = element_text(angle = 18, hjust = 1),
+          axis.title = element_text(size = 20),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 20),
+          legend.position=c(.9,.1),
+          legend.box.background = element_rect(colour = "black", size = 1)) +
+    guides(shape = 'none') +
+    labs(color = 'Cohort:')
+p_es_pgs_forest_spark_episli %>%
+    ggsave(filename = 'manuscript/figures/EpiSLI_and_SPARK_factor_ES-PGS_forest.png', 
+           device = 'png', dpi = 300, bg = 'white', 
+           units = 'in', width = 11, height = 9)
+
+
 ## scatterplots of residualized F1-F3 and HAQERs
 wd <- tmp %>% 
     select(IID, factor, factor_val, matches('HAQER')) %>% 
@@ -368,7 +419,7 @@ table_a <- tribble(
   'F3', 'Nonverbal IQ', 
   'F4', 'Early language', 
   'F5', 'Talkativeness', 
-  'F6', 'Following directions', 
+  'F6', 'Instruction comprehension', 
   'F7', 'Vocabulary'
   ) %>% 
   gridExtra::tableGrob(
@@ -480,11 +531,86 @@ plot_b <- ph %>%
     legend.title = element_text(size = 14)
   )
 
-plot_b
 
+############################
+## balancing selection figs
+############################
+## SFS bin comparison across sequence classes
+p_seq_class_comp <- binned_sfs_comp %>% 
+  mutate(maf_bin = factor(maf_bin, levels = unique(maf_bin))) %>%
+  ggplot(aes(x = maf_bin, y = log2_ratio, fill = classes)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(x = "Minor allele frequency bin", 
+       y = "SFS log2(ratio)") +
+  theme_classic() +  
+  theme(axis.text = element_text(size = 18),
+        axis.text.x = element_text(angle = 30, hjust = 1),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 18),
+        legend.title = element_text(size = 20),
+        legend.position=c(.175,.925)) +
+  labs(fill = NULL) +
+  geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075)
+
+## F-statistic comparison across classes 
+broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_HARs))
+broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_RAND))
+broom::tidy(t.test(fstat_dat$f_HARs, fstat_dat$f_RAND))
+
+cl <- c("#762776", "#e04468", "#dcc699")
+p_fstat <- fstat_dat %>%  
+  pivot_longer(cols = c("f_HAQERs", 'f_HARs', "f_RAND"), names_to = 'class', values_to = 'f') %>%
+  mutate(class = str_remove_all(class, 'f_')) %>%
+  mutate(class = factor(class, levels = c('HAQERs', 'HARs', 'RAND'))) %>%
+  ggplot(aes(x = class, y = f)) +
+  geom_violin(size = 1.1) +
+  geom_boxplot(width = .3, aes(fill =class), alpha = .9, size = 1.1) +
+  scale_fill_manual(values = c(cl, 'grey60')) +
+  xlab(NULL) +
+  ylab("F-statistic") +
+  theme_classic() +  
+  theme(axis.text = element_text(size = 18),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 18),
+        legend.title = element_text(size = 20),
+        legend.position="none",
+        legend.box.background = element_rect(colour = "black"),
+        strip.text = element_text(size = 20)) +
+  geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+  ggsignif::geom_signif(comparisons=list(c("HAQERs", "HARs")), annotations="***", # p_haqer_vs_har_all_1000genomes
+              y_position = .1, tip_length = 0, vjust=0.4, size = 1.1, textsize = 6) +
+  ggsignif::geom_signif(comparisons=list(c("HAQERs", "RAND")), annotations="***", # p_haqer_vs_rand_all_1000genomes
+              y_position = .125, tip_length = 0, vjust=0.4, size = 1.1, textsize = 6) +
+  ggsignif::geom_signif(comparisons=list(c("HARs", "RAND")), annotations="*", # p_har_vs_rand_all_1000genomes
+              y_position = .15, tip_length = 0, size = 1.1, textsize = 6)
+
+## F-statistic correlation with language (F1)
+fph <- ph %>% 
+  inner_join(fstat_dat)
+lab <- broom::tidy(cor.test(fph$F1, fph$f_HAQERs, method = 's')) %>% 
+    mutate(lab = str_c('rho = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+
+p_f_haq_f1 <- fph %>% 
+  mutate(lab = lab$lab) %>%
+  ggplot(aes(x = F1, y = f_HAQERs)) +
+  geom_point(size = 0.7) +
+  geom_smooth(method = 'lm', size = 1.25, color = cl[1]) +
+  xlab("Core language (F1)") +
+  ylab("HAQERs F-statistic") +
+  geom_text(aes(x = -1, y = -.09, label = lab), check_overlap = TRUE, size = 5) +
+  theme_classic() +  
+  theme(axis.text = element_text(size = 18),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 18),
+        legend.title = element_text(size = 20),
+        legend.position="none",
+        legend.box.background = element_rect(colour = "black"),
+        strip.text = element_text(size = 20))
 
 #####################
 ## save plot objects
+#####################
 plot_a %>% 
   write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor_loadings.rds')
 plot_b %>% 
@@ -503,3 +629,24 @@ p_f2 %>%
   write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor2_HAQER-CP-PGS.rds')
 p_f3 %>% 
   write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor3_HAQER-CP-PGS.rds')
+## balancing selection figs
+p_seq_class_comp %>% 
+    ggsave(filename = "manuscript/figures/HAQER_SFS_bin_comparisons.png",
+           device = 'png', bg = 'white', dpi = 300,
+           units = 'in', width = 12, height = 6)
+p_seq_class_comp %>% 
+  write_rds("manuscript/figures/R_plot_objects/HAQER_SFS_bin_comparisons.rds")
+## 
+p_fstat %>% 
+    ggsave(filename = "manuscript/figures/EpiSLI_Fstat_selection.png",
+           device = 'png', dpi = 300, bg = 'white',
+           units = 'in', width = 6, height = 6)
+p_fstat %>% 
+    write_rds("manuscript/figures/R_plot_objects/EpiSLI_fstat_comparisons.rds")
+##
+p_f_haq_f1 %>% 
+    ggsave(filename = "manuscript/figures/EpiSLI_Fstat_F1_association.png",
+           device = 'png', dpi = 300, bg = 'white',
+           units = 'in', width = 7, height = 7)
+p_f_haq_f1 %>% 
+    write_rds("manuscript/figures/R_plot_objects/EpiSLI_Fstat_F1_association.rds")

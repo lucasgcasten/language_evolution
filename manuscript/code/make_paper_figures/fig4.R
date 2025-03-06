@@ -26,13 +26,12 @@ AABBGH
 "
 
 fig4 <- p_scqtl_enr +
+       p_paired_bg +
+       p_paired_haq +
+       p_sib_bw_bg +
+       p_sib_bw +
         p_abcd_icv +
         p_abcd_icv_growth +
-        p_sib_bw_bg + 
-        p_sib_bw +
-        p_paired_bg +
-        p_paired_haq +
-       #  p_scqtl_valid +
         plot_layout(design = layout) + plot_annotation(tag_levels = 'a') & 
         theme(plot.tag = element_text(size = 28, face = 'bold'),
                axis.text = element_text(size = 14),

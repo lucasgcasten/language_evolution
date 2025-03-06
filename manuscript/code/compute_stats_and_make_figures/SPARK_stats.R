@@ -8,7 +8,7 @@ spark_df <- read_csv('manuscript/supplemental_materials/SPARK_data.csv')
 ####################
 ## ES-PGS analysis
 ####################
-## sent rep factor stats
+## sent rep factor stats for HAQERs
 n_mod <- spark_df %>% 
     select(IID, factor_sent_rep, age_years, sex, cp_pgs.HAQER, cp_pgs.background_HAQER) %>% 
     drop_na() %>% 
@@ -50,6 +50,61 @@ p_f1_rep %>%
     ggsave(filename = 'manuscript/figures/SPARK_replication_core_language_HAQER_ES-PGS.png', 
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 5, height = 5)
+
+## -----------------------------------------------------------------------------
+## sent rep factor stats for all annotations (to show it's specifically HAQERs)
+spark_df_es_pgs <- spark_df %>% 
+    select(IID, factor_sent_rep, age_years, sex, matches("cp_pgs")) %>% 
+    mutate(sex_f = case_when(sex == 'Female' ~ 1,
+                             sex == 'Male' ~ 0,
+                             TRUE ~ NA)) %>%
+    select(-c(sex, cp_pgs.genome_wide)) %>%
+    drop_na() 
+coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background', negate = TRUE)]
+
+iter = 0
+res_list = list()
+for(evo in coi){
+    cat(sprintf('\n\n\n\n'))
+    message(evo)
+    iter = iter + 1
+    tmp2 <- spark_df_es_pgs %>% 
+        select(IID, factor_sent_rep, age_years, sex_f, matches(str_c(str_remove_all(evo, pattern = 'cp_pgs.'), '$')))
+    bdat <- tmp2 %>% 
+        select(IID, factor_sent_rep, age_years, sex_f, matches('background'))
+
+    baseline <- lm(factor_sent_rep ~ ., data = bdat[,-1])
+    baseline_plus_anno <- lm(factor_sent_rep ~ ., data = tmp2[,-1])
+    baseline_rsq = summary(baseline)$r.squared
+    baseline_plus_anno_rsq = summary(baseline_plus_anno)$r.squared
+    baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
+        filter(term != '(Intercept)' & str_detect(term, 'background', negate = TRUE)) %>% 
+        filter(term == evo)
+
+    res <- broom::tidy(anova(baseline, baseline_plus_anno)) %>% 
+        drop_na() %>% 
+        mutate(factor = "SPARK_core_language_sent_rep_factor") %>% 
+        mutate(evo = str_remove_all(evo, 'cp_pgs.')) %>% 
+        relocate(factor, evo) %>% 
+        mutate(baseline_rsq = baseline_rsq,
+               baseline_plus_anno_rsq = baseline_plus_anno_rsq,
+                annotation_beta = baseline_plus_anno_coef$estimate,
+                annotation_std_err = baseline_plus_anno_coef$std.error,
+                annotation_pval = baseline_plus_anno_coef$p.value)
+
+    res_list[[iter]] <- res
+}
+
+## reformat ES-PGS results
+es_pgs_res <- bind_rows(res_list) %>%
+  arrange(p.value) %>% 
+  select(-term) %>% 
+  rename(model = evo, p.value_model_comparison = p.value) %>%
+  arrange(model)
+
+es_pgs_res %>% 
+  write_csv('manuscript/supplemental_materials/stats/SPARK_sent_rep_factor_ES-PGS_results.csv')
+
 
 ###################
 ## ES-PGS dx stats
@@ -168,6 +223,177 @@ spark_p_iq %>%
     ggsave(filename = 'manuscript/figures/SPARK_replication_IQ_HAQER_ES-PGS.png', 
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 8, height = 3.5)
+
+## birth complication analysis
+spark_df_es_pgs <- spark_df %>% 
+    filter(asd == TRUE) %>%
+    select(IID, matches('dx_birth'), age_years, sex, matches("cp_pgs")) %>% 
+    mutate(sex_f = case_when(sex == 'Female' ~ 1,
+                             sex == 'Male' ~ 0,
+                             TRUE ~ NA)) %>%
+    select(-c(sex, cp_pgs.genome_wide)) %>%
+    drop_na() %>% 
+    pivot_longer(cols = matches('dx_birth'))
+coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background', negate = TRUE)]
+
+iter = 0
+res_list = list()
+for(evo in coi){
+    cat(sprintf('\n\n\n\n'))
+    message(evo)
+    for(ph in unique(spark_df_es_pgs$name)) {
+        message('   --', ph)
+        iter = iter + 1
+        ##
+        tmp2 <- spark_df_es_pgs %>% 
+            select(IID, name, value, age_years, sex_f, matches(str_c(str_remove_all(evo, pattern = 'cp_pgs.'), '$'))) %>% 
+            filter(name == ph)
+        bdat <- tmp2 %>% 
+            select(IID, name, value, age_years, sex_f, matches('background')) %>% 
+            filter(name == ph)
+        ##
+        baseline <- glm(value ~ ., data = bdat[,-c(1:2)], family = 'binomial')
+        baseline_plus_anno <- glm(value ~ ., data = tmp2[,-c(1:2)], family = 'binomial')
+        baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
+            filter(term != '(Intercept)' & str_detect(term, 'background', negate = TRUE)) %>% 
+            filter(term == evo)
+        ##
+        res <- broom::tidy(anova(baseline, baseline_plus_anno, test = "LRT")) %>% 
+            drop_na() %>% 
+            mutate(factor = ph) %>% 
+            mutate(evo = str_remove_all(evo, 'cp_pgs.')) %>% 
+            relocate(factor, evo) %>% 
+            mutate(annotation_beta = baseline_plus_anno_coef$estimate,
+                    annotation_std_err = baseline_plus_anno_coef$std.error,
+                    annotation_pval = baseline_plus_anno_coef$p.value) %>% 
+            inner_join(rename(dx_cnt, factor = pheno))
+        ##
+        res_list[[iter]] <- res
+    }
+}
+
+es_pgs_res <- bind_rows(res_list) %>%
+  arrange(p.value) %>% 
+  select(-term) %>% 
+  rename(model = evo, p.value_model_comparison = p.value) %>%
+  arrange(model)
+
+es_pgs_res %>% 
+    filter(str_detect(factor, pattern = '_oth_', negate = TRUE)) %>%
+    filter(n_case >= 20) %>%
+    group_by(model) %>% 
+    mutate(fdr = p.adjust(annotation_pval, method = 'fdr')) %>% 
+    ungroup() %>%
+    mutate(sig = case_when(fdr < .05 ~ '**',
+                           fdr >= .05 & annotation_pval < .05 ~ '*',
+                           TRUE ~ NA_character_)) %>%
+    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
+                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
+                                 model == 'LinAR_Homininae' ~ 'Homininae',
+                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
+                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
+                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
+                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
+                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                 model == 'HAQER' ~ 'HAQERs',
+                                 model == 'HAR' ~ 'HARs',
+                                 TRUE ~ NA_character_)) %>% 
+    drop_na(mod_clean) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
+    # filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
+    mutate(stat = annotation_beta / annotation_std_err) %>%
+    inner_join(dd) %>%
+    mutate(clean_name = str_remove_all(clean_name, pattern = 'Branching Question[:] ')) %>%
+    select(-c(factor, sig, stat, model)) %>% 
+    relocate(factor = clean_name, model = mod_clean) %>%
+    relocate(fdr, .after = p.value_model_comparison) %>% 
+    relocate(fdr, p.value_model_comparison, annotation_beta, n_case) %>% 
+    filter(model == 'HAQERs')
+
+es_pgs_res %>% 
+    filter(str_detect(factor, pattern = '_oth_', negate = TRUE)) %>%
+    filter(n_case >= 20) %>%
+    group_by(model) %>% 
+    mutate(fdr = p.adjust(annotation_pval, method = 'fdr')) %>% 
+    ungroup() %>%
+    mutate(sig = case_when(fdr < .05 ~ '**',
+                           fdr >= .05 & annotation_pval < .05 ~ '*',
+                           TRUE ~ NA_character_)) %>%
+    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
+                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
+                                 model == 'LinAR_Homininae' ~ 'Homininae',
+                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
+                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
+                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
+                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
+                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                 model == 'HAQER' ~ 'HAQERs',
+                                 model == 'HAR' ~ 'HARs',
+                                 TRUE ~ NA_character_)) %>% 
+    drop_na(mod_clean) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
+    # filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
+    mutate(stat = annotation_beta / annotation_std_err) %>%
+    inner_join(dd) %>%
+    mutate(clean_name = str_remove_all(clean_name, pattern = 'Branching Question[:] ')) %>%
+    select(-c(factor, sig, stat, model)) %>% 
+    relocate(factor = clean_name, model = mod_clean) %>%
+    relocate(fdr, .after = p.value_model_comparison) %>%
+    write_csv('manuscript/supplemental_materials/stats/SPARK_birth_complications_ES-PGS_results.csv')
+dd <- readxl::read_xlsx("/sdata/Simons/SPARK/DATA/phenotypes/SPARK_Collection_v13_DataRelease_2024-09-24/Supplemental Information and Data Dictionary/SPARK Data Dictionary.xlsx", sheet = 'basic_medical_screening') %>% 
+    select(factor = variable, clean_name = `definition/question`) %>% 
+    mutate(factor = str_c('dx_', factor))
+
+p_birth_def <- es_pgs_res %>% 
+    filter(str_detect(factor, pattern = '_oth_', negate = TRUE)) %>%
+    filter(n_case >= 20) %>%
+    group_by(model) %>%  
+    mutate(fdr = p.adjust(annotation_pval, method = 'fdr')) %>% 
+    ungroup() %>%
+    mutate(sig = case_when(fdr < .05 ~ '**',
+                           fdr >= .05 & annotation_pval < .05 ~ '*',
+                           TRUE ~ NA_character_)) %>%
+    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
+                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
+                                 model == 'LinAR_Homininae' ~ 'Homininae',
+                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
+                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
+                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
+                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
+                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                 model == 'HAQER' ~ 'HAQERs',
+                                 model == 'HAR' ~ 'HARs',
+                                 TRUE ~ NA_character_)) %>% 
+    drop_na(mod_clean) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
+    # filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
+    mutate(stat = annotation_beta / annotation_std_err) %>%
+    inner_join(dd) %>%
+    mutate(clean_name = str_remove_all(clean_name, pattern = 'Branching Question[:] ')) %>%
+    arrange(desc(mod_clean), stat) %>%
+    relocate(stat, mod_clean) %>%
+    mutate(clean_name = factor(clean_name, levels = unique(clean_name))) %>%
+    ggplot(aes(x = mod_clean, y = clean_name, fill = stat)) +
+    geom_tile() +
+    scale_fill_gradient2(low = 'blue', mid = 'white', high = 'chocolate1', midpoint = 0) +
+    geom_text(aes(label = sig), check_overlap = TRUE, size = 5) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16),
+          legend.text = element_text(size = 14),
+          legend.title = element_text(size = 16),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = 'bottom') +
+    labs(fill = 'ES-PGS statistic:') +
+    xlab("ES-PGS annotation") +
+    ylab("Birth complication")
+p_birth_def %>% 
+    ggsave(filename = 'manuscript/figures/SPARK_birth_complication_ES-PGS.png', 
+           dpi = 300, device = 'png', 
+           units = 'in', width = 15, height = 12)
 
 ## merge ES-PGS sumstats to a table and save
 bind_rows(rep_fac_stat_es_pgs, spark_dx_es_pgs_res, spark_iq_es_pgs_res) %>% 
@@ -301,7 +527,7 @@ cl <- c("#762776", "#e04468", "#dcc699")
 
 p_rev_forest <- bind_rows(reversions_spark_dx_res, reversions_dev_res) %>% 
     mutate(lab = str_c('N ASD cases = ', n)) %>% 
-    mutate(pheno_clean = case_when(pheno == 'dx_dev_lang_disorder' ~ str_c('Developmental language disorder\n(', prettyNum(n_case, big.mark = ','), ' cases)'),
+    mutate(pheno_clean = case_when(pheno == 'dx_dev_lang_disorder' ~ str_c('Dev. language disorder\n(', prettyNum(n_case, big.mark = ','), ' cases)'),
                                    pheno == 'dx_intellectual_disability' ~ str_c('Intellectual disability\n(', prettyNum(n_case, big.mark = ','), ' cases)'),
                                    pheno == 'walked_age_mos' ~ 'Age started walking',
                                    pheno == 'used_words_age_mos' ~ 'Age of first word',
@@ -310,7 +536,7 @@ p_rev_forest <- bind_rows(reversions_spark_dx_res, reversions_dev_res) %>%
            x_clean = case_when(str_detect(x, 'haqer_') ~ 'HAQER rare reversions',
                                str_detect(x, 'har_') ~ 'HAR rare reversions',
                                str_detect(x, 'rand_') ~ 'RAND rare reversions')) %>% 
-    mutate(type = case_when(str_detect(pheno, 'dx_') ~ str_c('Diagnosis (N = ', n, ')'),
+    mutate(type = case_when(str_detect(pheno, 'dx_') ~ str_c('Diagnosis (N = ', prettyNum(n, big.mark = ','), ')'),
                             str_detect(pheno, 'dx_', negate = TRUE) ~ str_c('Developmental milestones (N = ', prettyNum(n, big.mark = ','), ')'))
            ) %>%
     mutate(pheno = factor(pheno, levels = rev(c('dx_dev_lang_disorder', 'dx_intellectual_disability', 'used_words_age_mos', 'combined_words_age_mos', 'combined_phrases_age_mos', 'walked_age_mos')))) %>%

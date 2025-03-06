@@ -35,9 +35,9 @@ tfdiff = function(x1,x2,m){
 
 
 ### read in the variants
-har = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAR_all_variants_10Kb_flank.vcf.rds")
-rand = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/RAND_all_variants_10Kb_flank.vcf.rds")
-haq = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_all_variants_10Kb_flank.vcf.rds")
+har = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAR_all_variants.hg19_normed.vcf.rds")
+rand = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/RAND_all_variants.hg19_normed.vcf.rds")
+haq = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_all_variants.hg19_normed.vcf.rds")
 
 cols = list(rand=colnames(rand),har=colnames(har),haq=colnames(haq))
 ctb = unclass(table(unlist(cols),rep(names(cols),sapply(cols,length))))
@@ -183,8 +183,8 @@ registerDoMC(cores=10)
 n = length(pwm)
 print(n)
 ## takes a while to run - so commenting out and just reading in the results
-# s = foreach(i=1:n) %dopar% tfdiff(sref,salt,pwm[[i]])
-# names(s) = names(pwm)[1:n]
+s = foreach(i=1:n) %dopar% tfdiff(sref,salt,pwm[[i]])
+names(s) = names(pwm)[1:n]
 # write_rds(s, '/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas.rds')
 s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas.rds')
 
@@ -218,24 +218,25 @@ seq_context=relevel(seq_context,"random")
 ###################################################
 gg = do.call('rbind',lapply(ll,function(x) x[[2]]))
 
+v$af_episli_hg19 <- rowSums(gg, na.rm = TRUE) / ncol(gg) / 2
+
 ## RAND HCA reversion burden per sample
-brd_random = scale((t(gg * rvr * as.integer(v$source=="random")) %*% t(si)))
+brd_random = scale((t(gg * rvr * as.integer(v$source=="random") * ifelse(v$max_AF < .01, 1, 0)) %*% t(si)))
 cfl_random = t(sapply(1:ncol(brd_random), function(i) summary(lm(ph~brd_random[,i]))$coef[2,]))
 rownames(cfl_random) = colnames(brd_random)
 head(cfl_random[order(cfl_random[,3],decreasing=T),],20)
 
 ## HARs HCA reversion burden per sample
-brd_har = scale(t(gg * rvr * as.integer(v$source=="HAR")) %*% t(si))
+brd_har = scale(t(gg * rvr * as.integer(v$source=="HAR") * ifelse(v$AF_EpiSLI < .01, 1, 0)) %*% t(si))
 cfl_har = t(sapply(1:ncol(brd_har), function(i) summary(lm(ph~brd_har[,i]))$coef[2,]))
 rownames(cfl_har) = colnames(brd_har)
 head(cfl_har[order(cfl_har[,3],decreasing=T),],20)
 
 ## HAQERs HCA reversion burden per sample
-brd_haq = scale(t(gg * rvr * as.integer(v$source=="HAQER")) %*% t(si))
+brd_haq = scale(t(gg * rvr * as.integer(v$source=="HAQER") * ifelse(v$AF_EpiSLI < .01, 1, 0)) %*% t(si))
 cfl_haq = t(sapply(1:ncol(brd_haq), function(i) summary(lm(ph~brd_haq[,i]))$coef[2,]))
 rownames(cfl_haq) = colnames(brd_haq)
 head(cfl_haq[order(cfl_haq[,3],decreasing=T),],20)
-
 
 
 ### get the TF family annotations and arrange colors
@@ -264,6 +265,11 @@ for(i in 1:5){
 ##########################################################################
 betas = t(apply(si,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:rev))$coef[,1]))
 beta_se = t(apply(si,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:rev))$coef[,2]))
+pvals = t(apply(si,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:rev))))
+
+## look at human-gained TF binding for forkhead genes of interest
+pvals[[which(rownames(si) == 'FOXC2')]]
+pvals[[which(rownames(si) == 'FOXP2')]]
 
 ###########################################################################
 ### run the York regression; note that we flip the sign of the beta so that
@@ -490,7 +496,7 @@ rand_col = "#dcc699"
 ## plot set up
 png("manuscript/figures/TFBS_left_panels.png",4,12,res=300,units="in")
 par(mfrow=c(3,1))
-xrg = c(-1.2,1.2)
+xrg = c(-1.5,1.5)
 yrg = c(-0.2,0.2)
 pt_col = rgb(0,0,0,0.3)
 cxl = 1.5
@@ -522,18 +528,26 @@ dev.off()
 ## plot set up
 png("manuscript/figures/TFBS_center_panel.png",7,7,res=300,units="in")
 grp = unique(tfcols)
-xrg = c(-0.275,0.3)
-yrg = c(-0.15,0.2)
+xrg = c(-0.4,0.425)
+yrg = c(-0.2,0.2)
 x1 = -1*betas[,5]
 y1 = cfl_haq[,1]
 sig = (-1*betas[,5]/beta_se[,5]) > 1.96 & cfl_haq[,3]>1.96
+tf_map <- read.csv("manuscript/supplemental_materials/TFBS_data/TF_family_color_mapping.csv")
+top_per_type <- data.frame(gene = names(sig), stat = -1*betas[,5]/beta_se[,5], sig = sig) %>% 
+  inner_join(tf_map) %>% 
+  arrange(desc(stat)) %>%
+  filter(sig == TRUE) %>%
+  group_by(tf) %>% 
+  slice_head(n = 1)
+sig = sig == TRUE & names(sig) %in% top_per_type$gene  
 ## make figure cex = (res_haq$weights/median(res_haq$weights)) / 2
 plot(x1,y1,
 	xlab="Selection for motif integrity",ylab="Language-motif association", main="HAQERs", cex.main = 1.5, font.main = 2,
 	xlim=xrg,ylim=yrg,cex = 0,col=tfcols, cex.lab = 1.25, type = 'n',
 	pch=ifelse(sig,16,1))
 rect(xrg[1] - .025, yrg[1] - .025, 0, yrg[2] + .025, col = "grey92", border = NA)  # Left half
-rect(xrg[1]- .025, yrg[1] - .025, xrg[2] + .025, 0, col = "grey92", border = NA)  # Bottom-right
+rect(xrg[1]- .025, yrg[1] - .025, xrg[2] + .035, 0, col = "grey92", border = NA)  # Bottom-right
 ## make figure cex = (res_haq$weights/median(res_haq$weights)) / 2
 points(x1,y1,
 	cex = (res_haq$weights/median(res_haq$weights)) / 3,col=tfcols,
@@ -549,21 +563,21 @@ for(i in 1:6){
 	lines(x1[tfcols==grp[i]][idx],y1[tfcols==grp[i]][idx],col=grp[i],lwd=2)
 }
 txt = rownames(cfl_haq)[sig]
-txt[1] = "FOXP2"
+# txt[1] = "FOXP2"
 text(x1[sig],y1[sig],txt,
 	col=tfcols[sig],pos=sample(1:4,sum(sig),replace=T))
-text(0.2,0.2,"Convergence of selection\nand language effects")
+text(0.25,0.2,"Convergence of selection\nand language effects")
 legend("topleft",legend=c("ETS domain","Forkhead","Homeobox","Basic Helix-Loop-Helix","Zinc Finger C2H2","other"),lty=1,col=c(pal,"grey"),bty='n',border=NA,lwd=3)
 legend("bottomleft",legend=c("p < 0.05 for both positive language and positive selection effects","all others"),pch=c(16,1),col='grey',border=NA,bty='n',cex=0.8,pt.cex=1)
 dev.off()
-
 
 
 ### the analysis of enrichment in quadrant I
 fam = structure(c(rownames(ptb),"Other"),names=c(pal,"grey"))
 fam[grp]
 
-ft = lapply(grp,function(z) fisher.test(table(x1 > 0 & y1 > 0,tfcols%in%z)))
+ft = lapply(grp,function(z) fisher.test(table(x1 > 0 & y1 > 0,tfcols%in%z) + 1))
+
 names(ft) = fam[grp]
 enr = data.frame(OR=log2(sapply(ft,function(x) x$est)),
 	log2(t(sapply(ft,function(x) x$conf[1:2]))),
