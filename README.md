@@ -26,7 +26,7 @@ A general ES-PGS analysis has 5 steps, which are covered in our example:
 5. Visualize results with `R`
 
 ## Citations
-If you use this method, please cite our manuscript describing [ES-PGS](LINK).
+If you use this method, please cite our manuscript describing [ES-PGS](https://www.biorxiv.org/content/10.1101/2025.03.07.641231v1).
 
 If you use the recommended software to compute and run the ES-PGS analysis, cite the following papers:
 - [BEDTools](https://pubmed.ncbi.nlm.nih.gov/20110278/)

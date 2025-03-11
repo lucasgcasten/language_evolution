@@ -15,7 +15,7 @@ The primary pipeline script (`code/ES-PGS_pipeline.sh`) and accompanying R scrip
 You will not be able to run this example without access to the EpiSLI / 1000 Genomes merged sample described in our manuscript. To run the example you would need to download the EpiSLI data from dbGaP and 1000 Genomes Phase 3 data and merge them. You should be able to easily swap out the file paths with your own data in these scripts to run an ES-PGS analysis.
 
 ## Citations
-If you use this method, please cite our manuscript describing [ES-PGS](LINK).
+If you use this method, please cite our manuscript describing [ES-PGS](https://www.biorxiv.org/content/10.1101/2025.03.07.641231v1).
 
 If you use the recommended software to compute and run the ES-PGS analysis, cite the following papers:
 - [BEDTools](https://pubmed.ncbi.nlm.nih.gov/20110278/)
