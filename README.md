@@ -11,9 +11,11 @@ Below is a graphical abstract showcasing how ES-PGS can be used to better unders
 ## Requirements
 In this repository we adapt established tools for our ES-PGS calculation, which should minimize needing to download and compile new software. Basic requirements can be seen below:
 
-- `BEDTools` (for partitioning the genome), [download here](https://bedtools.readthedocs.io/en/latest/content/installation.html)
-- `PRSet` (for ES-PGS calculation), [download here](https://choishingwan.github.io/PRSice/)
-- `R` (for ES-PGS modeling) and the `tidyverse` package (for data manipulation and visualization), [download here](https://cran.r-project.org/)
+- `BEDTools` (for partitioning the genome), [download here](https://bedtools.readthedocs.io/en/latest/content/installation.html), tested with v2.26.0
+- `PRSet` (for ES-PGS calculation), [download here](https://choishingwan.github.io/PRSice/), tested with v2.3.5
+- `R` (for ES-PGS modeling) and the `tidyverse` package (for data manipulation and visualization), [download here](https://cran.r-project.org/), tested with `R` version > 4.0 and `tidyverse` version 2.0.0
+
+All software was tested using the Ubuntu OS (version 18.04.6 LTS). To install all software and dependencies listed above should take ~15 minutes.
 
 ## Example usage
 We provide an example implementation and output of ES-PGS in the `ES-PGS_example` directory, we hope this code can be easily adapted to a wide range of research areas.
