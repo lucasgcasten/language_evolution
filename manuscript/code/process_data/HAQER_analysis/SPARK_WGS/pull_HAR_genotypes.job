@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#$ -S /bin/bash
+#$ -pe smp 56
+#$ -q JM,CCOM,UI
+#$ -cwd
+#$ -j y
+#$ -ckpt user
+
+## qsub -t 1-22:1 /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/code/SPARK_WGS/pull_HAR_genotypes.job
+conda activate saige
+Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/code/SPARK_WGS/pull_HAR_genotypes.R $SGE_TASK_ID
+##

@@ -1,0 +1,2 @@
+y,x,beta,std.error,statistic,p.value,n_species,n_vocal_learning_species,n_non_vocal_learning_species
+vocal_learner_binary,HAQER_sequence_similarity_scaled,3.9202113157371996,0.8655155386180102,4.529336725712281,5.9169137375075474e-6,170,49,121

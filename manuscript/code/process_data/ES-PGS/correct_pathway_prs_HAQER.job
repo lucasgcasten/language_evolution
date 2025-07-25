@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#$ -S /bin/bash
+#$ -pe smp 56
+#$ -q JM,UI
+#$ -cwd
+#$ -j y
+#$ -ckpt user
+#$ -N correct_pathway_prs_HAQER
+#$ -m eas
+#$ -M lucas-casten@uiowa.edu
+
+## to run: qsub /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/correct_pathway_prs_HAQER.job
+
+##
+conda activate RERCONVERGE
+
+##
+# Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/correct_pathway_prs_HAQER.R
+Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/correct_pathway_prs_HAQER.SPARK_ABCD.R

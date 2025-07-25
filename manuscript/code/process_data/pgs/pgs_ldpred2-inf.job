@@ -1,0 +1,34 @@
+#! /bin/bash
+
+#$ -q JM,UI
+#$ -cwd
+#$ -pe smp 56
+#$ -j y
+#$ -N pgs_SLI_WGS
+#$ -m eas
+#$ -M lucas-casten@uiowa.edu
+
+## ------------------------------------------------------------------------
+#### Compute PGS for EpiSLI + 1000 Genomes using HapMap3 plus variants ####
+## ------------------------------------------------------------------------
+## $ qsub /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/pgs_ldpred2-inf.job
+TC=56
+
+##
+module load stack/legacy
+module load R 
+
+## merge with 1000 Genomes Europeans
+# BED="/Dedicated/jmichaelson-sdata/SLI_WGS/pop_strat/sli_seq_1000_Genomes_eur_merged.HapMap3_plus.bed"
+BED="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/1000_genomes_EUR_merge/merged.1000_genomes_EUR.SLI_WGS.qc.bed"
+##
+echo "Started calculations at $(date)..."
+# Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/pgs_ldpred2-inf.R $BED $TC 
+# Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/pgs_ldpred2-inf2.R $BED $TC 
+# Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/pgs_ldpred2-inf_test.R $BED $TC 
+# Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/pgs_ldpred2-inf3.R $BED $TC 
+# Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/pgs_ldpred2-inf4.R $BED $TC 
+Rscript /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/code/pgs_ldpred2-inf-extra.R $BED $TC 
+echo "Finished at $(date)..."
+
+## done

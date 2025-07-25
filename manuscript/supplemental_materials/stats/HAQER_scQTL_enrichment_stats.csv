@@ -1,0 +1,97 @@
+evo_annot,scQTL_set,scQTL_type,enrichment_method,n_elements_evo_annot,n_elements_scQTL_set,n_overlapping_elements,n_expected_overlaps,enrichment,enrichment_p
+HAQER,day11.Floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,345076,100,85.744876,1.16625,0.06227438
+HAR,day11.Floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,345076,38,61.002627,0.622924,0.9988857
+RAND,day11.Floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,345076,37,69.496946,0.532397,0.9999785
+HAQER,day11.Proliferating floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,359387,115,88.886756,1.293781,0.002457968
+HAR,day11.Proliferating floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,359387,43,63.370081,0.678554,0.9961589
+RAND,day11.Proliferating floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,359387,46,72.051286,0.638434,0.9993961
+HAQER,day30.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,204250,70,53.165979,1.316631,0.01105046
+HAR,day30.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,204250,27,36.835118,0.732996,0.9573558
+RAND,day30.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,204250,27,42.984998,0.628126,0.9948746
+HAQER,day30.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,234834,73,60.452334,1.207563,0.05620331
+HAR,day30.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,234834,33,42.045976,0.784855,0.9318088
+RAND,day30.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,234834,36,48.865852,0.736711,0.9748512
+HAQER,day30.Floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,214783,86,55.780136,1.541767,2.353254e-5
+HAR,day30.Floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,214783,24,38.58603,0.621987,0.9929584
+RAND,day30.Floor plate progenitors,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,214783,25,45.081583,0.55455,0.9991341
+HAQER,day30.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,189727,75,49.422913,1.517515,1.364511e-4
+HAR,day30.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,189727,19,34.084091,0.557445,0.9964889
+RAND,day30.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,189727,22,39.91016,0.551238,0.9985177
+HAQER,day52.Astrocytes,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,145722,64,39.852055,1.60594,6.916112e-5
+HAR,day52.Astrocytes,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,145722,18,26.70489,0.674034,0.9637713
+RAND,day52.Astrocytes,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,145722,19,32.052819,0.592772,0.9925032
+HAQER,day52.Astrocytes,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,148413,61,39.793526,1.532913,4.20376e-4
+HAR,day52.Astrocytes,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,148413,24,26.929483,0.891217,0.747436
+RAND,day52.Astrocytes,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,148413,19,32.020362,0.593372,0.9924068
+HAQER,day52.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,152889,59,39.954505,1.47668,0.001423945
+HAR,day52.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,152889,17,27.31242,0.622427,0.9815325
+RAND,day52.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,152889,24,32.227184,0.744713,0.9408885
+HAQER,day52.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,237874,93,60.665632,1.532993,1.410816e-5
+HAR,day52.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,237874,26,42.255646,0.615302,0.9954449
+RAND,day52.Dopaminergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,237874,28,49.05165,0.570827,0.9991851
+HAQER,day52.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,243382,84,62.236229,1.349696,0.002862194
+HAR,day52.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,243382,22,43.401861,0.506891,0.9996165
+RAND,day52.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,243382,36,50.318975,0.715436,0.9838261
+HAQER,day52.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,286890,114,72.411888,1.574327,3.374033e-7
+HAR,day52.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,286890,27,50.943177,0.530002,0.9997416
+RAND,day52.Ependymal,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,286890,42,58.595909,0.716774,0.9891805
+HAQER,day52.Any (pseudobulk),developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,335854,109,83.44547,1.306242,0.002302787
+HAR,day52.Any (pseudobulk),developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,335854,35,59.363601,0.589587,0.9994774
+RAND,day52.Any (pseudobulk),developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,335854,38,67.644608,0.561759,0.9999232
+HAQER,day52.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,259858,104,66.355662,1.567312,1.42041e-6
+HAR,day52.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,259858,28,46.244278,0.60548,0.9973756
+RAND,day52.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,259858,26,53.650117,0.484621,0.9999598
+HAQER,day52.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1430,293507,102,74.215668,1.374373,5.542399e-4
+HAR,day52.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,2561,293507,37,52.002139,0.711509,0.9853689
+RAND,day52.Serotinergic,developing_iPSC_neurons.Jerber-NatGen2021,normalApproximate,1107,293507,31,60.037145,0.516347,0.9999562
+HAQER,Astro,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,51250,9,12.908975,0.697189,0.8919323
+HAR,Astro,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,51250,3,9.097289,0.329769,0.9861773
+RAND,Astro,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,51250,3,12.648678,0.237179,0.9979875
+HAQER,Chandelier__Pvalb,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,92332,18,23.379632,0.769901,0.8903651
+HAR,Chandelier__Pvalb,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,92332,14,16.490097,0.848994,0.7707103
+RAND,Chandelier__Pvalb,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,92332,10,22.941119,0.435899,0.9977085
+HAQER,L2,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,265774,75,66.666756,1.124998,0.1626653
+HAR,L2,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,265774,28,47.320683,0.591707,0.9982361
+RAND,L2,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,265774,29,65.451874,0.443074,0.9999986
+HAQER,L4,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,112090,35,28.316213,1.236041,0.119846
+HAR,L4,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,112090,16,19.932238,0.80272,0.8412754
+RAND,L4,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,112090,12,27.780677,0.431955,0.9991111
+HAQER,L5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,1120,0,0.284378,0,0.957231
+HAR,L5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,1120,0,0.198836,0,0.98838
+RAND,L5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,1120,0,0.277795,0,0.958444
+HAQER,L5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,149371,45,37.346062,1.204946,0.1174431
+HAR,L5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,149371,18,26.445884,0.680635,0.9602531
+RAND,L5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,149371,14,36.646477,0.382029,0.9999477
+HAQER,L6,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,15368,1,3.711576,0.269427,0.9543275
+HAR,L6,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,15368,5,2.660615,1.879265,0.1257704
+RAND,L6,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,15368,0,3.629888,0,0.9859472
+HAQER,L6,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,130690,39,32.896932,1.185521,0.1611291
+HAR,L6,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,130690,21,23.221063,0.904351,0.7152929
+RAND,L6,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,130690,11,32.278221,0.340787,0.9999486
+HAQER,L6b,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,4580,3,1.254722,2.390969,0.1247344
+HAR,L6b,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,4580,3,0.846655,3.543354,0.02925011
+RAND,L6b,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,4580,1,1.227714,0.814522,0.7520877
+HAQER,Lamp5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,24806,4,6.15784,0.649578,0.8601092
+HAR,Lamp5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,24806,4,4.367373,0.915882,0.6625883
+RAND,Lamp5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,24806,1,6.034555,0.165712,0.9885074
+HAQER,Lamp5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,139,0,0.049411,0,1.751157
+HAR,Lamp5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,139,0,0.029243,0,2.299061
+RAND,Lamp5,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,139,0,0.04823,0,1.773469
+HAQER,Micro,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,7221,1,1.358887,0.735896,0.7767553
+HAR,Micro,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,7221,1,1.081918,0.924285,0.7200785
+RAND,Micro,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,7221,0,1.324666,0,0.9493561
+HAQER,Oligo,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,80467,11,20.765899,0.529715,0.9885263
+HAR,Oligo,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,80467,15,14.522933,1.032849,0.5024162
+RAND,Oligo,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,80467,4,20.370702,0.19636,0.9999195
+HAQER,OPC,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,30664,6,7.678565,0.781396,0.786025
+HAR,OPC,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,30664,6,5.443658,1.1022,0.4902793
+RAND,OPC,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,30664,2,7.528171,0.265669,0.9866328
+HAQER,PC,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,503,0,0.076238,0,1.39621
+HAR,PC,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,503,0,0.054333,0,1.666117
+RAND,PC,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,503,0,0.073852,0,1.419235
+HAQER,Sst__Sst,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,37045,8,9.30262,0.859973,0.7243077
+HAR,Sst__Sst,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,37045,8,6.595455,1.212956,0.3612783
+RAND,Sst__Sst,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,37045,2,9.118249,0.21934,0.9945033
+HAQER,Vip,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1479,56960,19,14.48459,1.311739,0.1437429
+HAR,Vip,adult_brain_post_mortem.Emani-Science2024,normalApproximate,2645,56960,8,10.156824,0.787648,0.7993182
+RAND,Vip,adult_brain_post_mortem.Emani-Science2024,normalApproximate,1388,56960,6,14.211315,0.422199,0.9900875

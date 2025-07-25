@@ -1,0 +1,184 @@
+#! /bin/bash
+
+#$ -q JM,CCOM,UI
+#$ -cwd
+#$ -pe smp 56
+#$ -j y
+#$ -N annotate_all_variants
+#$ -m eas
+#$ -M lucas-casten@uiowa.edu
+
+## to run: 
+## qsub /Dedicated/jmichaelson-wdata/lcasten/spark/annotation/code/process_iWES1/02-annotate_variants.array.job
+
+## -------------------------------------
+#### get variants (strip genotypes) ####
+## -------------------------------------
+# IV="/Dedicated/jmichaelson-wdata/lcasten/spark/annotation/iWES1/raw_geno/qc/processed/iWES_chr$SGE_TASK_ID.vcf.gz"
+# OV="/Dedicated/jmichaelson-wdata/lcasten/spark/annotation/iWES1/annotations/raw/iWES1_chr${SGE_TASK_ID}.vcf.gz"
+
+# echo "Started stripping genotypes at: $(date)"
+# # conda activate genoProcessing
+# module load bcftools
+# bcftools view -G ${IV} --threads 8 -Oz -o ${OV}
+# # conda deactivate
+# echo "Finished stripping genotypes at: $(date)"
+
+
+## --------------------------
+#### prep for annotation ####
+## --------------------------
+echo "Started VEP annotations at: $(date)"
+
+THREADS=56
+
+## just grab variants, no annotations
+VCF="/Dedicated/jmichaelson-sdata/SLI_WGS/callsets/ensemble/sli.seq.merge.vcf.gz"
+zcat $VCF | grep -v "^##" | cut -f 1-5 > /Dedicated/jmichaelson-sdata/SLI_WGS/callsets/ensemble/sli.seq.merge.variants.vcf
+
+## re-annotate
+VCF="/Dedicated/jmichaelson-sdata/SLI_WGS/callsets/ensemble/sli.seq.merge.variants.vcf"
+PREFIX=${VCF%.vcf}.annotations
+VEP_VCF=$PREFIX".vep.vcf.gz"
+
+STAT=${PREFIX}.VEP_stats
+
+# DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+echo "VEP anno output will be: " $VEP_VCF
+
+#### vep anno ####
+conda activate vep
+
+echo "#########"
+which vep
+which bcftools
+which perl
+echo "#########"
+
+# merged
+#     --no_stats \ ## removed because of error: substr outside of string at /.../TranscriptVariationAllele.pm line 906
+    # --most_severe \
+
+vep --vcf \
+    -o stdout \
+    -i ${VCF} \
+    --fork ${THREADS} \
+    --buffer_size 15000 \
+    --species homo_sapiens \
+    --cache \
+    --offline \
+    --force_overwrite \
+    --stats_file ${STAT} \
+    --symbol \
+    --numbers \
+    --total_length \
+    --canonical \
+    --gene_phenotype \
+    --biotype \
+    --ccds \
+    --uniprot \
+    --domains \
+    --regulatory \
+    --protein \
+    --tsl \
+    --appris \
+    --af \
+    --max_af \
+    --af_1kg \
+    --af_gnomade \
+    --af_gnomadg \
+    --pubmed \
+    --variant_class \
+    --allele_number \
+    --sift b \
+    --polyphen b \
+    --hgvs \
+    --shift_hgvs 1 \
+    --assembly GRCh37 \
+    --merged | \
+    sed '/^#/! s/;;/;/g' | \
+    bgzip -c > $VEP_VCF
+
+conda deactivate 
+
+echo "Finished VEP annotations at: $(date)"
+
+zcat $VEP_VCF | head -n 6
+
+## sort vep output vcf and index
+module load bcftools
+echo "Started sorting and indexing VCF at: $(date)"
+tabix -f -p vcf $VEP_VCF
+bcftools sort ${VEP_VCF} -Oz -o $PREFIX".sorted.vep.vcf.gz"
+tabix -f -p vcf $PREFIX".sorted.vep.vcf.gz"
+
+echo "sorted VEP anno output is here: " $PREFIX".sorted.vep.vcf.gz"
+
+##--------------------------
+#### vcfAnno ####
+##--------------------------
+echo "Started vcfAnno annotations at: $(date)"
+
+conda activate vcf_annotation
+
+ANNO_VCF="$PREFIX.vep.vcfanno.vcf.gz"
+CONF="/Dedicated/jmichaelson-wdata/lcasten/functions/vcfanno_hg19.conf"
+LUA_CONF="/Dedicated/jmichaelson-wdata/lcasten/functions/vcfanno.lua"
+
+which vcfanno
+# $VCFANNO  \
+vcfanno \
+    -p $THREADS \
+    -lua $LUA_CONF \
+    $CONF \
+    $PREFIX".sorted.vep.vcf.gz" | sed -e 's/Number=A/Number=1/g' |  bgzip -c > $ANNO_VCF
+
+tabix -f -p vcf $ANNO_VCF
+
+echo "Finished vcfAnno annotations at: $(date)"
+zcat $ANNO_VCF | head -n 40
+
+rm $PREFIX.sorted.vep.vcf.g*
+rm ${VEP_VCF}
+
+
+## ---------------------------------
+## make unique variant IDs
+## ---------------------------------
+OUTVCF=${ANNO_VCF%.vcf.gz}.ID.vcf.gz
+bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%ALT' $ANNO_VCF -Oz -o $OUTVCF
+
+## ---------------------------------
+## get worst CSQ for each variant + VEP annotations
+## ---------------------------------
+OUTANNOS=${OUTVCF%.vcf.gz}.annotations.txt
+bcftools +split-vep $OUTVCF -l
+echo 'ID rsid gene worst_consequence impact max_AF max_AF_pop clin_sig pheno transcription_factors motif_name motif_score_change' > $OUTANNOS
+bcftools +split-vep $OUTVCF -s worst -f '%ID %Existing_variation %SYMBOL %Consequence %IMPACT %MAX_AF %MAX_AF_POPS %CLIN_SIG %PHENO %TRANSCRIPTION_FACTORS %MOTIF_NAME %MOTIF_SCORE_CHANGE\n' >> $OUTANNOS
+head $OUTANNOS
+
+wc -l $OUTANNOS
+
+## ---------------------------------
+## get CADD scores
+## ---------------------------------
+## extract annotations to plain text file
+ANNORAW=${OUTVCF%.vcf.gz}.anno.tsv
+zcat $OUTVCF | grep -v "^#" | cut -f 1-8 > $ANNORAW
+head $ANNORAW
+
+zcat $OUTVCF | grep "^##" | grep "CSQ"
+
+## extract gnomAD AF and CADD from long annotation strings
+ANNORAWCADD=${ANNORAW%.tsv}.CADD.tsv
+head $ANNORAW
+
+awk -F'\t' '!/^#/ {print $3 "\t" $8}' $ANNORAW | awk '{split($2, arr, ";"); for (i in arr) if (arr[i] ~ /^cadd_phred=/) print $1 "\t" arr[i]}' | sed 's/cadd_phred=//' > $ANNORAWCADD
+head $ANNORAWCADD
+wc -l $ANNORAWCADD
+
+echo $OUTANNOS
+echo $ANNORAWCADD
+
+## done

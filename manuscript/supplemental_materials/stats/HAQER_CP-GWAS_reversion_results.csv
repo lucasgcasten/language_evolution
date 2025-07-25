@@ -1,0 +1,3 @@
+gwas,statistic,p.value,method,alternative,n_ind_HAQER_SNP,n_HCA_reversion_SNP,n_conserved_variant_SNP,mean_HCA_reversion_zscore,mean_conserved_variant_zscore
+cogPerf,0.11667481662591689,0.0251656566090962,Asymptotic two-sample Kolmogorov-Smirnov test,two-sided,1018,200,818,-0.08879758373710124,0.039745248903419635
+NVIQ,0.05051775147928991,0.7878749160130232,Asymptotic two-sample Kolmogorov-Smirnov test,two-sided,1053,208,845,0.03201004874327512,-0.018499432551486502
