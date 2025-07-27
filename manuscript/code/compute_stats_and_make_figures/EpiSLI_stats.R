@@ -215,12 +215,14 @@ p_es_pgs_forest <- es_pgs_res %>%
                                  model == 'consPrimates_UCE' ~ 'Primate UCEs',
                                  model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
                                  model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                 model == 'GAQERs' ~ 'GAQERs',
+                                 model == 'CAQERs' ~ 'CAQERs',
                                  model == 'HAQER' ~ 'HAQERs',
                                  model == 'HAR' ~ 'HARs',
                                  TRUE ~ NA_character_)) %>% 
     drop_na(mod_clean) %>%
-    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
-    filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'GAQERs', 'CAQERs', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
+    filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts')) %>%
     mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
     ggplot(aes(x = mod_clean, y = annotation_beta, color = sig)) +
     geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5) +

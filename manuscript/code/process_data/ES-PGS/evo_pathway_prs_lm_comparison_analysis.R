@@ -3,7 +3,7 @@ library(tidyverse)
 
 ##############################################
 ##
-dat <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/gathered_pgs_pc_corrected_long_full_data.cogPerf.complement.csv')
+dat <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/gathered_pgs_pc_corrected_long_full_data.cogPerf.complement_rand_controls.csv')
 
 fc = read_csv('/wdata/common/SLI_WGS/public/phenotype/factors/pheno_factors_resid.csv')
 
@@ -58,6 +58,13 @@ pgs_complement_long <- pgs_long %>%
   rename(complement_pgs_val = pgs_val) %>% 
   mutate(pgs_nm = str_remove_all(pgs_nm, pattern = 'complement_')) %>% 
   select(-pgs)
+
+pgs_matched_long <- pgs_long %>% 
+  filter(str_detect(pgs_nm, pattern = 'random_matched_control')) %>% 
+  rename(matched_pgs_val = pgs_val) %>% 
+  mutate(pgs_nm = str_remove_all(pgs_nm, pattern = 'random_matched_control_regions_')) %>% 
+  select(-pgs)
+
 unique(pgs_long$pgs_nm)
 
 ###########################
@@ -84,14 +91,25 @@ res <- fc %>%
 
 unique(res$pgs_nm)
 
+tmpp <- fc %>% 
+  pivot_longer(cols = -c(1)) %>%
+  rename(IID = sample) %>%
+  # inner_join(select(pgs_wide, IID, pgs_genome_wide_baseline)) %>% 
+  inner_join(pgs_complement_long) %>%
+  inner_join(pgs_matched_long) %>%
+  filter(pgs_nm == 'HAQER_v2') %>% 
+  inner_join(pgs_long)
+
+summary(lm(value ~ complement_pgs_val + matched_pgs_val + pgs_val, data = tmpp[tmpp$name == 'Factor1',]))
 
 res2 <- fc %>% 
   pivot_longer(cols = -c(1)) %>%
   rename(IID = sample) %>%
   # inner_join(select(pgs_wide, IID, pgs_genome_wide_baseline)) %>% 
   inner_join(pgs_complement_long) %>%
+  inner_join(pgs_matched_long) %>%
   group_by(name, pgs_nm) %>%
-  mutate(resid_value = resid(lm(value ~ complement_pgs_val)),
+  mutate(resid_value = resid(lm(value ~ complement_pgs_val + matched_pgs_val)),
          resid_value = scale(resid_value)[,1]) %>% 
   ungroup() %>%
   inner_join(pgs_long) %>%
@@ -102,7 +120,7 @@ res2 <- fc %>%
   arrange(p.value) %>% 
   mutate(lab = str_c('Pearson r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
 
-res2 %>% 
+res2 %>%
   # filter(p.value < 0.05) %>% 
   filter(str_detect(pgs_nm, 'intro|Sweep')) %>%
   select(1,3,estimate, statistic) %>%
@@ -363,7 +381,7 @@ for(c in coi){
 }
 
 ## get SNP info
-snp_counts <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/prsice_info.cogPerf.complement.csv') %>% 
+snp_counts <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/prsice_info.complement_rand_controls.csv') %>% 
   filter(Threshold == 1) %>% 
   select(anno = Set, Num_SNP)  %>% 
   mutate(model = str_remove_all(anno, pattern = 'complement_')) %>% 
