@@ -37,7 +37,7 @@ identical(data$IID, rownames(k)) ## identical order and elements of GRM rows wit
 #################################################################
 ## fit the GREML LMM: age ~ background_pgs + es_pgs (this will take a few minutes...)
 lmm_mod <- lmm.aireml(Y = scale(data$age)[,1], 
-                      X = as.matrix(data[,c("int", "cp_pgs.HAQER", "cp_pgs.background")]), 
+                      X = as.matrix(data[,c("int", "cp_pgs.HAQER", "cp_pgs.background", "cp_pgs.matched")]), 
                       K = k)
 
 ## extract betas (intercept, cp_pgs.HAQER, cp_pgs.background)
@@ -54,7 +54,7 @@ pvals <- 2 * pt(-abs(t_stats), df = nrow(data) - length(betas))
 ## gather stats
 sel_results <- data.frame(
     y = rep('sample_age', times = length(betas)),
-    x = c("intercept", "cp_pgs.HAQER", "cp_pgs.background"),
+    x = c("intercept", "cp_pgs.HAQER", "cp_pgs.background", "cp_pgs.matched"),
     beta = betas,
     se = se_betas,
     t_stat = t_stats,

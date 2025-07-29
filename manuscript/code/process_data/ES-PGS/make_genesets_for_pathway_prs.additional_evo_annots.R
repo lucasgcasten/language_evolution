@@ -341,8 +341,8 @@ chr_sizes <- read_table('/wdata/lcasten/tools/ref_data/hg19/hg19.chrom.sizes', c
 
 ## make complement bed file of anno
 anno_files <- list.files(d, pattern = 'bed$', full.names = TRUE)
-anno_files <- anno_files[str_detect(anno_files, pattern = 'complement', negate = TRUE)]
-anno_files <- anno_files[str_detect(anno_files, pattern = 'HAQERs_under_1700')]
+anno_files <- anno_files[str_detect(anno_files, pattern = 'complement|matched_control_sequences', negate = TRUE)]
+anno_files <- anno_files[str_detect(anno_files, pattern = 'ancient_human_sel')]
 anno_files
 geno <- str_c(d, '/chromosome_sizes.txt')
 

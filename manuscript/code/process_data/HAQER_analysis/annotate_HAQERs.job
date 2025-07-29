@@ -2,7 +2,7 @@
 
 #$ -q JM,CCOM,UI
 #$ -cwd
-#$ -pe smp 12
+#$ -pe smp 56
 #$ -j y
 #$ -N annotate_HAQER_variants
 #$ -m eas
@@ -24,14 +24,17 @@
 # # conda deactivate
 # echo "Finished stripping genotypes at: $(date)"
 
+##
+zcat /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER.sli.seq.merge.norm.vep.vcfanno.hg19.10Kb_flank.vcf.gz | grep -v "^#" | cut -f 1-5 > /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_v2_all_variants_10Kb_flank.vcf
+wc -l /Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_v2_all_variants_10Kb_flank.vcf
 
 ## --------------------------
 #### prep for annotation ####
 ## --------------------------
 echo "Started VEP annotations at: $(date)"
 
-THREADS=12
-VCF="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_all_variants_10Kb_flank.vcf"
+THREADS=48
+VCF="/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_v2_all_variants_10Kb_flank.vcf"
 PREFIX=${VCF%.vcf}.annotations
 VEP_VCF=$PREFIX".vep.vcf.gz"
 

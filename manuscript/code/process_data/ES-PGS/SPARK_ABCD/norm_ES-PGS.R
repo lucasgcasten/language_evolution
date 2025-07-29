@@ -1,20 +1,21 @@
 library(tidyverse)
 
 #####
-pc <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/spark/prs/HapMap3_plus/PCA/raw_KING_pca_results.csv')
+# pc <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/spark/prs/HapMap3_plus/PCA/raw_KING_pca_results.csv')
+pc <- read_csv("/Dedicated/jmichaelson-wdata/lcasten/SPARK_ABCD_merge_v2/PCA/pca_results.csv")
 names(pc)[1] <- 'IID'
 
 ##
-unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/spark/prs/pathway/SPARK_ABCD_unrelated_europeans_for_LD.txt", col_names = FALSE)
+# unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/spark/prs/pathway/SPARK_ABCD_unrelated_europeans_for_LD.txt", col_names = FALSE)
+# unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/SPARK_ABCD_merge_v2/PCA/unrelated_samples_random_5k_SPARK_europeans.txt", col_names = FALSE)
+unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/SPARK_ABCD_merge_v2/PCA/unrelated_samples.txt", col_names = FALSE)
 
 #### get PGS files ####
-files = list.files('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs', 
+files = list.files('/Dedicated/jmichaelson-wdata/lcasten/externalizing/data', 
                    pattern = 'all_score', recursive = TRUE)
-files <- files[str_detect(files, pattern = 'SPARK_ABCD')]
-files <- files[str_detect(files, pattern = 'human_evolution|custom_gene_sets')]
+# files <- files[str_detect(files, pattern = 'SPARK_ABCD')]
+# files <- files[str_detect(files, pattern = 'human_evolution|custom_gene_sets')]
 files <- files[str_detect(files, pattern = 'cogPerf')]
-files <- files[str_detect(files, pattern = 'complement')]
-
 
 pgs_list <- list()
 prsice_list = list()
@@ -28,7 +29,7 @@ for (f in files) {
   gs <- str_split(f, pattern = '[.]', simplify = TRUE)[,2]
 
   ##
-  filename <- str_c('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/', f)
+  filename <- str_c('/Dedicated/jmichaelson-wdata/lcasten/externalizing/data/', f)
   pgs <- read_table(file = filename,
                   show_col_types = FALSE)
   prsice <- read_table(file = str_replace_all(filename, pattern = 'all_score', replacement = 'prsice'),
@@ -52,7 +53,7 @@ for (f in files) {
     nm <- colnames(kg)[j]
     kg$PGS <- unname(unlist(kg[,colnames(kg)[j]]))
     dg$PGS <- unname(unlist(dg[,colnames(kg)[j]]))
-    mod <- lm(PGS ~ pc1 + pc2 + pc3 + pc4 + pc5, 
+    mod <- lm(PGS ~ pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10, 
               data = kg)
     ##
     preds_kg <- predict(mod, newdata = kg)
@@ -156,58 +157,80 @@ length(unique(pgs_all$pgs_name))
 unique(pgs_all$pgs_name)
 length(unique(pgs_all$IID))
 
-kp = sample(unique(pgs_all$pgs_name), size = 10)
-kp
-pgs_all  %>% 
-  filter(pgs_name %in% kp) %>% 
-  inner_join(pc) %>%
-  ggplot(aes(x = pgs_pc_corrected)) +
-  geom_histogram() +
-  facet_wrap(~ pgs_name)
+# kp = sample(unique(pgs_all$pgs_name), size = 10)
+# kp
+# pgs_all  %>% 
+#   filter(pgs_name %in% kp) %>% 
+#   inner_join(pc) %>%
+#   ggplot(aes(x = pgs_pc_corrected)) +
+#   geom_histogram() +
+#   facet_wrap(~ pgs_name)
 
-pgs_all  %>% 
-  filter(str_detect(pgs_name, 'cogPerf') & str_detect(pgs_name, 'HAQER')) %>% 
-  inner_join(pc) %>%
-  ggplot(aes(x = pgs_pc_corrected)) +
-  geom_histogram() +
-  facet_wrap(~ pgs_name)
+# pgs_all  %>% 
+#   filter(str_detect(pgs_name, 'cogPerf') & str_detect(pgs_name, 'HAQER')) %>% 
+#   inner_join(pc) %>%
+#   ggplot(aes(x = pgs_pc_corrected)) +
+#   geom_histogram() +
+#   facet_wrap(~ pgs_name)
 
 ##
-f <- '/Dedicated/jmichaelson-wdata/lcasten/spark_abcd_array_merge/topmed_hg19/autosomes.qc.fam'
+# f <- '/Dedicated/jmichaelson-wdata/lcasten/spark_abcd_array_merge/topmed_hg19/autosomes.qc.fam'
+f <- '/genome/SPARK_ABCD_imputed_genotype_merge/autosomes_all.fam'
 fam <- read_table(file = f, col_names = FALSE)
 fam = fam[,1:2]
 names(fam) <- c('FID', 'IID')
 
 dat <- fam %>%
   inner_join(pgs_all) %>%
+  # filter(str_detect(pgs_name, 'complement_|random_matched_control_', negate = TRUE)) %>%
   rename(pgs_raw = PGS) %>%
   inner_join(excess_burden) %>%
   relocate(pgs_genome_wide_baseline = pgs_genome_wide, .after = pgs_name) %>%
   inner_join(select(pc, IID)) %>%
   mutate(cohort = 'SPARK_ABCD') %>%
   relocate(cohort, .after = IID) %>% 
-  mutate(pgs_name = str_remove_all(pgs_name, pattern = 'SPARK_ABCD.'))
+  mutate(pgs_name = str_remove_all(pgs_name, pattern = 'SPARK_ABCD.')) %>% 
+  mutate(pgs_name = str_replace_all(pgs_name, 'cogPerf_ES_PGS_selective_sweep_pgs.|cogPerf_ES_PGS_all_score.|cogPerf_ES_PGS_all_score.', 'cp_pgs.')) %>% 
+  mutate(pgs_name = str_remove_all(pgs_name, pattern = '.all_score')) %>% 
+  mutate(pgs_name = str_replace_all(pgs_name, 'cogPerf_ES_PGS_matched_control_pgs.', 'cp_pgs.'))
+unique(dat$pgs_name)
 
 ## make df w/ cols for complement + anno scores
 datc <- dat %>% 
   filter(str_detect(pgs_name, 'complement_')) %>% 
+  # mutate(pgs_name = str_replace_all(pgs_name, 'cogPerf_ES_PGS_selective_sweep_pgs.|cogPerf_ES_PGS_all_score.|cogPerf_ES_PGS_all_score.', 'cp_pgs.'))
   mutate(pgs_name = str_remove_all(pgs_name, pattern = 'complement_')) 
 names(datc)[6:8] <- str_c(names(datc)[6:8], '_complement')
 names(datc)
+unique(datc$pgs_name)
+
+## make df w/ cols for matched + anno scores
+unique(dat$pgs_name)
+datr <- dat %>% 
+  filter(str_detect(pgs_name, 'random_matched_control_')) %>% 
+  mutate(pgs_name = str_replace_all(pgs_name, 'cogPerf_ES_PGS_selective_sweep_pgs.|cogPerf_ES_PGS_all_score.|cogPerf_ES_PGS_all_score.', 'cp_pgs.')) %>% 
+  mutate(pgs_name = str_remove_all(pgs_name, pattern = 'random_matched_control_')) 
+names(datr)[6:8] <- str_c(names(datr)[6:8], '_matched_control')
+names(datr)
 
 data <- dat %>% 
-  filter(str_detect(pgs_name, 'complement_', negate = TRUE)) %>% 
-  inner_join(datc)
+  filter(str_detect(pgs_name, 'complement_|random_matched_control_', negate = TRUE)) %>% 
+  inner_join(select(datc, -pgs_genome_wide_baseline)) %>% 
+  inner_join(select(datr, -pgs_genome_wide_baseline))
+
+unique(data$pgs_name)
 
 unique(datc$pgs_name)[1:10]
 unique(data$pgs_name)[1:10]
 
 data %>%
-  write_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/SPARK_ABCD.gathered_pgs_pc_corrected_long_full_data.cogPerf.complement.csv')
+  write_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/SPARK_ABCD.gathered_pgs_pc_corrected_long_full_data.cogPerf.complement.v2.csv')
 prsice_sets %>% 
-  write_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/SPARK_ABCD.prsice_info.cogPerf.complement.csv')
+  write_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/SPARK_ABCD.prsice_info.cogPerf.complement.v2.csv')
 prsice_sets %>% 
     filter(Threshold == 1) %>% 
     head(n = 15)
+prsice_sets %>% 
+  filter(str_detect(Set, 'HAQER_v2'))
 # read_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/gathered_pgs_pc_corrected_long_full_data.cogPerf.csv')
 

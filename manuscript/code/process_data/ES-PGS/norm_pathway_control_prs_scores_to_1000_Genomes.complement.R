@@ -186,13 +186,34 @@ dat <- fam %>%
   select(-population)
 
 ## make df w/ cols for complement + anno scores
+date <- dat %>% 
+  filter(str_detect(pgs_name, 'complement_|random_matched_control_', negate = TRUE))
+datc <- dat %>% 
+  filter(str_detect(pgs_name, 'complement_')) # %>% 
+  # mutate(pgs_name = str_replace_all(pgs_name, pattern = 'human_evolution_matched_control_regions.random_matched_control_', 'human_evolution_complement.')) 
+names(datc)[6:8] <- str_c(names(datc)[6:8], '_complement')
+
+gw <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/gathered_pgs_pc_corrected_long_full_data.cogPerf.complement.csv') %>% 
+  select(IID, pgs_genome_wide_baseline) %>% 
+  group_by(IID) %>%
+  slice_head(n = 1) %>% 
+  ungroup()
+
+dat2 <- date %>%
+  select(-pgs_genome_wide_baseline) %>%
+  inner_join(select(datc, -pgs_name)) %>% 
+  mutate(pgs_name = str_replace_all(pgs_name, pattern = 'human_evolution_matched_control_regions.', 'human_evolution_complement.')) # %>% 
+  # inner_join(gw)
+
 datr <- dat %>% 
-  # filter(str_detect(pgs_name, 'complement_')) %>% 
+  filter(str_detect(pgs_name, 'random_matched_control_')) %>% 
   mutate(pgs_name = str_replace_all(pgs_name, pattern = 'human_evolution_matched_control_regions.random_matched_control_', 'human_evolution_complement.')) 
 names(datr)[6:8] <- str_c(names(datr)[6:8], '_random_matched_control_regions')
 
 data <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/gathered_pgs_pc_corrected_long_full_data.cogPerf.complement.csv')
 data %>% 
+  bind_rows(dat2) %>%
+  # left_join(select(datc, FID, IID, cohort, pgs_name, pgs_raw_complement, pgs_pc_corrected_complement)) %>% 
   left_join(select(datr, FID, IID, cohort, pgs_name, pgs_raw_random_matched_control_regions, pgs_pc_corrected_random_matched_control_regions)) %>% 
   drop_na() %>%
   write_csv('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/gathered_pgs_pc_corrected_long_full_data.cogPerf.complement_rand_controls.csv')

@@ -23,10 +23,11 @@ files <- list.files("/wdata/lcasten/sli_wgs/prs/gene_sets", pattern = '.bed$')
 files = files[str_detect(files, 'matched_control_sequences|_flank|complement|human_specific_evolution_brain_expression|human_specific_brain_CRE_|human_brain_expression_divergence|brainCREs|human_specific_variants_in_brain_CRE|Kb|1700b', negate = TRUE)]
 
 ## drop SNP level annotations (matching too inefficient for this right now)
+message("Getting annotations to work on...")
 file_elements <- data.frame(file = files)
 nrow_in_files <- vector()
 for(f in files) {
-    cnt <- nrow(read_tsv(str_c("/wdata/lcasten/sli_wgs/prs/gene_sets/", f), col_names = FALSE))
+    cnt <- nrow(read_tsv(str_c("/wdata/lcasten/sli_wgs/prs/gene_sets/", f), col_names = FALSE, show_col_types = FALSE))
     nrow_in_files <- c(nrow_in_files, cnt)
 }
 file_elements$n_rows <- nrow_in_files
@@ -35,7 +36,7 @@ files_kp <- file_elements %>%
 files <- files[files %in% files_kp$file]
 
 ## for each annotation, find matched random regions
-for(f in files[-c(1:6)]) {
+for(f in files[1]) {
     cat('\n\n\n\n\n\n')
     message(rep('<>', times = 15))
     message('Working on: ', f)

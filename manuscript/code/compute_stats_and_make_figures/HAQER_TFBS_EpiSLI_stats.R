@@ -37,7 +37,15 @@ tfdiff = function(x1,x2,m){
 ### read in the variants
 har = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAR_all_variants.hg19_normed.vcf.rds")
 rand = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/RAND_all_variants.hg19_normed.vcf.rds")
-haq = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_all_variants.hg19_normed.vcf.rds")
+haq = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_v2_all_variants.hg19_normed.vcf.rds")
+
+### fill in HCA alleles when it's obvious (all reference species have the same allele)
+har$HCA_allele = case_when(is.na(har$HCA_allele) & har$neanderthal_allele == har$chimp_allele & har$neanderthal_allele == har$bonobo_allele & har$neanderthal_allele == har$gorilla_allele & har$neanderthal_allele == har$orangutan_allele ~ har$neanderthal_allele,
+                           TRUE ~ har$HCA_allele)
+rand$HCA_allele = case_when(is.na(rand$HCA_allele) & rand$neanderthal_allele == rand$chimp_allele & rand$neanderthal_allele == rand$bonobo_allele & rand$neanderthal_allele == rand$gorilla_allele & rand$neanderthal_allele == rand$orangutan_allele ~ rand$neanderthal_allele,
+                           TRUE ~ rand$HCA_allele)
+haq$HCA_allele = case_when(is.na(haq$HCA_allele) & haq$neanderthal_allele == haq$chimp_allele & haq$neanderthal_allele == haq$bonobo_allele & haq$neanderthal_allele == haq$gorilla_allele & haq$neanderthal_allele == haq$orangutan_allele ~ haq$neanderthal_allele,
+                           TRUE ~ haq$HCA_allele)
 
 cols = list(rand=colnames(rand),har=colnames(har),haq=colnames(haq))
 ctb = unclass(table(unlist(cols),rep(names(cols),sapply(cols,length))))
@@ -139,6 +147,8 @@ v = do.call('rbind',lapply(ll,function(x) x[[1]]))
 ##############################################################
 library(glmnet)
 rev = as.integer(v$alt == v$HCA_allele)
+sum(rev, na.rm = TRUE)
+sum(as.integer(v$ref == v$HCA_allele), na.rm = TRUE)
 xrev = do.call('rbind',lapply(ll,function(x) cbind(x[[3]],x[[4]])))
 xrev = cbind(xrev,as.matrix(v[,17:21]=="-"))
 
@@ -150,13 +160,15 @@ wt = 391/table(as.factor(rev):as.factor(v$source))
 wt = wt[as.character(as.factor(rev):as.factor(v$source))]
 
 tr = !is.na(rev)
-fit = cv.glmnet(y=rev[tr],x=xrev[tr,],alpha=0.9,family="binomial",weights=wt[tr])
+fit = cv.glmnet(y=rev[tr],x=xrev[tr,],alpha=0.9,family="binomial",weights=wt[tr]) # ,weights=wt[tr]
 
 prd = predict(fit,xrev,s=fit$lambda.min,type="response")[,1]
-rvr = as.integer(prd >= 0.8)
+rvr = as.integer(prd >= 0.99)
 rvr[tr] = rev[tr] ## relabel the training data according to their original labels
 
 v$reversion = rvr
+# v$reversion = prd
+table(rvr, v$source)
 
 ##############################################################
 ### fetch the genomic sequence around the variant sites,
@@ -185,8 +197,9 @@ print(n)
 ## takes a while to run - so commenting out and just reading in the results
 s = foreach(i=1:n) %dopar% tfdiff(sref,salt,pwm[[i]])
 names(s) = names(pwm)[1:n]
-# write_rds(s, '/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas.rds')
-s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas.rds')
+# write_rds(s, '/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas_v2.rds')
+# s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas.rds')
+s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas_v2.rds')
 
 score_ref = do.call('rbind',lapply(s,function(x) x[[1]]))
 score_alt = do.call('rbind',lapply(s,function(x) x[[2]]))
@@ -196,6 +209,7 @@ score_alt = do.call('rbind',lapply(s,function(x) x[[2]]))
 ### in TFBS motif match scores related to core language ability (F1)?
 load("/wdata/jmichaelson/SLI-seq/2024/Nature/phenotypes.Rdata.pxz", verbose = TRUE)
 ph = p0[,2] ## 2nd col is F1 (core language)
+# p0 <- read_csv('manuscript/supplemental_materials/EpiSLI_pheno_data.csv')$F1
 
 ### -log MAF (not used in final analysis)
 lmaf = -log10(pmax(v$max_AF,1e-5)) 
@@ -220,24 +234,29 @@ gg = do.call('rbind',lapply(ll,function(x) x[[2]]))
 
 v$af_episli_hg19 <- rowSums(gg, na.rm = TRUE) / ncol(gg) / 2
 
+table(rvr,v$source)
+sum(as.integer(v$source=="random") * ifelse(v$ref == v$neanderthal_allele & v$AF_EpiSLI < .01, 1, 0) * rvr)
+sum(as.integer(v$source=="HAQER") * ifelse(v$ref == v$neanderthal_allele & v$AF_EpiSLI < .01, 1, 0) * rvr)
+sum(as.integer(v$source=="HAR") * ifelse(v$ref == v$neanderthal_allele & v$AF_EpiSLI < .01, 1, 0) * rvr)
+
 ## RAND HCA reversion burden per sample
-brd_random = scale((t(gg * rvr * as.integer(v$source=="random") * ifelse(v$max_AF < .01, 1, 0)) %*% t(si)))
+## 
+brd_random = scale((t(gg * rvr * as.integer(v$source=="random") * ifelse(v$ref == v$neanderthal_allele & v$af_episli_hg19 < .01 & v$AF_EpiSLI < .01, 1, 0)) %*% t(si))) #  * ifelse(v$max_AF < .05, 1, 0))
 cfl_random = t(sapply(1:ncol(brd_random), function(i) summary(lm(ph~brd_random[,i]))$coef[2,]))
 rownames(cfl_random) = colnames(brd_random)
 head(cfl_random[order(cfl_random[,3],decreasing=T),],20)
 
 ## HARs HCA reversion burden per sample
-brd_har = scale(t(gg * rvr * as.integer(v$source=="HAR") * ifelse(v$AF_EpiSLI < .01, 1, 0)) %*% t(si))
+brd_har = scale(t(gg * rvr * as.integer(v$source=="HAR") * ifelse(v$ref == v$neanderthal_allele & v$af_episli_hg19 < .01 & v$AF_EpiSLI < .01, 1, 0)) %*% t(si)) #  * ifelse(v$AF_EpiSLI < .05, 1, 0))
 cfl_har = t(sapply(1:ncol(brd_har), function(i) summary(lm(ph~brd_har[,i]))$coef[2,]))
 rownames(cfl_har) = colnames(brd_har)
 head(cfl_har[order(cfl_har[,3],decreasing=T),],20)
 
 ## HAQERs HCA reversion burden per sample
-brd_haq = scale(t(gg * rvr * as.integer(v$source=="HAQER") * ifelse(v$AF_EpiSLI < .01, 1, 0)) %*% t(si))
+brd_haq = scale(t(gg * rvr * as.integer(v$source=="HAQER") * ifelse(v$ref == v$neanderthal_allele & v$af_episli_hg19 < .01 & v$AF_EpiSLI < .01, 1, 0)) %*% t(si)) #  * ifelse(v$AF_EpiSLI < .05, 1, 0))
 cfl_haq = t(sapply(1:ncol(brd_haq), function(i) summary(lm(ph~brd_haq[,i]))$coef[2,]))
 rownames(cfl_haq) = colnames(brd_haq)
 head(cfl_haq[order(cfl_haq[,3],decreasing=T),],20)
-
 
 ### get the TF family annotations and arrange colors
 ### for plotting (this is gory code but works)
@@ -444,6 +463,10 @@ add_york_stats <- function(fit, x_pos = "topleft", y_pos = NULL) {
   }
 }
 
+##
+cor.test(-1*betas[,4],cfl_random[,1])
+cor.test(-1*betas[,5],cfl_haq[,1])
+cor.test(-1*betas[,6],cfl_har[,1])
 
 ##
 res_r = york_regression(-1*betas[,4],cfl_random[,1],beta_se[,4],cfl_random[,2])

@@ -1,2 +1,3 @@
 y,x,beta,std.error,statistic,p.value,n_species,n_vocal_learning_species,n_non_vocal_learning_species
-vocal_learner_binary,HAQER_sequence_similarity_scaled,3.9202113157371996,0.8655155386180102,4.529336725712281,5.9169137375075474e-6,170,49,121
+vocal_learner_binary,HAQER_sequence_similarity_scaled,1.4069079360983994,0.36237598249968683,3.8824535952782555,1.0340775449036226e-4,170,49,121
+log10(brain_mass_g),HAQER_sequence_similarity_scaled,0.42494536284854223,0.1522033550779373,2.7919579212359973,0.0061450469221283315,116,NA,NA

@@ -10,32 +10,32 @@ spark_df <- read_csv('manuscript/supplemental_materials/SPARK_data.csv')
 ####################
 ## sent rep factor stats for HAQERs
 n_mod <- spark_df %>% 
-    select(IID, factor_sent_rep, age_years, sex, cp_pgs.HAQER, cp_pgs.background_HAQER) %>% 
+    select(IID, factor_sent_rep, age_years, sex, cp_pgs.HAQER_v2, cp_pgs.background_HAQER) %>% 
     drop_na() %>% 
     nrow(.)
-rep_fac_stat_es_pgs <- broom::tidy(lm(factor_sent_rep ~ cp_pgs.HAQER + cp_pgs.background_HAQER + age_years + as.factor(sex), data = spark_df)) %>% 
-    filter(term == 'cp_pgs.HAQER') %>% 
+rep_fac_stat_es_pgs <- broom::tidy(lm(factor_sent_rep ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + age_years + as.factor(sex), data = spark_df)) %>% 
+    filter(term == 'cp_pgs.HAQER_v2') %>% 
     mutate(pheno = 'SPARK_core_language_factor',
-           x = 'cp_pgs.HAQER',
+           x = 'cp_pgs.HAQER_v2',
            n = n_mod) %>% 
     relocate(pheno, x) %>% 
     select(-term)
 
 ## make scatterplot
 tmp <- spark_df %>% 
-    select(IID, factor_sent_rep, age_years, sex, cp_pgs.HAQER, cp_pgs.background_HAQER) %>% 
+    select(IID, factor_sent_rep, age_years, sex, cp_pgs.HAQER_v2, cp_pgs.matched_control_HAQER_v2, cp_pgs.background_HAQER_v2) %>% 
     drop_na() %>% 
-    mutate(factor_sent_rep_resid = resid(lm(factor_sent_rep ~ age_years + as.factor(sex) + cp_pgs.background_HAQER)),
+    mutate(factor_sent_rep_resid = resid(lm(factor_sent_rep ~ age_years + as.factor(sex) + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2)),
            factor_sent_rep_resid = scale(factor_sent_rep_resid)[,1]) %>% 
     relocate(factor_sent_rep_resid, .after = factor_sent_rep)
-rep_fac_stat_cor <- broom::tidy(cor.test(tmp$factor_sent_rep_resid, tmp$cp_pgs.HAQER)) %>% 
+rep_fac_stat_cor <- broom::tidy(cor.test(tmp$factor_sent_rep_resid, tmp$cp_pgs.HAQER_v2)) %>% 
     mutate(pheno = 'SPARK_core_language_factor',
-           x = 'cp_pgs.HAQER',
+           x = 'cp_pgs.HAQER_v2',
            n = parameter + 2) %>% 
     mutate(lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nN = ', n))
 
 p_f1_rep <- tmp %>% 
-    ggplot(aes(x = factor_sent_rep_resid, y = cp_pgs.HAQER)) +
+    ggplot(aes(x = factor_sent_rep_resid, y = cp_pgs.HAQER_v2)) +
     geom_point(size = 0.7) +
     geom_smooth(method = 'lm', size = 1.5, color = 'black') +
     xlab('SPARK core language score\nadjusted for background CP-PGS') +
@@ -60,7 +60,7 @@ spark_df_es_pgs <- spark_df %>%
                              TRUE ~ NA)) %>%
     select(-c(sex, cp_pgs.genome_wide)) %>%
     drop_na() 
-coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background', negate = TRUE)]
+coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background|matched', negate = TRUE)]
 
 iter = 0
 res_list = list()
@@ -71,14 +71,14 @@ for(evo in coi){
     tmp2 <- spark_df_es_pgs %>% 
         select(IID, factor_sent_rep, age_years, sex_f, matches(str_c(str_remove_all(evo, pattern = 'cp_pgs.'), '$')))
     bdat <- tmp2 %>% 
-        select(IID, factor_sent_rep, age_years, sex_f, matches('background'))
+        select(IID, factor_sent_rep, age_years, sex_f, matches('background|matched'))
 
     baseline <- lm(factor_sent_rep ~ ., data = bdat[,-1])
     baseline_plus_anno <- lm(factor_sent_rep ~ ., data = tmp2[,-1])
     baseline_rsq = summary(baseline)$r.squared
     baseline_plus_anno_rsq = summary(baseline_plus_anno)$r.squared
     baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
-        filter(term != '(Intercept)' & str_detect(term, 'background', negate = TRUE)) %>% 
+        filter(term != '(Intercept)' & str_detect(term, 'background|matched', negate = TRUE)) %>% 
         filter(term == evo)
 
     res <- broom::tidy(anova(baseline, baseline_plus_anno)) %>% 
@@ -110,7 +110,7 @@ es_pgs_res %>%
 ## ES-PGS dx stats
 dx_cnt <- spark_df %>%
     filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER) %>%
+    drop_na(cp_pgs.HAQER_v2) %>%
     pivot_longer(cols = matches('dx_')) %>% 
     group_by(name, value) %>% 
     count() %>% 
@@ -123,37 +123,37 @@ dx_cnt <- spark_df %>%
     ungroup()
 dx_mean = spark_df %>%
     filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER) %>%
+    drop_na(cp_pgs.HAQER_v2) %>%
     pivot_longer(cols = matches('dx_')) %>% 
     group_by(name, value) %>% 
-    summarise(mean_val = mean(cp_pgs.HAQER)) %>% 
+    summarise(mean_val = mean(cp_pgs.HAQER_v2)) %>% 
     drop_na() %>%
-    mutate(type = ifelse(value == 0, 'control_mean_cp_pgs.HAQER', 'case_mean_cp_pgs.HAQER')) %>% 
+    mutate(type = ifelse(value == 0, 'control_mean_cp_pgs.HAQER_v2', 'case_mean_cp_pgs.HAQER_v2')) %>% 
     pivot_wider(id_cols = name, names_from = type, values_from = mean_val) %>% 
     rename(pheno = name) %>% 
     ungroup()
 dx_sd = spark_df %>%
     filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER) %>%
+    drop_na(cp_pgs.HAQER_v2) %>%
     pivot_longer(cols = matches('dx_')) %>% 
     group_by(name, value) %>% 
-    summarise(sd_val = sd(cp_pgs.HAQER)) %>% 
+    summarise(sd_val = sd(cp_pgs.HAQER_v2)) %>% 
     drop_na() %>%
-    mutate(type = ifelse(value == 0, 'control_std_dev_cp_pgs.HAQER', 'case_std_dev_cp_pgs.HAQER')) %>% 
+    mutate(type = ifelse(value == 0, 'control_std_dev_cp_pgs.HAQER_v2', 'case_std_dev_cp_pgs.HAQER_v2')) %>% 
     pivot_wider(id_cols = name, names_from = type, values_from = sd_val) %>% 
     rename(pheno = name) %>% 
     ungroup()
 spark_dx_es_pgs_res <- spark_df %>%
     filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER) %>%
+    drop_na(cp_pgs.HAQER_v2) %>%
     pivot_longer(cols = matches('dx_')) %>% 
     group_by(name) %>% 
-    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER + cp_pgs.background_HAQER + age_at_eval_years + as.factor(sex), family = 'binomial', data = .))) %>% 
+    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + age_at_eval_years + as.factor(sex), family = 'binomial', data = .))) %>% 
     unnest(res) %>% 
-    filter(term == 'cp_pgs.HAQER') %>% 
+    filter(term == 'cp_pgs.HAQER_v2') %>% 
     arrange(p.value) %>% 
     rename(pheno = name) %>%
-    mutate(x = 'cp_pgs.HAQER') %>% 
+    mutate(x = 'cp_pgs.HAQER_v2') %>% 
     relocate(pheno, x) %>% 
     inner_join(dx_cnt) %>%
     inner_join(dx_mean) %>%
@@ -167,23 +167,23 @@ spark_dx_es_pgs_res <- spark_df %>%
 ## IQ ES-PGS stats
 iq_cnt <- spark_df %>%
     filter(asd == TRUE) %>%
-    filter(age_years >= 4) %>%
+    # filter(age_years >= 4) %>%
     pivot_longer(cols = matches('iq_score')) %>% 
-    drop_na(name, value, cp_pgs.HAQER, cp_pgs.background_HAQER, sex, age_years) %>% 
+    drop_na(name, value, cp_pgs.HAQER_v2, cp_pgs.background_HAQER, sex, age_years) %>% 
     group_by(name) %>% 
     count() %>% 
     ungroup()
 spark_iq_es_pgs_res <- spark_df %>%
-    filter(asd == TRUE) %>%
-    filter(age_years >= 4) %>%
-    drop_na(cp_pgs.HAQER, cp_pgs.background_HAQER, sex, age_years) %>% 
+    # filter(asd == TRUE) %>%
+    # filter(age_years >= 4) %>%
+    drop_na(cp_pgs.HAQER_v2, cp_pgs.background_HAQER, sex, age_years) %>% 
     pivot_longer(cols = matches('iq_score')) %>% 
     group_by(name) %>% 
-    do(res = broom::tidy(lm(value ~ cp_pgs.HAQER + cp_pgs.background_HAQER + as.factor(sex) + age_years, data = .))) %>% 
+    do(res = broom::tidy(lm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER + as.factor(sex) + age_years, data = .))) %>% 
     unnest(res) %>% 
-    filter(term == 'cp_pgs.HAQER') %>% 
+    filter(term == 'cp_pgs.HAQER_v2') %>% 
     arrange(p.value) %>% 
-    mutate(x = 'cp_pgs.HAQER') %>% 
+    mutate(x = 'cp_pgs.HAQER_v2') %>% 
     inner_join(iq_cnt) %>%
     rename(pheno = name) %>%
     relocate(pheno, x) %>% 
@@ -198,13 +198,13 @@ spark_p_iq <- spark_df %>%
     pivot_longer(cols = matches('iq_score')) %>% 
     rename(pheno = name) %>%
     inner_join(spark_iq_es_pgs_res_lab) %>% 
-    drop_na(cp_pgs.HAQER) %>%
+    drop_na(cp_pgs.HAQER_v2) %>%
     mutate(pheno_clean = case_when(pheno == 'viq_score' ~ 'Verbal IQ',
                                    pheno == 'nviq_score' ~ 'Nonverbal IQ',
                                    pheno == 'fsiq_score' ~ 'Full-scale IQ'),
            pheno_clean = factor(pheno_clean, levels = c('Verbal IQ', 'Nonverbal IQ', 'Full-scale IQ'))) %>%
     mutate(sig = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-    ggplot(aes(x = value, y = cp_pgs.HAQER)) +
+    ggplot(aes(x = value, y = cp_pgs.HAQER_v2)) +
     geom_jitter(size = 0.3, alpha = 0.7, aes(color = sig)) +
     geom_smooth(method = 'lm', size = 1.5, aes(color = sig)) +
     facet_wrap(~ pheno_clean) +
@@ -234,7 +234,7 @@ spark_df_es_pgs <- spark_df %>%
     select(-c(sex, cp_pgs.genome_wide)) %>%
     drop_na() %>% 
     pivot_longer(cols = matches('dx_birth'))
-coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background', negate = TRUE)]
+coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background|matched', negate = TRUE)]
 
 iter = 0
 res_list = list()
@@ -249,13 +249,13 @@ for(evo in coi){
             select(IID, name, value, age_years, sex_f, matches(str_c(str_remove_all(evo, pattern = 'cp_pgs.'), '$'))) %>% 
             filter(name == ph)
         bdat <- tmp2 %>% 
-            select(IID, name, value, age_years, sex_f, matches('background')) %>% 
+            select(IID, name, value, age_years, sex_f, matches('background|matched')) %>% 
             filter(name == ph)
         ##
         baseline <- glm(value ~ ., data = bdat[,-c(1:2)], family = 'binomial')
         baseline_plus_anno <- glm(value ~ ., data = tmp2[,-c(1:2)], family = 'binomial')
         baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
-            filter(term != '(Intercept)' & str_detect(term, 'background', negate = TRUE)) %>% 
+            filter(term != '(Intercept)' & str_detect(term, 'background|matched', negate = TRUE)) %>% 
             filter(term == evo)
         ##
         res <- broom::tidy(anova(baseline, baseline_plus_anno, test = "LRT")) %>% 

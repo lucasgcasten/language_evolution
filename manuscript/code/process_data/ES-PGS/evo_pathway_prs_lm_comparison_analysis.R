@@ -100,8 +100,79 @@ tmpp <- fc %>%
   filter(pgs_nm == 'HAQER_v2') %>% 
   inner_join(pgs_long)
 
-summary(lm(value ~ complement_pgs_val + matched_pgs_val + pgs_val, data = tmpp[tmpp$name == 'Factor1',]))
+## ES-PGS
+m1 <- lm(value ~ complement_pgs_val + matched_pgs_val, data = tmpp[tmpp$name == 'Factor1',])
+m2 <- lm(value ~ complement_pgs_val + matched_pgs_val + pgs_val, data = tmpp[tmpp$name == 'Factor1',])
+broom::tidy(anova(m1, m2))
 
+## look at relative predictive power
+summary(lm(value ~ complement_pgs_val + matched_pgs_val + pgs_val, data = tmpp[tmpp$name == 'Factor1',]))
+broom::tidy(cor.test(value ~ complement_pgs_val + matched_pgs_val + pgs_val, data = tmpp[tmpp$name == 'Factor1',]))
+broom::tidy(cor.test(tmpp$pgs_val[tmpp$name == 'Factor1'], tmpp$value[tmpp$name == 'Factor1']))
+broom::tidy(cor.test(tmpp$complement_pgs_val[tmpp$name == 'Factor1'], tmpp$value[tmpp$name == 'Factor1']))
+broom::tidy(cor.test(tmpp$matched_pgs_val[tmpp$name == 'Factor1'], tmpp$value[tmpp$name == 'Factor1']))
+
+## make figure(s) showing that
+res_tmp <- tmpp %>% 
+  pivot_longer(cols = c(complement_pgs_val, matched_pgs_val ,pgs_val), names_to = 'pgs_nm_all', values_to = 'pgs_val_all')  %>% 
+  group_by(name, pgs_nm_all) %>% 
+  do(res = broom::tidy(cor.test(.$pgs_val_all, .$value))) %>% 
+  unnest(res) %>% 
+  mutate(lab = str_c("r = ", round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+tmpp2 <- tmpp %>% 
+  pivot_longer(cols = c(complement_pgs_val, matched_pgs_val ,pgs_val), names_to = 'pgs_nm_all', values_to = 'pgs_val_all')  %>% 
+  inner_join(res_tmp) %>% 
+  filter(name == 'Factor1')
+p_es <- tmpp2 %>% 
+  filter(pgs_nm_all == 'pgs_val') %>%
+  ggplot(aes(x = pgs_val_all, y = value)) +
+  geom_point(size = 1.5) +
+  geom_smooth(method = 'lm', size = 1.5) +
+  geom_text(aes(x = -1.375, y = 2.5, label = lab), check_overlap = TRUE, size = 5) +
+  theme_classic(base_size = 16) +
+  xlab("HAQER CP-PGS") +
+  ylab("Core language score (F1)")
+p_c <- tmpp2 %>% 
+  filter(pgs_nm_all == 'complement_pgs_val') %>%
+  ggplot(aes(x = pgs_val_all, y = value)) +
+  geom_point(size = 1.5) +
+  geom_smooth(method = 'lm', size = 1.5) +
+  geom_text(aes(x = -1.5, y = 2.5, label = lab), check_overlap = TRUE, size = 5) +
+  theme_classic(base_size = 16) +
+  xlab("Complement CP-PGS") +
+  ylab("Core language score (F1)")
+p_m <- tmpp2 %>% 
+  filter(pgs_nm_all == 'matched_pgs_val') %>%
+  ggplot(aes(x = pgs_val_all, y = value)) +
+  geom_point(size = 1.5) +
+  geom_smooth(method = 'lm', size = 1.5) +
+  geom_text(aes(x = -1.5, y = 2.5, label = lab), check_overlap = TRUE, size = 5) +
+  theme_classic(base_size = 16) +
+  xlab("Matched CP-PGS") +
+  ylab("Core language score (F1)")
+library(patchwork)
+p_es + p_c + p_m  + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 25, face = 'bold'),
+        axis.title = element_text(face = 'bold'))
+
+tmpp %>% 
+  pivot_longer(cols = c(complement_pgs_val, matched_pgs_val ,pgs_val), names_to = 'pgs_nm_all', values_to = 'pgs_val_all')  %>% 
+  inner_join(res_tmp) %>% 
+  filter(pgs_nm_all == 'pgs_val') %>%
+  mutate(sig = ifelse(p.value < .05, TRUE, FALSE)) %>%
+  ggplot(aes(x = pgs_val_all, y = value)) +
+  geom_point(size = 1.5, aes(color = sig)) +
+  geom_smooth(method = 'lm', size = 1.5) +
+  geom_text(aes(x = 0, y = 3, label = lab), check_overlap = TRUE, size = 5) +
+  theme_classic(base_size = 16) +
+  xlab("HAQER CP-PGS") +
+  ylab("Factor score") +
+  facet_wrap(~ name, scales = 'free') +
+  scale_color_manual(values = c('grey80', "black")) +
+  theme(legend.position = 'none')
+
+###########
 res2 <- fc %>% 
   pivot_longer(cols = -c(1)) %>%
   rename(IID = sample) %>%
@@ -121,12 +192,15 @@ res2 <- fc %>%
   mutate(lab = str_c('Pearson r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
 
 res2 %>%
-  # filter(p.value < 0.05) %>% 
+  filter(p.value < 0.05) %>% 
+  mutate(name = str_remove_all(name, 'actor')) %>% 
+  select(1,3,4)
   filter(str_detect(pgs_nm, 'intro|Sweep')) %>%
   select(1,3,estimate, statistic) %>%
   filter(str_detect(name, '1|2|3'))
 
-
+res2 %>% 
+  filter(str_detect(pgs_nm,'select'))
 
 foxp2_targets = c('L4_6_RORB_2', 'L5_6_THEMIS_1')
 ct_res <- res2 %>% 
