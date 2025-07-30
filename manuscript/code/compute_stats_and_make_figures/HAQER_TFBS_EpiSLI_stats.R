@@ -12,7 +12,6 @@ opts[["all_versions"]] <- FALSE
 pwm_set = getMatrixSet(JASPAR2020, opts)
 pwm = lapply(pwm_set,function(x) toPWM(TFBSTools::Matrix(x),pseudocounts=colSums(TFBSTools::Matrix(x))))
 names(pwm) = sapply(pwm_set,name)
-# psave(pwm,file="/wdata/jmichaelson/SLI-seq/2024/Nature/JASPAR2020_pwms.Rdata")
 
 ### function for calculating delta TF motif scores
 tfdiff = function(x1,x2,m){
@@ -39,12 +38,12 @@ har = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAR_all_va
 rand = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/RAND_all_variants.hg19_normed.vcf.rds")
 haq = readRDS("/wdata/lcasten/sli_wgs/HAQER_variant_associations/data/HAQER_v2_all_variants.hg19_normed.vcf.rds")
 
-### fill in HCA alleles when it's obvious (all reference species have the same allele)
-har$HCA_allele = case_when(is.na(har$HCA_allele) & har$neanderthal_allele == har$chimp_allele & har$neanderthal_allele == har$bonobo_allele & har$neanderthal_allele == har$gorilla_allele & har$neanderthal_allele == har$orangutan_allele ~ har$neanderthal_allele,
+### fill in HCA alleles when it's obvious (human, neanderthal, chimp, and gorrilla all have same allele)
+har$HCA_allele = case_when(is.na(har$HCA_allele) & har$neanderthal_allele %in% c(har$ref, har$alt) & har$neanderthal_allele == har$chimp_allele & har$neanderthal_allele == har$bonobo_allele & har$neanderthal_allele == har$gorilla_allele ~ har$neanderthal_allele,
                            TRUE ~ har$HCA_allele)
-rand$HCA_allele = case_when(is.na(rand$HCA_allele) & rand$neanderthal_allele == rand$chimp_allele & rand$neanderthal_allele == rand$bonobo_allele & rand$neanderthal_allele == rand$gorilla_allele & rand$neanderthal_allele == rand$orangutan_allele ~ rand$neanderthal_allele,
+rand$HCA_allele = case_when(is.na(rand$HCA_allele) & rand$neanderthal_allele %in% c(rand$ref, rand$alt) & rand$neanderthal_allele == rand$chimp_allele & rand$neanderthal_allele == rand$bonobo_allele & rand$neanderthal_allele == rand$gorilla_allele ~ rand$neanderthal_allele,
                            TRUE ~ rand$HCA_allele)
-haq$HCA_allele = case_when(is.na(haq$HCA_allele) & haq$neanderthal_allele == haq$chimp_allele & haq$neanderthal_allele == haq$bonobo_allele & haq$neanderthal_allele == haq$gorilla_allele & haq$neanderthal_allele == haq$orangutan_allele ~ haq$neanderthal_allele,
+haq$HCA_allele = case_when(is.na(haq$HCA_allele) & haq$neanderthal_allele %in% c(haq$ref, haq$alt) & haq$neanderthal_allele == haq$chimp_allele & haq$neanderthal_allele == haq$bonobo_allele & haq$neanderthal_allele == haq$gorilla_allele ~ haq$neanderthal_allele,
                            TRUE ~ haq$HCA_allele)
 
 cols = list(rand=colnames(rand),har=colnames(har),haq=colnames(haq))
@@ -163,7 +162,7 @@ tr = !is.na(rev)
 fit = cv.glmnet(y=rev[tr],x=xrev[tr,],alpha=0.9,family="binomial",weights=wt[tr]) # ,weights=wt[tr]
 
 prd = predict(fit,xrev,s=fit$lambda.min,type="response")[,1]
-rvr = as.integer(prd >= 0.99)
+rvr = as.integer(prd >= 0.95) ## classify reversions as all unlabeled variants with a predicted reversion probability >= 95%
 rvr[tr] = rev[tr] ## relabel the training data according to their original labels
 
 v$reversion = rvr
@@ -190,6 +189,7 @@ substr(salt,26,26) = v$alt
 
 
 ### get the maximal motif scores for ref and alt sequences
+### (only need to run once, this takes a while to run)
 library(doMC)
 registerDoMC(cores=10)
 n = length(pwm)
@@ -197,7 +197,7 @@ print(n)
 ## takes a while to run - so commenting out and just reading in the results
 s = foreach(i=1:n) %dopar% tfdiff(sref,salt,pwm[[i]])
 names(s) = names(pwm)[1:n]
-# write_rds(s, '/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas_v2.rds')
+write_rds(s, '/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas_v2.rds')
 # s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas.rds')
 s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas_v2.rds')
 
@@ -209,11 +209,10 @@ score_alt = do.call('rbind',lapply(s,function(x) x[[2]]))
 ### in TFBS motif match scores related to core language ability (F1)?
 load("/wdata/jmichaelson/SLI-seq/2024/Nature/phenotypes.Rdata.pxz", verbose = TRUE)
 ph = p0[,2] ## 2nd col is F1 (core language)
-# p0 <- read_csv('manuscript/supplemental_materials/EpiSLI_pheno_data.csv')$F1
 
 ### -log MAF (not used in final analysis)
-lmaf = -log10(pmax(v$max_AF,1e-5)) 
-lmaf = lmaf-min(lmaf)
+# lmaf = -log10(pmax(v$max_AF,1e-5)) 
+# lmaf = lmaf-min(lmaf)
 
 ### this order makes sense from a perspective, 
 ### but we flip the sign of the beta in a later analysis such that higher scores indicate increased motif integrity in the human ref allele
@@ -232,28 +231,22 @@ seq_context=relevel(seq_context,"random")
 ###################################################
 gg = do.call('rbind',lapply(ll,function(x) x[[2]]))
 
-v$af_episli_hg19 <- rowSums(gg, na.rm = TRUE) / ncol(gg) / 2
-
-table(rvr,v$source)
-sum(as.integer(v$source=="random") * ifelse(v$ref == v$neanderthal_allele & v$AF_EpiSLI < .01, 1, 0) * rvr)
-sum(as.integer(v$source=="HAQER") * ifelse(v$ref == v$neanderthal_allele & v$AF_EpiSLI < .01, 1, 0) * rvr)
-sum(as.integer(v$source=="HAR") * ifelse(v$ref == v$neanderthal_allele & v$AF_EpiSLI < .01, 1, 0) * rvr)
-
 ## RAND HCA reversion burden per sample
-## 
-brd_random = scale((t(gg * rvr * as.integer(v$source=="random") * ifelse(v$ref == v$neanderthal_allele & v$af_episli_hg19 < .01 & v$AF_EpiSLI < .01, 1, 0)) %*% t(si))) #  * ifelse(v$max_AF < .05, 1, 0))
+si2 = scale(si)
+brd_random = scale((t(gg * rvr * as.integer(v$source=="random")* ifelse(v$AF_EpiSLI < .05 & v$ref == v$neanderthal_allele, 1, 0)) %*% t(si2))) #  * ifelse(v$max_AF < .05, 1, 0))
 cfl_random = t(sapply(1:ncol(brd_random), function(i) summary(lm(ph~brd_random[,i]))$coef[2,]))
 rownames(cfl_random) = colnames(brd_random)
 head(cfl_random[order(cfl_random[,3],decreasing=T),],20)
 
-## HARs HCA reversion burden per sample
-brd_har = scale(t(gg * rvr * as.integer(v$source=="HAR") * ifelse(v$ref == v$neanderthal_allele & v$af_episli_hg19 < .01 & v$AF_EpiSLI < .01, 1, 0)) %*% t(si)) #  * ifelse(v$AF_EpiSLI < .05, 1, 0))
+## HARs HCA reversion burden per sample 
+# v$ref == v$neanderthal_allele & 
+brd_har = scale(t(gg * rvr * as.integer(v$source=="HAR") * ifelse(v$AF_EpiSLI < .05 & v$ref == v$neanderthal_allele, 1, 0)) %*% t(si2)) #  * ifelse(v$AF_EpiSLI < .05, 1, 0))
 cfl_har = t(sapply(1:ncol(brd_har), function(i) summary(lm(ph~brd_har[,i]))$coef[2,]))
 rownames(cfl_har) = colnames(brd_har)
 head(cfl_har[order(cfl_har[,3],decreasing=T),],20)
 
 ## HAQERs HCA reversion burden per sample
-brd_haq = scale(t(gg * rvr * as.integer(v$source=="HAQER") * ifelse(v$ref == v$neanderthal_allele & v$af_episli_hg19 < .01 & v$AF_EpiSLI < .01, 1, 0)) %*% t(si)) #  * ifelse(v$AF_EpiSLI < .05, 1, 0))
+brd_haq = scale(t(gg * rvr * as.integer(v$source=="HAQER") * ifelse(v$AF_EpiSLI < .05 & v$ref == v$neanderthal_allele, 1, 0)) %*% t(si2)) #  * ifelse(v$AF_EpiSLI < .05, 1, 0))
 cfl_haq = t(sapply(1:ncol(brd_haq), function(i) summary(lm(ph~brd_haq[,i]))$coef[2,]))
 rownames(cfl_haq) = colnames(brd_haq)
 head(cfl_haq[order(cfl_haq[,3],decreasing=T),],20)
@@ -282,13 +275,12 @@ for(i in 1:5){
 ### source (e.g., HAQER, HAR, random); the coefficient of interest
 ### is the source-specific effect of reversions (the seq_context:rev term)
 ##########################################################################
-betas = t(apply(si,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:rev))$coef[,1]))
-beta_se = t(apply(si,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:rev))$coef[,2]))
-pvals = t(apply(si,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:rev))))
+betas = t(apply(si2,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:ifelse(rev == 1 & v$neanderthal_allele == v$ref, 1, 0)))$coef[,1]))
+beta_se = t(apply(si2,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:ifelse(rev == 1 & v$neanderthal_allele == v$ref, 1, 0)))$coef[,2]))
+pvals = t(apply(si2,1,function(y) summary(lm(scale(y)~0+seq_context+seq_context:ifelse(rev == 1 & v$neanderthal_allele == v$ref, 1, 0)))))
 
 ## look at human-gained TF binding for forkhead genes of interest
-pvals[[which(rownames(si) == 'FOXC2')]]
-pvals[[which(rownames(si) == 'FOXP2')]]
+pvals[[which(rownames(si2) == 'FOXP2')]]
 
 ###########################################################################
 ### run the York regression; note that we flip the sign of the beta so that
@@ -527,21 +519,21 @@ cxl = 1.5
 ## add HAQER panel
 plot(-1*betas[,5],cfl_haq[,1],
 	xlim=xrg,ylim=yrg,cex=res_haq$weights/median(res_haq$weights),col=pt_col,cex.lab=cxl,
-	xlab="Selection for motif integrity",ylab="Language-motif association",main="HAQERs", cex.main = 1.5, font.main = 2)
+	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association",main="HAQERs", cex.main = 1.5, font.main = 2)
 pt_error(-1*betas[,5],cfl_haq[,1],beta_se[,5],cfl_haq[,2])
 add_york_line(res_haq,xlim=xrg,line_col=haq_col,ci_col=rgb(0.27,0.51,0.71,0.2))
 add_york_stats_size(res_haq, size = 1.1)
 ## add HAR panel
 plot(-1*betas[,6],cfl_har[,1],
 	xlim=xrg,ylim=yrg,cex=res_har$weights/median(res_har$weights),col=pt_col,cex.lab=cxl,
-	xlab="Selection for motif integrity",ylab="Language-motif association",main="HARs", cex.main = 1.5, font.main = 2)
+	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association",main="HARs", cex.main = 1.5, font.main = 2)
 pt_error(-1*betas[,6],cfl_har[,1],beta_se[,6],cfl_har[,2])
 add_york_line(res_har,xlim=xrg,line_col='grey',ci_col=rgb(0.2,0.2,0.2,0.2))
 add_york_stats_size(res_har, size = 1.1)
 ## add RAND panel
 plot(-1*betas[,4],cfl_random[,1],
 	xlim=xrg,ylim=yrg,cex=res_r$weights/median(res_r$weights),col=pt_col,cex.lab=cxl,
-	xlab="Selection for motif integrity",ylab="Language-motif association",main="RAND", cex.main = 1.5, font.main = 2)
+	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association",main="RAND", cex.main = 1.5, font.main = 2)
 pt_error(-1*betas[,4],cfl_random[,1],beta_se[,4],cfl_random[,2])
 add_york_line(res_r,xlim=xrg,line_col='grey',ci_col=rgb(0.2,0.2,0.2,0.2))
 add_york_stats_size(res_r, size = 1.1)
@@ -551,8 +543,8 @@ dev.off()
 ## plot set up
 png("manuscript/figures/TFBS_center_panel.png",7,7,res=300,units="in")
 grp = unique(tfcols)
-xrg = c(-0.4,0.425)
-yrg = c(-0.2,0.2)
+xrg = c(-0.55,0.4)
+yrg = c(-0.2,0.17)
 x1 = -1*betas[,5]
 y1 = cfl_haq[,1]
 sig = (-1*betas[,5]/beta_se[,5]) > 1.96 & cfl_haq[,3]>1.96
@@ -564,18 +556,18 @@ top_per_type <- data.frame(gene = names(sig), stat = -1*betas[,5]/beta_se[,5], s
   group_by(tf) %>% 
   slice_head(n = 1)
 sig = sig == TRUE & names(sig) %in% top_per_type$gene  
-## make figure cex = (res_haq$weights/median(res_haq$weights)) / 2
+## make figure
 plot(x1,y1,
-	xlab="Selection for motif integrity",ylab="Language-motif association", main="HAQERs", cex.main = 1.5, font.main = 2,
+	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association", main="HAQERs", cex.main = 1.5, font.main = 2,
 	xlim=xrg,ylim=yrg,cex = 0,col=tfcols, cex.lab = 1.25, type = 'n',
 	pch=ifelse(sig,16,1))
-rect(xrg[1] - .025, yrg[1] - .025, 0, yrg[2] + .025, col = "grey92", border = NA)  # Left half
-rect(xrg[1]- .025, yrg[1] - .025, xrg[2] + .035, 0, col = "grey92", border = NA)  # Bottom-right
+rect(xrg[1] - .0375, yrg[1] - .025, 0, yrg[2] + .025, col = "grey95", border = NA)  # Left half
+rect(xrg[1]- .025, yrg[1] - .025, xrg[2] + .035, 0, col = "grey95", border = NA)  # Bottom-right
 ## make figure cex = (res_haq$weights/median(res_haq$weights)) / 2
 points(x1,y1,
 	cex = (res_haq$weights/median(res_haq$weights)) / 3,col=tfcols,
 	pch=ifelse(sig,16,1))
-xlab("Selection for motif integrity", cex.lab = 1.25)    
+xlab("Human gained motif integrity", cex.lab = 1.25)    
 sig = sig | rownames(betas)=="FOXP2"
 set.seed(8)
 # abline(v=seq(-0.4,0.4,0.1),h=seq(-0.2,0.2,0.1),col=grey(0.8))
@@ -587,9 +579,9 @@ for(i in 1:6){
 }
 txt = rownames(cfl_haq)[sig]
 # txt[1] = "FOXP2"
-text(x1[sig],y1[sig],txt,
+text(x1[sig] + .01,y1[sig],txt,
 	col=tfcols[sig],pos=sample(1:4,sum(sig),replace=T))
-text(0.25,0.2,"Convergence of selection\nand language effects")
+text(0.225,0.165,"Convergence of selection\nand language effects")
 legend("topleft",legend=c("ETS domain","Forkhead","Homeobox","Basic Helix-Loop-Helix","Zinc Finger C2H2","other"),lty=1,col=c(pal,"grey"),bty='n',border=NA,lwd=3)
 legend("bottomleft",legend=c("p < 0.05 for both positive language and positive selection effects","all others"),pch=c(16,1),col='grey',border=NA,bty='n',cex=0.8,pt.cex=1)
 dev.off()
@@ -610,6 +602,17 @@ enr = enr[order(enr[,1],decreasing=T),]
 
 ### bottom center panel - a barplot showing the enrichment results
 ## plot set up
+enr_conv <- enr %>% 
+	as.data.frame() %>% 
+	rownames_to_column('TF_family') %>% 
+	as_tibble() %>% 
+	dplyr::rename(log2_OR = OR, ci_lower = X1, ci_upper = X2) %>% 
+  mutate(TF_family_clean = case_when(TF_family == 'Homeobox domain' ~ 'Homeobox',
+                               TF_family == 'Fork head domain' ~ 'Forkhead',
+                               TF_family == 'Other' ~ 'Other',
+                               TF_family == 'Myc-type, basic helix-loop-helix (bHLH) domain' ~ 'Basic\nHelix-Loop-Helix',
+                               TF_family == 'Ets domain' ~ 'ETS domain',
+                               TF_family == 'Zinc finger C2H2 superfamily' ~ 'Zinc Finger\nC2H2'))
 png("manuscript/figures/TFBS_barplot.png",5,5,res=300,units="in")
 par(mar=c(8,6,1,2))
 col2 = apply(col2rgb(names(fam)[match(rownames(enr),fam)])/255,2,function(x) rgb(x[1],x[2],x[3],0.5))
@@ -617,12 +620,12 @@ col1 = names(fam)[match(rownames(enr),fam)]
 bp = barplot(enr[,1],las=2,col=col2,
 	ylab="Convergence of selection and\nlanguage effects (log2 OR)",
 	border=NA,ylim=c(min(enr[,2]),max(enr[,3])),
-	names.arg=c("Forkhead","Homeobox","Basic\nHelix-Loop-Helix","other","Zinc Finger\nC2H2","ETS domain"))
+	names.arg=enr_conv$TF_family_clean)
 abline(h=0,col='grey',lty=2,lwd=2)
 points(bp[,1],enr[,1],pch=ifelse(enr[,4]<0.05,16,1),cex=1.5,col=col1)
 arrows(bp[,1], enr[,2], bp[,1], enr[,3], code = 3, angle = 90, length = 0.05,col=col1, lwd = 2.5)
 ofst = c(0.5,0.5,-0.5,-0.7,-0.9,-1)
-legend("topright",legend=c("p > 0.05","p < 0.05"),pch=c(1,16),col='grey',border=NA,bty='n')
+# legend("topright",legend=c("p > 0.05","p < 0.05"),pch=c(1,16),col='grey',border=NA,bty='n')
 dev.off()
 
 
