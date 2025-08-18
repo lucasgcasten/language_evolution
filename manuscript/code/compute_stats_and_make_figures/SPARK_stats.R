@@ -8,161 +8,54 @@ spark_df <- read_csv('manuscript/supplemental_materials/SPARK_data.csv')
 ####################
 ## ES-PGS analysis
 ####################
-## sent rep factor stats for HAQERs
+## SCQ stats for HAQERs
 n_mod <- spark_df %>% 
-    select(IID, factor_sent_rep, age_years, sex, cp_pgs.HAQER_v2, cp_pgs.background_HAQER) %>% 
-    drop_na() %>% 
-    nrow(.)
-rep_fac_stat_es_pgs <- broom::tidy(lm(factor_sent_rep ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + age_years + as.factor(sex), data = spark_df)) %>% 
-    filter(term == 'cp_pgs.HAQER_v2') %>% 
-    mutate(pheno = 'SPARK_core_language_factor',
-           x = 'cp_pgs.HAQER_v2',
-           n = n_mod) %>% 
-    relocate(pheno, x) %>% 
-    select(-term)
-
-## make scatterplot
-tmp <- spark_df %>% 
-    select(IID, factor_sent_rep, age_years, sex, cp_pgs.HAQER_v2, cp_pgs.matched_control_HAQER_v2, cp_pgs.background_HAQER_v2) %>% 
-    drop_na() %>% 
-    mutate(factor_sent_rep_resid = resid(lm(factor_sent_rep ~ age_years + as.factor(sex) + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2)),
-           factor_sent_rep_resid = scale(factor_sent_rep_resid)[,1]) %>% 
-    relocate(factor_sent_rep_resid, .after = factor_sent_rep)
-rep_fac_stat_cor <- broom::tidy(cor.test(tmp$factor_sent_rep_resid, tmp$cp_pgs.HAQER_v2)) %>% 
-    mutate(pheno = 'SPARK_core_language_factor',
-           x = 'cp_pgs.HAQER_v2',
-           n = parameter + 2) %>% 
-    mutate(lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nN = ', n))
-
-p_f1_rep <- tmp %>% 
-    ggplot(aes(x = factor_sent_rep_resid, y = cp_pgs.HAQER_v2)) +
-    geom_point(size = 0.7) +
-    geom_smooth(method = 'lm', size = 1.5, color = 'black') +
-    xlab('SPARK core language score\nadjusted for background CP-PGS') +
-    ylab('HAQER CP-PGS') +
-    geom_text(aes(x = -1, y = 3.2, label = rep_fac_stat_cor$lab), size = 4, check_overlap = TRUE) +
-    theme_classic() +  
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          legend.title = element_text(size = 14))
-p_f1_rep %>%
-    ggsave(filename = 'manuscript/figures/SPARK_replication_core_language_HAQER_ES-PGS.png', 
-           device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 5)
-
-## -----------------------------------------------------------------------------
-## sent rep factor stats for all annotations (to show it's specifically HAQERs)
-spark_df_es_pgs <- spark_df %>% 
-    select(IID, factor_sent_rep, age_years, sex, matches("cp_pgs")) %>% 
-    mutate(sex_f = case_when(sex == 'Female' ~ 1,
-                             sex == 'Male' ~ 0,
-                             TRUE ~ NA)) %>%
-    select(-c(sex, cp_pgs.genome_wide)) %>%
-    drop_na() 
-coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background|matched', negate = TRUE)]
-
-iter = 0
-res_list = list()
-for(evo in coi){
-    cat(sprintf('\n\n\n\n'))
-    message(evo)
-    iter = iter + 1
-    tmp2 <- spark_df_es_pgs %>% 
-        select(IID, factor_sent_rep, age_years, sex_f, matches(str_c(str_remove_all(evo, pattern = 'cp_pgs.'), '$')))
-    bdat <- tmp2 %>% 
-        select(IID, factor_sent_rep, age_years, sex_f, matches('background|matched'))
-
-    baseline <- lm(factor_sent_rep ~ ., data = bdat[,-1])
-    baseline_plus_anno <- lm(factor_sent_rep ~ ., data = tmp2[,-1])
-    baseline_rsq = summary(baseline)$r.squared
-    baseline_plus_anno_rsq = summary(baseline_plus_anno)$r.squared
-    baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
-        filter(term != '(Intercept)' & str_detect(term, 'background|matched', negate = TRUE)) %>% 
-        filter(term == evo)
-
-    res <- broom::tidy(anova(baseline, baseline_plus_anno)) %>% 
-        drop_na() %>% 
-        mutate(factor = "SPARK_core_language_sent_rep_factor") %>% 
-        mutate(evo = str_remove_all(evo, 'cp_pgs.')) %>% 
-        relocate(factor, evo) %>% 
-        mutate(baseline_rsq = baseline_rsq,
-               baseline_plus_anno_rsq = baseline_plus_anno_rsq,
-                annotation_beta = baseline_plus_anno_coef$estimate,
-                annotation_std_err = baseline_plus_anno_coef$std.error,
-                annotation_pval = baseline_plus_anno_coef$p.value)
-
-    res_list[[iter]] <- res
-}
-
-## reformat ES-PGS results
-es_pgs_res <- bind_rows(res_list) %>%
-  arrange(p.value) %>% 
-  select(-term) %>% 
-  rename(model = evo, p.value_model_comparison = p.value) %>%
-  arrange(model)
-
-es_pgs_res %>% 
-  write_csv('manuscript/supplemental_materials/stats/SPARK_sent_rep_factor_ES-PGS_results.csv')
-
-
-###################
-## ES-PGS dx stats
-dx_cnt <- spark_df %>%
-    filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER_v2) %>%
-    pivot_longer(cols = matches('dx_')) %>% 
+    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, matches("^SCQ_q"), cp_pgs.HAQER_v2, cp_pgs.background_HAQER, cp_pgs.matched_control_HAQER_v2) %>% 
+    drop_na(SCQ_final_score, cp_pgs.HAQER_v2) %>% 
+    pivot_longer(cols = matches('SCQ_q')) %>% 
+    drop_na(value) %>%
     group_by(name, value) %>% 
     count() %>% 
-    drop_na() %>%
-    mutate(type = ifelse(value == 0, 'n_control', 'n_case')) %>% 
-    pivot_wider(id_cols = name, names_from = type, values_from = n) %>% 
-    rename(pheno = name) %>% 
-    mutate(n = n_control + n_case) %>% 
-    relocate(n, .before = n_control) %>% 
-    ungroup()
-dx_mean = spark_df %>%
-    filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER_v2) %>%
-    pivot_longer(cols = matches('dx_')) %>% 
-    group_by(name, value) %>% 
-    summarise(mean_val = mean(cp_pgs.HAQER_v2)) %>% 
-    drop_na() %>%
-    mutate(type = ifelse(value == 0, 'control_mean_cp_pgs.HAQER_v2', 'case_mean_cp_pgs.HAQER_v2')) %>% 
-    pivot_wider(id_cols = name, names_from = type, values_from = mean_val) %>% 
-    rename(pheno = name) %>% 
-    ungroup()
-dx_sd = spark_df %>%
-    filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER_v2) %>%
-    pivot_longer(cols = matches('dx_')) %>% 
-    group_by(name, value) %>% 
-    summarise(sd_val = sd(cp_pgs.HAQER_v2)) %>% 
-    drop_na() %>%
-    mutate(type = ifelse(value == 0, 'control_std_dev_cp_pgs.HAQER_v2', 'case_std_dev_cp_pgs.HAQER_v2')) %>% 
-    pivot_wider(id_cols = name, names_from = type, values_from = sd_val) %>% 
-    rename(pheno = name) %>% 
-    ungroup()
-spark_dx_es_pgs_res <- spark_df %>%
-    filter(asd == TRUE) %>%
-    drop_na(cp_pgs.HAQER_v2) %>%
-    pivot_longer(cols = matches('dx_')) %>% 
+    ungroup() %>%
+    mutate(value = str_c(as.logical(value), '_n')) %>% 
+    pivot_wider(names_from = 'value', values_from = 'n')
+rep_scq_stat_es_pgs <- spark_df %>% 
+    select(IID, matches('SCQ_'), matches("HAQER_v2")) %>% 
+    drop_na(SCQ_final_score, cp_pgs.HAQER_v2) %>% 
+    pivot_longer(cols = matches('^SCQ_q')) %>%
     group_by(name) %>% 
-    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + age_at_eval_years + as.factor(sex), family = 'binomial', data = .))) %>% 
+    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + SCQ_age_at_eval_years + as.factor(SCQ_sex), data = ., family = 'binomial'))) %>% 
     unnest(res) %>% 
     filter(term == 'cp_pgs.HAQER_v2') %>% 
+    mutate(pheno = str_c('SPARK_SCQ_', name),
+           x = 'cp_pgs.HAQER_v2',
+           fdr = p.adjust(p.value, method = 'fdr')) %>% 
+    inner_join(n_mod) %>%
+    relocate(pheno, x) %>%  
+    select(-c(term, name))
+
+## make forestplot
+p_scq_rep <- rep_scq_stat_es_pgs %>% 
+    mutate(pheno = str_remove_all(pheno, 'SPARK_SCQ_SCQ_')) %>%
     arrange(p.value) %>% 
-    rename(pheno = name) %>%
-    mutate(x = 'cp_pgs.HAQER_v2') %>% 
-    relocate(pheno, x) %>% 
-    inner_join(dx_cnt) %>%
-    inner_join(dx_mean) %>%
-    inner_join(dx_sd) %>%
-    select(-term) %>% 
-    filter(pheno %in% c('dx_dev_lang', 'dx_dev_id')) %>% 
-    mutate(pheno = case_when(pheno == 'dx_dev_lang' ~ 'dx_dev_lang_disorder',
-                             pheno == 'dx_dev_id' ~ 'dx_intellectual_disability',
-                             TRUE ~ pheno))
+    head(n = 5) %>%
+    arrange(estimate) %>% 
+    mutate(pheno = factor(pheno, levels = unique(pheno))) %>%
+    ggplot(aes(x = estimate, y = pheno)) +
+    geom_point(size = 4) +
+    geom_linerange(aes(xmin = estimate - 1.96 * std.error, xmax = estimate + 1.96 * std.error), size = 1.3) +
+    geom_vline(xintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    xlab('HAQER CP-PGS Beta (95% CI)') +
+    ylab('SCQ item') +
+    theme_classic() +  
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14, face = 'bold'),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 14))
+p_scq_rep %>%
+    ggsave(filename = 'manuscript/figures/SPARK_SCQ_validation_core_language_HAQER_ES-PGS.png', 
+           device = 'png', dpi = 300, bg = 'white', 
+           units = 'in', width = 5, height = 5)
 
 ## IQ ES-PGS stats
 iq_cnt <- spark_df %>%
@@ -174,7 +67,7 @@ iq_cnt <- spark_df %>%
     count() %>% 
     ungroup()
 spark_iq_es_pgs_res <- spark_df %>%
-    # filter(asd == TRUE) %>%
+    filter(asd == TRUE) %>%
     # filter(age_years >= 4) %>%
     drop_na(cp_pgs.HAQER_v2, cp_pgs.background_HAQER, sex, age_years) %>% 
     pivot_longer(cols = matches('iq_score')) %>% 
@@ -194,7 +87,7 @@ spark_iq_es_pgs_res_lab <- spark_iq_es_pgs_res %>%
 
 spark_p_iq <- spark_df %>%
     filter(asd == TRUE) %>%
-    filter(age_years >= 4) %>%
+    # filter(age_years >= 4) %>%
     pivot_longer(cols = matches('iq_score')) %>% 
     rename(pheno = name) %>%
     inner_join(spark_iq_es_pgs_res_lab) %>% 
@@ -224,179 +117,8 @@ spark_p_iq %>%
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 8, height = 3.5)
 
-## birth complication analysis
-spark_df_es_pgs <- spark_df %>% 
-    filter(asd == TRUE) %>%
-    select(IID, matches('dx_birth'), age_years, sex, matches("cp_pgs")) %>% 
-    mutate(sex_f = case_when(sex == 'Female' ~ 1,
-                             sex == 'Male' ~ 0,
-                             TRUE ~ NA)) %>%
-    select(-c(sex, cp_pgs.genome_wide)) %>%
-    drop_na() %>% 
-    pivot_longer(cols = matches('dx_birth'))
-coi <- names(spark_df_es_pgs)[str_detect(names(spark_df_es_pgs), pattern = 'pgs') & str_detect(names(spark_df_es_pgs), 'background|matched', negate = TRUE)]
-
-iter = 0
-res_list = list()
-for(evo in coi){
-    cat(sprintf('\n\n\n\n'))
-    message(evo)
-    for(ph in unique(spark_df_es_pgs$name)) {
-        message('   --', ph)
-        iter = iter + 1
-        ##
-        tmp2 <- spark_df_es_pgs %>% 
-            select(IID, name, value, age_years, sex_f, matches(str_c(str_remove_all(evo, pattern = 'cp_pgs.'), '$'))) %>% 
-            filter(name == ph)
-        bdat <- tmp2 %>% 
-            select(IID, name, value, age_years, sex_f, matches('background|matched')) %>% 
-            filter(name == ph)
-        ##
-        baseline <- glm(value ~ ., data = bdat[,-c(1:2)], family = 'binomial')
-        baseline_plus_anno <- glm(value ~ ., data = tmp2[,-c(1:2)], family = 'binomial')
-        baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
-            filter(term != '(Intercept)' & str_detect(term, 'background|matched', negate = TRUE)) %>% 
-            filter(term == evo)
-        ##
-        res <- broom::tidy(anova(baseline, baseline_plus_anno, test = "LRT")) %>% 
-            drop_na() %>% 
-            mutate(factor = ph) %>% 
-            mutate(evo = str_remove_all(evo, 'cp_pgs.')) %>% 
-            relocate(factor, evo) %>% 
-            mutate(annotation_beta = baseline_plus_anno_coef$estimate,
-                    annotation_std_err = baseline_plus_anno_coef$std.error,
-                    annotation_pval = baseline_plus_anno_coef$p.value) %>% 
-            inner_join(rename(dx_cnt, factor = pheno))
-        ##
-        res_list[[iter]] <- res
-    }
-}
-
-es_pgs_res <- bind_rows(res_list) %>%
-  arrange(p.value) %>% 
-  select(-term) %>% 
-  rename(model = evo, p.value_model_comparison = p.value) %>%
-  arrange(model)
-
-es_pgs_res %>% 
-    filter(str_detect(factor, pattern = '_oth_', negate = TRUE)) %>%
-    filter(n_case >= 20) %>%
-    group_by(model) %>% 
-    mutate(fdr = p.adjust(annotation_pval, method = 'fdr')) %>% 
-    ungroup() %>%
-    mutate(sig = case_when(fdr < .05 ~ '**',
-                           fdr >= .05 & annotation_pval < .05 ~ '*',
-                           TRUE ~ NA_character_)) %>%
-    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
-                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
-                                 model == 'LinAR_Homininae' ~ 'Homininae',
-                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
-                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
-                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
-                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
-                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
-                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
-                                 model == 'HAQER' ~ 'HAQERs',
-                                 model == 'HAR' ~ 'HARs',
-                                 TRUE ~ NA_character_)) %>% 
-    drop_na(mod_clean) %>%
-    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
-    # filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
-    mutate(stat = annotation_beta / annotation_std_err) %>%
-    inner_join(dd) %>%
-    mutate(clean_name = str_remove_all(clean_name, pattern = 'Branching Question[:] ')) %>%
-    select(-c(factor, sig, stat, model)) %>% 
-    relocate(factor = clean_name, model = mod_clean) %>%
-    relocate(fdr, .after = p.value_model_comparison) %>% 
-    relocate(fdr, p.value_model_comparison, annotation_beta, n_case) %>% 
-    filter(model == 'HAQERs')
-
-es_pgs_res %>% 
-    filter(str_detect(factor, pattern = '_oth_', negate = TRUE)) %>%
-    filter(n_case >= 20) %>%
-    group_by(model) %>% 
-    mutate(fdr = p.adjust(annotation_pval, method = 'fdr')) %>% 
-    ungroup() %>%
-    mutate(sig = case_when(fdr < .05 ~ '**',
-                           fdr >= .05 & annotation_pval < .05 ~ '*',
-                           TRUE ~ NA_character_)) %>%
-    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
-                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
-                                 model == 'LinAR_Homininae' ~ 'Homininae',
-                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
-                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
-                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
-                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
-                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
-                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
-                                 model == 'HAQER' ~ 'HAQERs',
-                                 model == 'HAR' ~ 'HARs',
-                                 TRUE ~ NA_character_)) %>% 
-    drop_na(mod_clean) %>%
-    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
-    # filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
-    mutate(stat = annotation_beta / annotation_std_err) %>%
-    inner_join(dd) %>%
-    mutate(clean_name = str_remove_all(clean_name, pattern = 'Branching Question[:] ')) %>%
-    select(-c(factor, sig, stat, model)) %>% 
-    relocate(factor = clean_name, model = mod_clean) %>%
-    relocate(fdr, .after = p.value_model_comparison) %>%
-    write_csv('manuscript/supplemental_materials/stats/SPARK_birth_complications_ES-PGS_results.csv')
-dd <- readxl::read_xlsx("/sdata/Simons/SPARK/DATA/phenotypes/SPARK_Collection_v13_DataRelease_2024-09-24/Supplemental Information and Data Dictionary/SPARK Data Dictionary.xlsx", sheet = 'basic_medical_screening') %>% 
-    select(factor = variable, clean_name = `definition/question`) %>% 
-    mutate(factor = str_c('dx_', factor))
-
-p_birth_def <- es_pgs_res %>% 
-    filter(str_detect(factor, pattern = '_oth_', negate = TRUE)) %>%
-    filter(n_case >= 20) %>%
-    group_by(model) %>%  
-    mutate(fdr = p.adjust(annotation_pval, method = 'fdr')) %>% 
-    ungroup() %>%
-    mutate(sig = case_when(fdr < .05 ~ '**',
-                           fdr >= .05 & annotation_pval < .05 ~ '*',
-                           TRUE ~ NA_character_)) %>%
-    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
-                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
-                                 model == 'LinAR_Homininae' ~ 'Homininae',
-                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
-                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
-                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
-                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
-                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
-                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
-                                 model == 'HAQER' ~ 'HAQERs',
-                                 model == 'HAR' ~ 'HARs',
-                                 TRUE ~ NA_character_)) %>% 
-    drop_na(mod_clean) %>%
-    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
-    # filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
-    mutate(stat = annotation_beta / annotation_std_err) %>%
-    inner_join(dd) %>%
-    mutate(clean_name = str_remove_all(clean_name, pattern = 'Branching Question[:] ')) %>%
-    arrange(desc(mod_clean), stat) %>%
-    relocate(stat, mod_clean) %>%
-    mutate(clean_name = factor(clean_name, levels = unique(clean_name))) %>%
-    ggplot(aes(x = mod_clean, y = clean_name, fill = stat)) +
-    geom_tile() +
-    scale_fill_gradient2(low = 'blue', mid = 'white', high = 'chocolate1', midpoint = 0) +
-    geom_text(aes(label = sig), check_overlap = TRUE, size = 5) +
-    theme_classic() +
-    theme(axis.text = element_text(size = 14),
-          axis.title = element_text(size = 16),
-          legend.text = element_text(size = 14),
-          legend.title = element_text(size = 16),
-          axis.text.x = element_text(angle = 45, hjust = 1),
-          legend.position = 'bottom') +
-    labs(fill = 'ES-PGS statistic:') +
-    xlab("ES-PGS annotation") +
-    ylab("Birth complication")
-p_birth_def %>% 
-    ggsave(filename = 'manuscript/figures/SPARK_birth_complication_ES-PGS.png', 
-           dpi = 300, device = 'png', 
-           units = 'in', width = 15, height = 12)
-
 ## merge ES-PGS sumstats to a table and save
-bind_rows(rep_fac_stat_es_pgs, spark_dx_es_pgs_res, spark_iq_es_pgs_res) %>% 
+bind_rows(rep_scq_stat_es_pgs, spark_iq_es_pgs_res) %>% 
     rename(beta = estimate) %>% 
     write_csv('manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations.csv')
 
@@ -406,6 +128,7 @@ bind_rows(rep_fac_stat_es_pgs, spark_dx_es_pgs_res, spark_iq_es_pgs_res) %>%
 ## diagnosis results
 dx_cnt_rev <- spark_df %>%
     filter(asd == TRUE) %>%
+    # filter(age_years >= 5) %>%
     drop_na(haqer_rare_variant_reversion_count, matches('dx')) %>%
     pivot_longer(cols = matches('dx_')) %>% 
     group_by(name, value) %>% 
@@ -420,6 +143,7 @@ dx_cnt_rev <- spark_df %>%
 
 reversions_spark_dx_res <- spark_df %>%
     filter(asd == TRUE) %>%
+    # filter(age_years >= 5) %>%
     drop_na(haqer_rare_variant_reversion_count, sex, age_years) %>%
     mutate(sex_female = ifelse(sex == 'Female', 1, 0)) %>%
     pivot_longer(cols = matches('dx_')) %>% 
@@ -572,8 +296,6 @@ p_rev_forest %>%
 
 ########################
 ## save plot objects
-p_f1_rep %>% 
-    write_rds('manuscript/figures/R_plot_objects/SPARK_HAQER_F1_replication.rds')
 spark_p_iq %>% 
     write_rds('manuscript/figures/R_plot_objects/SPARK_HAQER_IQ_replication.rds')
 p_rev_dist  %>% 

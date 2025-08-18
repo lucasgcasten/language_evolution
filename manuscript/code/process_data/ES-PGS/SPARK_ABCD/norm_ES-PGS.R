@@ -5,17 +5,59 @@ library(tidyverse)
 pc <- read_csv("/Dedicated/jmichaelson-wdata/lcasten/SPARK_ABCD_merge_v2/PCA/pca_results.csv")
 names(pc)[1] <- 'IID'
 
+# eur1 <- read_tsv('/wdata/trthomas/array/merged_2022_ABCD_iWES1_WGS_2-4/master.tsv')
+wes_anc <- read_tsv('/genome/SPARK_WES/iWES3/metadata/SPARK.iWES_v3.2024_08.ancestry.tsv')  %>% 
+  select(IID = spid, superclass)
+
+superpop <- read_tsv("/wdata/lcasten/master.tsv") %>% 
+  select(IID, cluster_allPCs) %>% 
+  mutate(superclass = case_when(cluster_allPCs == 1 ~ 'EUR',
+                                cluster_allPCs == 2 ~ 'EAS',
+                                cluster_allPCs == 3 ~ 'AFR',
+                                cluster_allPCs == 4 ~ 'SAS',
+                                cluster_allPCs == 5 ~ 'AMR')) %>% 
+  select(IID, superclass) %>% 
+  filter(! IID %in% wes_anc$IID)
+
+anc <- wes_anc %>% 
+  bind_rows(superpop) %>% 
+  filter(superclass %in% c("EUR", 'AFR', 'EAS', 'AMR', 'SAS'))
+
+tr <- pc %>% 
+  inner_join(anc)
 ##
-# unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/spark/prs/pathway/SPARK_ABCD_unrelated_europeans_for_LD.txt", col_names = FALSE)
+set.seed(1010)  
+tr2 <- tr %>%
+  filter(superclass %in% c("EUR", 'AFR', 'EAS', 'AMR', 'SAS')) %>%
+  group_by(superclass) %>% 
+  sample_n(size = 500)
+
+ho <- pc %>% 
+  anti_join(anc)
+
+set.seed(1010)
+mod <- randomForest::randomForest(as.factor(superclass) ~ pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + pc11 + pc12 + pc13 + pc14 + pc15 + pc16 + pc17 + pc18 + pc19 + pc20, data = tr2)
+prd <- predict(mod, newdata = ho)
+ho$superclass <- prd
+
+pc <- bind_rows(tr, ho)
+
+pc %>% 
+  write_csv("/wdata/lcasten/spark_abcd_merge_v2_pc_and_ancestry.csv")
+
+##
+pc <- read_csv('/Dedicated/jmichaelson-wdata/lcasten/spark/prs/HapMap3_plus/PCA/raw_KING_pca_results.csv') %>% rename(IID = sample.ID)
+unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/spark/prs/pathway/SPARK_ABCD_unrelated_europeans_for_LD.txt", col_names = FALSE)
 # unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/SPARK_ABCD_merge_v2/PCA/unrelated_samples_random_5k_SPARK_europeans.txt", col_names = FALSE)
-unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/SPARK_ABCD_merge_v2/PCA/unrelated_samples.txt", col_names = FALSE)
+# unrel <- read_table("/Dedicated/jmichaelson-wdata/lcasten/SPARK_ABCD_merge_v2/PCA/unrelated_samples.txt", col_names = FALSE)
 
 #### get PGS files ####
 files = list.files('/Dedicated/jmichaelson-wdata/lcasten/externalizing/data', 
                    pattern = 'all_score', recursive = TRUE)
 # files <- files[str_detect(files, pattern = 'SPARK_ABCD')]
 # files <- files[str_detect(files, pattern = 'human_evolution|custom_gene_sets')]
-files <- files[str_detect(files, pattern = 'cogPerf')]
+# files <- files[str_detect(files, pattern = 'cogPerf')]
+files = c("SPARK_ABCD.cogPerf.human_evolution_complement_ESPGSv2.all_score")
 
 pgs_list <- list()
 prsice_list = list()
@@ -29,7 +71,7 @@ for (f in files) {
   gs <- str_split(f, pattern = '[.]', simplify = TRUE)[,2]
 
   ##
-  filename <- str_c('/Dedicated/jmichaelson-wdata/lcasten/externalizing/data/', f)
+  filename <- str_c('/Dedicated/jmichaelson-wdata/lcasten/sli_wgs/prs/pathway_prs/', f)
   pgs <- read_table(file = filename,
                   show_col_types = FALSE)
   prsice <- read_table(file = str_replace_all(filename, pattern = 'all_score', replacement = 'prsice'),
@@ -53,7 +95,9 @@ for (f in files) {
     nm <- colnames(kg)[j]
     kg$PGS <- unname(unlist(kg[,colnames(kg)[j]]))
     dg$PGS <- unname(unlist(dg[,colnames(kg)[j]]))
-    mod <- lm(PGS ~ pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10, 
+    # mod <- lm(PGS ~ as.factor(superclass) + pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + pc11 + pc12 + pc13 + pc14 + pc15 + pc16 + pc17 + pc18 + pc19 + pc20, 
+              # data = kg)
+    mod <- lm(PGS ~ pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + pc11 + pc12 + pc13 + pc14 + pc15 + pc16 + pc17 + pc18 + pc19 + pc20, 
               data = kg)
     ##
     preds_kg <- predict(mod, newdata = kg)
