@@ -9,7 +9,8 @@ chrom_limits = read_table('manuscript/supplemental_materials/hg19.chrom.sizes', 
 names(chrom_limits) = c('#chrom', 'chrom_size')
 
 ## annotation coords
-outbed <- 'manuscript/supplemental_materials/HAQER.hg19.sorted_autosomes_non_overlapping.bed'
+# outbed <- 'manuscript/supplemental_materials/HAQER.hg19.sorted_autosomes_non_overlapping.bed'
+outbed <- 'manuscript/supplemental_materials/HAQER_conservative_set.hg19.bed'
 outbed_har <- 'manuscript/supplemental_materials/HAR.hg19.sorted_autosomes_non_overlapping.bed'
 outbed_rand <- 'manuscript/supplemental_materials/RAND.hg19.sorted_autosomes.bed'
 outbed_uce <- 'manuscript/supplemental_materials/UCE.hg19.sorted_autosomes.bed'
@@ -29,6 +30,7 @@ for(f in files) {
     ## make BED file coords
     tmp <- read_tsv(f) 
     tmp <- tmp %>% 
+        filter(p_value < 5e-4) %>%
         mutate(chromEnd = snp_position) %>%
         mutate(snp_position = snp_position - 1) %>%
         rename(`#chrom` = snp_chromosome, chromStart = snp_position) %>% 
@@ -85,7 +87,7 @@ names(chrom_limits) = c('#chrom', 'chrom_size')
 files = list.files('/wdata/lcasten/tools/ref_data/psychENCODE2/cell_type_eQTL', pattern = '.dat$', full.names = TRUE)
 
 outbed_rand <- 'manuscript/supplemental_materials/RAND.hg38.bed'
-outbed = 'manuscript/supplemental_materials/HAQER.hg38.sorted_autosomes.bed'
+outbed = 'manuscript/supplemental_materials/HAQER_conservative_set.hg38.bed'
 outbed_har <- 'manuscript/supplemental_materials/HAR.hg38.sorted_autosomes.bed'
 outbed_uce <- 'manuscript/supplemental_materials/UCE.hg38.bed'
 
@@ -179,6 +181,8 @@ for(f in files) {
 
 pre_scqtl <- bind_rows(res_list_pre) %>% 
     mutate(scQTL_type = 'developing_iPSC_neurons.Jerber-NatGen2021') %>% 
+    mutate(evo_annot = case_when(str_detect(evo_annot, 'HAQER') ~ 'HAQER',
+                                 TRUE ~ evo_annot)) %>%
     relocate(scQTL_type, .after = scQTL_set)
 
 ## adult scQTLs
@@ -199,6 +203,8 @@ for(f in files) {
 
 adult_scqtl <- bind_rows(res_list_adult) %>% 
     mutate(scQTL_type = 'adult_brain_post_mortem.Emani-Science2024') %>% 
+    mutate(evo_annot = case_when(str_detect(evo_annot, 'HAQER') ~ 'HAQER',
+                                 TRUE ~ evo_annot)) %>%
     relocate(scQTL_type, .after = scQTL_set)
 
 #########
@@ -248,7 +254,7 @@ p_post <- adult_scqtl %>%
     mutate(scQTL_set = str_replace_all(scQTL_set, pattern = '__', replacement = ' ')) %>%
     mutate(scQTL_set = factor(scQTL_set, levels = unique(scQTL_set))) %>% 
     drop_na() %>%
-    mutate(enrichment_p = ifelse(enrichment_p > 0.65, .65, enrichment_p)) %>% ## add a small constant value so they show up on the plot
+    mutate(enrichment_p = ifelse(enrichment_p > 0.85, .85, enrichment_p)) %>% ## add a small constant value so they show up on the plot
     ggplot(aes(x = -log10(enrichment_p), y = scQTL_set)) +
     geom_bar(stat = 'identity', aes(fill = evo_annot), position = 'dodge') +
     geom_vline(xintercept = -log10(0.05), color = 'red', linetype = 'dashed', size = 1.075) +
