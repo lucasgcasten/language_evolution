@@ -36,8 +36,10 @@ identical(data$IID, rownames(k)) ## identical order and elements of GRM rows wit
 ## ES-PGS selection test: accounting for relatedness
 #################################################################
 ## fit the GREML LMM: age ~ background_pgs + es_pgs (this will take a few minutes...)
+# data$sex_unknown = ifelse(data$molecular_sex == 'U', 1, 0)
+# data$sex_female <- ifelse(data$molecular_sex != 'U' & data$molecular_sex != 'M', 1, 0)
 lmm_mod <- lmm.aireml(Y = scale(data$age)[,1], 
-                      X = as.matrix(data[,c("int", "cp_pgs.HAQER", "cp_pgs.background", "cp_pgs.matched")]), 
+                      X = as.matrix(data[,c("int", "cp_pgs.HAQER", "cp_pgs.background", "cp_pgs.matched")]), ## , "sex_unknown", "sex_female", "lat", "long"
                       K = k)
 
 ## extract betas (intercept, cp_pgs.HAQER, cp_pgs.background)
@@ -54,7 +56,7 @@ pvals <- 2 * pt(-abs(t_stats), df = nrow(data) - length(betas))
 ## gather stats
 sel_results <- data.frame(
     y = rep('sample_age', times = length(betas)),
-    x = c("intercept", "cp_pgs.HAQER", "cp_pgs.background", "cp_pgs.matched"),
+    x = c("intercept", "cp_pgs.HAQER", "cp_pgs.background", "cp_pgs.matched"), ## , "sex_unknown", "sex_female", "lat", "long"
     beta = betas,
     se = se_betas,
     t_stat = t_stats,
@@ -90,12 +92,13 @@ p_sel <- data %>%
     pivot_longer(cols = matches('cp_pgs')) %>% 
     mutate(pgs = case_when(name == 'cp_pgs.HAQER' ~ 'HAQERs',
                            name == 'cp_pgs.background' ~ 'Background')) %>%
+    drop_na(pgs) %>%                           
     mutate(sel_haq_lab = sel_haq_lab,
            sel_bg_lab = sel_bg_lab) %>%
-    ggplot(aes(x = -1 * round(sample_age_GRM_adj), y = value, color = pgs)) +
+    ggplot(aes(x = -1 * sample_age, y = value, color = pgs)) +
     geom_smooth(method = 'lm', size = 1.5, alpha = .2) +
-    geom_text(aes(x = -8000, y = -3, label = sel_bg_lab), check_overlap = TRUE, size = 6, color = 'grey50') +
-    geom_text(aes(x = -8000, y = 1, label = sel_haq_lab), check_overlap = TRUE, size = 6, color = '#762776') +
+    geom_text(aes(x = -8000, y = -2.1, label = sel_bg_lab), check_overlap = TRUE, size = 6, color = 'grey50') +
+    geom_text(aes(x = -8000, y = .5, label = sel_haq_lab), check_overlap = TRUE, size = 6, color = '#762776') +
     xlab('Years ago') +
     ylab('CP-PGS') +
     scale_color_manual(values = c('grey70', "#762776")) +
@@ -119,72 +122,146 @@ p_sel %>%
 ## neanderthal ES-PGS
 ## ---------------------------------------------------
 cl <- c("#762776", "#e04468", "#dcc699") ## color palette (HAQER, HAR, RAND)
+
 ## read in PGS data
-df <- read_csv('manuscript/supplemental_materials/neanderthal_1000Genomes_raw_ES-PGS_data.csv') %>% 
-    filter(type != "EpiSLI") %>% ## drop EpiSLI samples 
-    mutate(cp_pgs.background = scale(cp_pgs.background)[,1],
-           cp_pgs.HAQER = scale(cp_pgs.HAQER)[,1])
+df <- read_csv("manuscript/supplemental_materials/AADR_1000_genomes_ES-PGS_data.csv") %>% 
+    ## add each group's N for figure
+    mutate(type = factor(type, levels = rev(c('Modern Europeans', 'Ancient Europeans', 'Neanderthals and Denisovans')))) %>% 
+    arrange(type) %>% 
+    group_by(type) %>% 
+    mutate(n = n(),
+           type = str_c(type, '\n(N = ', prettyNum(n, big.mark = ','), ')')) %>% 
+    ungroup() %>% 
+    mutate(type = ifelse(type == 'Neanderthals and Denisovans\n(N = 10)', 'Neanderthals and\nDenisovans (N = 10)', type)) %>%
+    mutate(type = factor(type, levels = unique(type)))
 
-## make density plots with neanderthals vs 1000 Genomes Europeans
-nean_id <- c('AltaiNea', 'Chagyrskaya-Phalanx', 'DenisovaPinky', 'Vindija33.19')
-tmp <- df %>% 
-    filter(IID %in% nean_id) %>% 
-    mutate(type = 'Neanderthals and Denisovan')
-kg_df <- df %>% 
-    filter(type == '1000 Genomes')
+## compare raw PGS across groups (ex. neanderthals vs modern humans) to look for trends
+res_haq <- broom::tidy(pairwise.t.test(x = df$cp_pgs.HAQER, g = df$type, p.adjustment.method = 'none')) %>% 
+    mutate(x = 'cp_pgs.HAQER') %>% 
+    relocate(x)
+res_bg <- broom::tidy(pairwise.t.test(x = df$cp_pgs.background, g = df$type)) %>% 
+    mutate(x = 'cp_pgs.background') %>% 
+    relocate(x)
+res_mt <- broom::tidy(pairwise.t.test(x = df$cp_pgs.matched, g = df$type)) %>% 
+    mutate(x = 'cp_pgs.matched') %>% 
+    relocate(x)
 
-p_nean_haq <- kg_df %>% 
-    mutate(type = 'Modern Europeans') %>%
-    ggplot(aes(x = cp_pgs.HAQER)) +
-    geom_density(aes(fill = type), alpha = 0.7) +
-    xlab('HAQER CP-PGS') +
-    ylab('Density') +
+## gather PGS group comparison stats and save
+pgs_sumstats <- df %>% 
+    pivot_longer(cols = matches('cp_pgs')) %>% 
+    group_by(name, type, n) %>% 
+    summarise(mean_pgs = mean(value),
+              median_pgs = median(value),
+              sd_pgs = sd(value)) %>% 
+    ungroup() %>% 
+    rename(x = name)
+
+tmp1 <- pgs_sumstats  %>% 
+    rename(group1 = type) %>% 
+    mutate(group1 = str_split(group1, pattern = '[\n]', simplify = TRUE)[,1])
+names(tmp1)[-c(1:2)] <- str_c("group1_", names(tmp1)[-c(1:2)])
+
+tmp2 <- pgs_sumstats  %>% 
+    rename(group2 = type) %>% 
+    mutate(group2 = str_split(group2, pattern = '[\n]', simplify = TRUE)[,1]) %>% 
+    mutate(group2 = ifelse(group2 == 'Neanderthals and', 'Neanderthals and Denisovans', group2))
+names(tmp2)[-c(1:2)] <- str_c("group2_", names(tmp2)[-c(1:2)])
+
+res_comp <- bind_rows(res_haq, res_bg, res_mt) %>% 
+    mutate(group1 = str_split(group1, pattern = '[\n]', simplify = TRUE)[,1],
+           group2 = str_split(group2, pattern = '[\n]', simplify = TRUE)[,1]) %>% 
+    mutate(group2 = ifelse(group2 == 'Neanderthals and', 'Neanderthals and Denisovans', group2))
+
+res_comp %>% 
+    inner_join(tmp1) %>% 
+    inner_join(tmp2) %>%
+    write_csv("manuscript/supplemental_materials/stats/AADR_HAQER_ES-PGS_polygenic_group_comparison_results.csv")
+
+## make 3 boxplots comparing neanderthals (AADR) vs ancient europeans (AADR) vs modern europeans (1000 Genomes) across 3 PGS' (HAQER, background, and matched)
+### HAQER pgs
+p_nean_haq <- df %>% 
+    ggplot(aes(x = type, y = cp_pgs.HAQER)) +
+    geom_violin(size = 1.5) +
+    geom_boxplot(aes(fill = type), size = 1.5, width = .3, alpha = .75) +
+    geom_hline(yintercept = mean(df$cp_pgs.HAQER), size = 1.075, color = 'red', linetype = 'dashed') +
+    xlab(NULL) +
+    ylab('HAQER CP-PGS') +
     theme_classic() +
     theme(axis.text = element_text(size = 12),
           axis.title = element_text(size = 14),
           strip.text = element_text(size = 14),
           legend.text = element_text(size = 12),
-          legend.position = 'bottom') +
-    geom_vline(data = tmp, aes(xintercept = cp_pgs.HAQER, color = type), size = 1, linetype = 'dashed') +
-    scale_color_manual(name = NULL, values = c("Neanderthals and Denisovan" = "black")) +
-    scale_fill_manual(name = NULL, values = c('Modern Europeans' = cl[1])) +
-    guides(fill = guide_legend(order = 1, override.aes = list(alpha = 0.7)),
-           color = guide_legend(order = 2, override.aes = list(size = 1.1, linetype = 'solid')))
+          legend.position = 'none') +
+    scale_fill_manual(name = NULL, values = viridis::viridis(3, option = "D")) +
+    ## add significance comparing neanderthals vs ancient europeans
+    geom_linerange(aes(xmin = 1, xmax = 2, y = 3.8), size = 1.075) +
+    geom_text(aes(x = 1.5, y = 3.85, label = "*"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    ## add significance comparing neanderthals vs modern europeans
+    geom_linerange(aes(xmin = 1, xmax = 3, y = 4.05), size = 1.075) +
+    geom_text(aes(x = 2, y = 4.1, label = "*"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
 
-p_nean_bg <- kg_df %>% 
-    mutate(type = 'Modern Europeans') %>%
-    ggplot(aes(x = cp_pgs.background)) +
-    geom_density(aes(fill = type), alpha = 0.7) +
-    xlab('Background CP-PGS') +
-    ylab('Density') +
+### background PGS
+p_bg_haq <- df %>% 
+    ggplot(aes(x = type, y = cp_pgs.background)) +
+    geom_violin(size = 1.5, width = 1.25) +
+    geom_boxplot(aes(fill = type), size = 1.1, width = .2, alpha = .75) +
+    geom_hline(yintercept = mean(df$cp_pgs.background), size = 1.075, color = 'red', linetype = 'dashed') +
+    xlab(NULL) +
+    ylab('Background CP-PGS') +
     theme_classic() +
     theme(axis.text = element_text(size = 12),
           axis.title = element_text(size = 14),
           strip.text = element_text(size = 14),
           legend.text = element_text(size = 12),
-          legend.position = 'bottom') +
-    geom_vline(data = tmp, aes(xintercept = cp_pgs.background, color = type), size = 1, linetype = 'dashed') +
-    scale_color_manual(name = NULL, values = c("Neanderthals and Denisovan" = "black")) +
-    scale_fill_manual(name = NULL, values = c('Modern Europeans' = 'grey75')) +
-    guides(fill = guide_legend(order = 1, override.aes = list(alpha = 0.7)),
-           color = guide_legend(order = 2, override.aes = list(size = 1.1, linetype = 'solid')))
+          legend.position = 'none') +
+    scale_fill_manual(name = NULL, values = viridis::viridis(3, option = "D")) +
+    ## add significance comparing neanderthals vs ancient europeans
+    geom_linerange(aes(xmin = 1, xmax = 2, y = 3.95), size = 1.075) +
+    geom_text(aes(x = 1.5, y = 4, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    ## add significance comparing neanderthals vs modern europeans
+    geom_linerange(aes(xmin = 1, xmax = 3, y = 4.25), size = 1.075) +
+    geom_text(aes(x = 2, y = 4.3, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    ## add significance comparing ancient europeans vs modern europeans
+    geom_linerange(aes(xmin = 2, xmax = 3, y = 4.55), size = 1.075) +
+    geom_text(aes(x = 2.5, y = 4.6, label = "***"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
 
-## save density plots
-p_nean_bg %>% 
+### matched control PGS
+p_mt_haq <- df %>% 
+    ggplot(aes(x = type, y = cp_pgs.matched)) +
+    geom_violin(size = 1.5) +
+    geom_boxplot(aes(fill = type), size = 1.5, width = .2, alpha = .75) +
+    geom_hline(yintercept = mean(df$cp_pgs.matched), size = 1.075, color = 'red', linetype = 'dashed') +
+    xlab(NULL) +
+    ylab('Matched CP-PGS') +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          legend.position = 'none') +
+    scale_fill_manual(name = NULL, values = viridis::viridis(3, option = "D"))
+
+## save plots
+p_bg_haq %>% 
     ggsave(filename = 'manuscript/figures/AADR_neanderthal_background_ES-PGS.png',
            device = 'png', dpi = 300, bg = 'white',
-           units = 'in', width = 5, height = 5)
+           units = 'in', width = 6, height = 6)
 p_nean_haq %>% 
     ggsave(filename = 'manuscript/figures/AADR_neanderthal_HAQER_ES-PGS.png',
            device = 'png', dpi = 300, bg = 'white',
-           units = 'in', width = 5, height = 5)
-
+           units = 'in', width = 6, height = 6)
+p_mt_haq %>% 
+    ggsave(filename = 'manuscript/figures/AADR_neanderthal_matched_ES-PGS.png',
+           device = 'png', dpi = 300, bg = 'white',
+           units = 'in', width = 6, height = 6)
 
 ###################################
 ## save plot objects to merge later
-p_nean_bg %>% 
+p_bg_haq %>% 
     write_rds('manuscript/figures/R_plot_objects/AADR_background-CP-PGS_nean_dist.rds')
 p_nean_haq %>% 
     write_rds('manuscript/figures/R_plot_objects/AADR_HAQER-CP-PGS_nean_dist.rds')
+p_mt_haq %>% 
+    write_rds('manuscript/figures/R_plot_objects/AADR_matched-CP-PGS_nean_dist.rds')    
 p_sel %>% 
     write_rds('manuscript/figures/R_plot_objects/AADR_HAQER-CP-PGS_selection.rds')
