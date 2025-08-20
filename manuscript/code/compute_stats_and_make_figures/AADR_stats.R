@@ -97,8 +97,8 @@ p_sel <- data %>%
            sel_bg_lab = sel_bg_lab) %>%
     ggplot(aes(x = -1 * sample_age, y = value, color = pgs)) +
     geom_smooth(method = 'lm', size = 1.5, alpha = .2) +
-    geom_text(aes(x = -8000, y = -2.1, label = sel_bg_lab), check_overlap = TRUE, size = 6, color = 'grey50') +
-    geom_text(aes(x = -8000, y = .5, label = sel_haq_lab), check_overlap = TRUE, size = 6, color = '#762776') +
+    geom_text(aes(x = -8000, y = -2.1, label = sel_bg_lab), check_overlap = TRUE, size = 4.25, color = 'grey50') +
+    geom_text(aes(x = -8000, y = .5, label = sel_haq_lab), check_overlap = TRUE, size = 4.25, color = '#762776') +
     xlab('Years ago') +
     ylab('CP-PGS') +
     scale_color_manual(values = c('grey70', "#762776")) +

@@ -1,0 +1,3 @@
+y,x,component,estimate,std_error,z_value,p_value,n
+language_diagnosis_count_self_report,cp_pgs.HAQER_v2,zero,-2.1409843439827707,0.722315281893454,-2.964057936543255,0.0030361111891313154,713
+language_diagnosis_count_self_report,cp_pgs.HAQER_v2,count,-0.43289168895603886,0.09846973419214976,-4.396190286360598,1.1016736490783311e-5,713

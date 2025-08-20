@@ -8,9 +8,65 @@ spark_df <- read_csv('manuscript/supplemental_materials/SPARK_data.csv')
 ####################
 ## ES-PGS analysis
 ####################
+## stats for self-reported language diagnosis count (language impairment + dyslexia + stutter + ...)
+### get number of language related diagoses for everyone
+spark_df$lang_dx_count <- spark_df$dx_lang_impairment + spark_df$dx_hearing_impairment + spark_df$dx_speech_impediment + spark_df$dx_speech_stutter + spark_df$dx_dyslexia
+
+n_self_report_lang_dx <- nrow(spark_df[spark_df$asd == FALSE & is.na(spark_df$lang_dx_count) == FALSE & is.na(spark_df$cp_pgs.background_HAQER_v2) == FALSE,])
+
+### check dispersion so we can select correct model
+var(spark_df$lang_dx_count[spark_df$asd == FALSE], na.rm = TRUE) > mean(spark_df$lang_dx_count[spark_df$asd == FALSE], na.rm = TRUE)
+
+### fit zero inflated regression models to predict number of language diagnoses
+m_dx_null <- pscl::zeroinfl(lang_dx_count ~ cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5, 
+                            data = spark_df[spark_df$asd == FALSE,], 
+                            dist = 'poisson')
+m_dx_alt <- pscl::zeroinfl(lang_dx_count ~ cp_pgs.HAQER_v2 + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5, 
+                           data = spark_df[spark_df$asd == FALSE,], 
+                           dist = 'poisson')
+
+### gather model stats
+mod_sum <- summary(m_dx_alt)
+
+count_results <- data.frame(
+  component = "count",
+  variable = rownames(mod_sum$coefficients$count),
+  estimate = mod_sum$coefficients$count[,1],
+  std_error = mod_sum$coefficients$count[,2],
+  z_value = mod_sum$coefficients$count[,3],
+  p_value = mod_sum$coefficients$count[,4],
+  stringsAsFactors = FALSE
+  )
+zero_results <- data.frame(
+  component = "zero",
+  variable = rownames(mod_sum$coefficients$zero),
+  estimate = mod_sum$coefficients$zero[,1],
+  std_error = mod_sum$coefficients$zero[,2],
+  z_value = mod_sum$coefficients$zero[,3],
+  p_value = mod_sum$coefficients$zero[,4],
+  stringsAsFactors = FALSE
+  )
+
+### save stats
+broom::tidy(lmtest::lrtest(m_dx_null, m_dx_alt)) %>%
+    drop_na() %>%
+    select(-df) %>%
+    rename(df = X.Df) %>% 
+    rename(model = term) %>% 
+    mutate(added_x = 'cp_pgs.HAQER_v2') %>% 
+    write_csv("manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations_self_reported_language_diagnosis_LRT.csv")
+bind_rows(zero_results, count_results) %>% 
+    as_tibble() %>% 
+    filter(variable == 'cp_pgs.HAQER_v2') %>% 
+    mutate(y = 'language_diagnosis_count_self_report') %>% 
+    rename(x = variable) %>%
+    relocate(y, x, component) %>% 
+    mutate(n = n_self_report_lang_dx) %>% 
+    write_csv('manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations_self_reported_language_diagnosis.csv')
+
 ## SCQ stats for HAQERs
 n_mod <- spark_df %>% 
-    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, matches("^SCQ_q"), cp_pgs.HAQER_v2, cp_pgs.background_HAQER, cp_pgs.matched_control_HAQER_v2) %>% 
+    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, matches("^SCQ_q"), cp_pgs.HAQER_v2, cp_pgs.background_HAQER, cp_pgs.matched_control_HAQER_v2, str_c('pc', 1:5)) %>% 
     drop_na(SCQ_final_score, cp_pgs.HAQER_v2) %>% 
     pivot_longer(cols = matches('SCQ_q')) %>% 
     drop_na(value) %>%
@@ -20,42 +76,20 @@ n_mod <- spark_df %>%
     mutate(value = str_c(as.logical(value), '_n')) %>% 
     pivot_wider(names_from = 'value', values_from = 'n')
 rep_scq_stat_es_pgs <- spark_df %>% 
-    select(IID, matches('SCQ_'), matches("HAQER_v2")) %>% 
+    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, SCQ_q01_phrases, matches("HAQER_v2"), matches('pc')) %>% 
     drop_na(SCQ_final_score, cp_pgs.HAQER_v2) %>% 
     pivot_longer(cols = matches('^SCQ_q')) %>%
     group_by(name) %>% 
-    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + SCQ_age_at_eval_years + as.factor(SCQ_sex), data = ., family = 'binomial'))) %>% 
+    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + SCQ_age_at_eval_years + as.factor(SCQ_sex) + pc1 + pc2 + pc3 + pc4 + pc5, data = ., family = 'binomial'))) %>% 
     unnest(res) %>% 
     filter(term == 'cp_pgs.HAQER_v2') %>% 
-    mutate(pheno = str_c('SPARK_SCQ_', name),
-           x = 'cp_pgs.HAQER_v2',
-           fdr = p.adjust(p.value, method = 'fdr')) %>% 
+    mutate(pheno = str_c(name),
+           x = 'cp_pgs.HAQER_v2'
+           ) %>% 
     inner_join(n_mod) %>%
     relocate(pheno, x) %>%  
-    select(-c(term, name))
-
-## make forestplot
-p_scq_rep <- rep_scq_stat_es_pgs %>% 
-    mutate(pheno = str_remove_all(pheno, 'SPARK_SCQ_SCQ_')) %>%
-    arrange(p.value) %>% 
-    head(n = 5) %>%
-    arrange(estimate) %>% 
-    mutate(pheno = factor(pheno, levels = unique(pheno))) %>%
-    ggplot(aes(x = estimate, y = pheno)) +
-    geom_point(size = 4) +
-    geom_linerange(aes(xmin = estimate - 1.96 * std.error, xmax = estimate + 1.96 * std.error), size = 1.3) +
-    geom_vline(xintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
-    xlab('HAQER CP-PGS Beta (95% CI)') +
-    ylab('SCQ item') +
-    theme_classic() +  
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14, face = 'bold'),
-          legend.text = element_text(size = 12),
-          legend.title = element_text(size = 14))
-p_scq_rep %>%
-    ggsave(filename = 'manuscript/figures/SPARK_SCQ_validation_core_language_HAQER_ES-PGS.png', 
-           device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 5)
+    select(-c(term, name)) %>% 
+    mutate(n = FALSE_n + TRUE_n)
 
 ## IQ ES-PGS stats
 iq_cnt <- spark_df %>%
@@ -67,12 +101,10 @@ iq_cnt <- spark_df %>%
     count() %>% 
     ungroup()
 spark_iq_es_pgs_res <- spark_df %>%
-    filter(asd == TRUE) %>%
-    # filter(age_years >= 4) %>%
     drop_na(cp_pgs.HAQER_v2, cp_pgs.background_HAQER, sex, age_years) %>% 
     pivot_longer(cols = matches('iq_score')) %>% 
     group_by(name) %>% 
-    do(res = broom::tidy(lm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER + as.factor(sex) + age_years, data = .))) %>% 
+    do(res = broom::tidy(lm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER + as.factor(sex) + age_years + pc1 + pc2 + pc3 + pc4 + pc5, data = .))) %>% 
     unnest(res) %>% 
     filter(term == 'cp_pgs.HAQER_v2') %>% 
     arrange(p.value) %>% 
@@ -128,7 +160,8 @@ bind_rows(rep_scq_stat_es_pgs, spark_iq_es_pgs_res) %>%
 ## diagnosis results
 dx_cnt_rev <- spark_df %>%
     filter(asd == TRUE) %>%
-    # filter(age_years >= 5) %>%
+    filter(age_years >= 3) %>%
+    select(-c(199:ncol(spark_df))) %>% ## drop self reported language diagnosis
     drop_na(haqer_rare_variant_reversion_count, matches('dx')) %>%
     pivot_longer(cols = matches('dx_')) %>% 
     group_by(name, value) %>% 
@@ -143,7 +176,7 @@ dx_cnt_rev <- spark_df %>%
 
 reversions_spark_dx_res <- spark_df %>%
     filter(asd == TRUE) %>%
-    # filter(age_years >= 5) %>%
+    filter(age_years >= 3) %>%
     drop_na(haqer_rare_variant_reversion_count, sex, age_years) %>%
     mutate(sex_female = ifelse(sex == 'Female', 1, 0)) %>%
     pivot_longer(cols = matches('dx_')) %>% 
@@ -267,6 +300,8 @@ p_rev_forest <- bind_rows(reversions_spark_dx_res, reversions_dev_res) %>%
     arrange(pheno) %>% 
     mutate(pheno_clean = factor(pheno_clean, levels = unique(pheno_clean))) %>%
     mutate(x_clean = factor(x_clean, levels = rev(c('HAQER rare reversions', 'HAR rare reversions', 'RAND rare reversions')))) %>%
+    arrange(type) %>% 
+    mutate(type = factor(type, levels = rev(unique(type)))) %>%
     mutate(sig = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
     ggplot(aes(x = beta, y = pheno_clean, color = x_clean)) +
     geom_linerange(aes(xmin = beta - 1.96 * std.error, xmax = beta + 1.96 * std.error), size = 1.1, position = position_dodge(.45)) +

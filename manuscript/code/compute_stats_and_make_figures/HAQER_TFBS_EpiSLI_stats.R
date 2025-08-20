@@ -198,7 +198,6 @@ print(n)
 s = foreach(i=1:n) %dopar% tfdiff(sref,salt,pwm[[i]])
 names(s) = names(pwm)[1:n]
 write_rds(s, '/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas_v2.rds')
-# s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas.rds')
 s <- read_rds('/wdata/lcasten/sli_wgs/HCA_reversion/data/TFBS_rare_variant_PWM_deltas_v2.rds')
 
 score_ref = do.call('rbind',lapply(s,function(x) x[[1]]))
@@ -456,11 +455,6 @@ add_york_stats <- function(fit, x_pos = "topleft", y_pos = NULL) {
 }
 
 ##
-cor.test(-1*betas[,4],cfl_random[,1])
-cor.test(-1*betas[,5],cfl_haq[,1])
-cor.test(-1*betas[,6],cfl_har[,1])
-
-##
 res_r = york_regression(-1*betas[,4],cfl_random[,1],beta_se[,4],cfl_random[,2])
 res_haq = york_regression(-1*betas[,5],cfl_haq[,1],beta_se[,5],cfl_haq[,2])
 res_har = york_regression(-1*betas[,6],cfl_har[,1],beta_se[,6],cfl_har[,2])
@@ -519,21 +513,21 @@ cxl = 1.5
 ## add HAQER panel
 plot(-1*betas[,5],cfl_haq[,1],
 	xlim=xrg,ylim=yrg,cex=res_haq$weights/median(res_haq$weights),col=pt_col,cex.lab=cxl,
-	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association",main="HAQERs", cex.main = 1.5, font.main = 2)
+	xlab="Hominin gained motif integrity",ylab="Language-motif integrity association",main="HAQERs", cex.main = 1.5, font.main = 2)
 pt_error(-1*betas[,5],cfl_haq[,1],beta_se[,5],cfl_haq[,2])
 add_york_line(res_haq,xlim=xrg,line_col=haq_col,ci_col=rgb(0.27,0.51,0.71,0.2))
 add_york_stats_size(res_haq, size = 1.1)
 ## add HAR panel
 plot(-1*betas[,6],cfl_har[,1],
 	xlim=xrg,ylim=yrg,cex=res_har$weights/median(res_har$weights),col=pt_col,cex.lab=cxl,
-	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association",main="HARs", cex.main = 1.5, font.main = 2)
+	xlab="Hominin gained motif integrity",ylab="Language-motif integrity association",main="HARs", cex.main = 1.5, font.main = 2)
 pt_error(-1*betas[,6],cfl_har[,1],beta_se[,6],cfl_har[,2])
 add_york_line(res_har,xlim=xrg,line_col='grey',ci_col=rgb(0.2,0.2,0.2,0.2))
 add_york_stats_size(res_har, size = 1.1)
 ## add RAND panel
 plot(-1*betas[,4],cfl_random[,1],
 	xlim=xrg,ylim=yrg,cex=res_r$weights/median(res_r$weights),col=pt_col,cex.lab=cxl,
-	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association",main="RAND", cex.main = 1.5, font.main = 2)
+	xlab="Hominin gained motif integrity",ylab="Language-motif integrity association",main="RAND", cex.main = 1.5, font.main = 2)
 pt_error(-1*betas[,4],cfl_random[,1],beta_se[,4],cfl_random[,2])
 add_york_line(res_r,xlim=xrg,line_col='grey',ci_col=rgb(0.2,0.2,0.2,0.2))
 add_york_stats_size(res_r, size = 1.1)
@@ -558,7 +552,7 @@ top_per_type <- data.frame(gene = names(sig), stat = -1*betas[,5]/beta_se[,5], s
 sig = sig == TRUE & names(sig) %in% top_per_type$gene  
 ## make figure
 plot(x1,y1,
-	xlab="Human/Neanderthal gained motif integrity",ylab="Language-motif integrity association", main="HAQERs", cex.main = 1.5, font.main = 2,
+	xlab="Hominin gained motif integrity",ylab="Language-motif integrity association", main="HAQERs", cex.main = 1.5, font.main = 2,
 	xlim=xrg,ylim=yrg,cex = 0,col=tfcols, cex.lab = 1.25, type = 'n',
 	pch=ifelse(sig,16,1))
 rect(xrg[1] - .0375, yrg[1] - .025, 0, yrg[2] + .025, col = "grey95", border = NA)  # Left half
