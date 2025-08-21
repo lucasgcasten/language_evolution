@@ -1,317 +1,174 @@
 library(tidyverse)
 
 ## read in ABCD imaging data and ES-PGS
-abcd_df <- read_csv('manuscript/supplemental_materials/ABCD_brain_imaging_data.csv')
+abcd_df <- read_csv('manuscript/supplemental_materials/ABCD_data.csv')
 
-##############################
-## ABCD ICV analysis
-##############################
+######################################################
+## ABCD verbal learning and cognitive score analysis
+######################################################
+abcd_df_cog <- abcd_df %>% 
+    select(IID, ravlt_age, sex, ravlt_total_learning, nihtbx_cryst_fc, nihtbx_fluidcomp_fc, nihtbx_reading_fc, nihtbx_picvocab_fc, matches("HAQER_v2"), matches('pc'))
+
+abcd_cog_espgs_stats <- abcd_df_cog %>%
+    rename(age = ravlt_age) %>%
+    pivot_longer(cols = matches("ravlt|nihtbx")) %>% 
+    drop_na() %>%
+    group_by(name) %>% 
+    mutate(n = n()) %>% 
+    group_by(name, n) %>%
+    do(res = broom::tidy(lm(value ~ age + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5 + cp_pgs.HAQER_v2 + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2, data = .))) %>%
+    unnest(res) %>% 
+    filter(term == 'cp_pgs.HAQER_v2') %>% 
+    arrange(p.value) %>% 
+    rename(x = term, beta = estimate, pheno = name) %>%
+    relocate(n, .after = p.value)
+
+#################################################
+## ABCD cephalo-pelvic disproportion analysis
+#################################################
+## compute cephalo-pelvic disproportion using residualized ICV (obstetric risk proxy)
+abcd_df_cpd <- abcd_df %>% 
+    select(IID, mri_age, sex, smri_vol_scs_intracranialv, bmi, anthroheightcalc, anthroweight1lb, anthro_waist_cm, cp_pgs.HAQER_v2, cp_pgs.background_HAQER_v2, cp_pgs.matched_control_HAQER_v2, str_c('pc', 1:5), matches('fsqc'), csection, birth_weight, mom_age_birth, bio_mom, preeclampsia_toxemia, premature_weeks) %>% 
+    drop_na(smri_vol_scs_intracranialv, fsqc_qc) %>% 
+    group_by(sex) %>%
+    mutate(smri_vol_scs_intracranialv2 = qnorm((rank(smri_vol_scs_intracranialv,na.last="keep")-0.5)/sum(!is.na(smri_vol_scs_intracranialv))),
+           resid_vol = scale(resid(lm(smri_vol_scs_intracranialv2 ~ mri_age + pc1 + pc2 + pc3 + pc4 + pc5 + anthro_waist_cm + anthroheightcalc + anthroweight1lb + fsqc_nrev + fsqc_revdisp + fsqc_qc + fsqc_qu_motion + fsqc_qu_pialover + fsqc_qu_wmunder + fsqc_qu_inhomogeneity + fsqc_qu_artifact)))[,1],
+           obstetric_risk = ifelse(resid_vol > 1.96, 1, 0)) %>% 
+    drop_na()
+
 ## sample size
-icv_n <- abcd_df %>% 
-    select(IID, intracranial_vol_resid, cp_pgs.HAQER, cp_pgs.background_HAQER) %>% 
-    drop_na() %>% 
-    nrow(.)
-## run ES-PGS
-abcd_icv_es_pgs_stats <- broom::tidy(lm(intracranial_vol_resid ~ cp_pgs.HAQER + cp_pgs.background_HAQER, data = abcd_df)) %>% 
+n_FALSE <- sum(abcd_df_cpd$obstetric_risk == 0)
+n_TRUE <- sum(abcd_df_cpd$obstetric_risk == 1)
+
+
+## run ES-PGS on cephalo-pelvic disproportion
+abcd_cpd_es_pgs_stats <- broom::tidy(glm(obstetric_risk ~ cp_pgs.HAQER_v2 + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2, data = abcd_df_cpd)) %>% 
     filter(term != '(Intercept)') %>% 
     rename(x = term, beta = estimate) %>%
-    mutate(pheno = 'intracranial_volume',
-           n = icv_n) %>% 
+    mutate(pheno = 'cephalopelvic_disproportion',
+           n = n_FALSE + n_TRUE,
+           n_TRUE = n_TRUE,
+           n_FALSE = n_FALSE) %>% 
     relocate(pheno)
 
 ## make labels for figure
-icv_haq_lab = abcd_icv_es_pgs_stats %>% 
-    filter(x == 'cp_pgs.HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
-icv_bg_lab = abcd_icv_es_pgs_stats %>% 
-    filter(x == 'cp_pgs.background_HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+res_obs <- abcd_cpd_es_pgs_stats %>% 
+    mutate(lab = str_c('Beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
 
-## make figure
-p_abcd_icv <- abcd_df %>% 
-    select(IID, intracranial_vol_resid, cp_pgs.HAQER, cp_pgs.background_HAQER) %>% 
-    drop_na() %>% 
-    mutate(icv_haq_lab = icv_haq_lab$lab,
-           icv_bg_lab = icv_bg_lab$lab) %>%
-    pivot_longer(cols = matches('cp_pgs'), names_to = 'x') %>% 
-    mutate(x = case_when(x == 'cp_pgs.HAQER' ~ 'HAQERs',
-                         x == 'cp_pgs.background_HAQER' ~ 'Background')) %>%
-    ggplot(aes(x = intracranial_vol_resid, y = value, color = x)) +
-    geom_smooth(method = 'lm', size = 1.5) +
-    geom_text(aes(x = -.1, y = .3, label = icv_bg_lab), check_overlap = TRUE, size = 4, color = 'grey50') +
-    geom_text(aes(x = 1, y = -.2, label = icv_haq_lab), check_overlap = TRUE, size = 4, color = '#762776') +
-    xlab('Intracranial volume') +
-    ylab('CP-PGS') +
-    scale_color_manual(values = c('grey75', "#762776")) +
-    theme_classic() +
-    labs(color = NULL) +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
-          legend.position = 'bottom')
-## save figure
-p_abcd_icv %>% 
-    ggsave(filename = 'manuscript/figures/ABCD_ICV_HAQER_ES-PGS.png',
-           device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 5)
+p_haq <- abcd_df_cpd %>% 
+    mutate(obstetric_risk = case_when(obstetric_risk == 1 ~ 'High risk',
+                                      obstetric_risk == 0 ~ 'Typical',
+                                      TRUE ~ NA_character_)) %>%
+    group_by(obstetric_risk) %>% 
+    mutate(n = n()) %>% 
+    ungroup() %>% 
+    mutate(obstetric_risk = str_c(obstetric_risk, '\nN = ', prettyNum(n, big.mark = ','))) %>% 
+    arrange(desc(obstetric_risk)) %>%
+    mutate(obstetric_risk = factor(obstetric_risk, levels = unique(obstetric_risk))) %>%
+    ggplot(aes(x = obstetric_risk, y = cp_pgs.HAQER_v2)) +
+    geom_violin(size = 1.4) +
+    geom_boxplot(aes(fill = obstetric_risk), width = .3, alpha = .8, size = 1.4) +
+    xlab("Cephalopelvic disproportion") +
+    ylab("HAQER CP-PGS") +
+    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    scale_fill_manual(values = c('grey70', 'chocolate1')) +
+    theme_classic(base_size = 18) +
+    theme(legend.position = 'none') +
+    geom_text(aes(x = 1.5, y = 3.75, label = res_obs$lab[res_obs$x == 'cp_pgs.HAQER_v2']), check_overlap = TRUE, size = 5)
 
-##############################
-## ABCD brain growth analysis
-##############################
-## sample size
-icv_n <- abcd_df %>% 
-    select(IID, intracranial_growth_resid, cp_pgs.HAQER, cp_pgs.background_HAQER) %>% 
-    drop_na() %>% 
-    nrow(.)
-## run ES-PGS
-abcd_icv_growth_es_pgs_stats <- broom::tidy(lm(intracranial_growth_resid ~ cp_pgs.HAQER + cp_pgs.background_HAQER, data = abcd_df)) %>% 
-    filter(term != '(Intercept)') %>% 
-    rename(x = term, beta = estimate) %>%
-    mutate(pheno = 'intracranial_growth_adolescence',
-           n = icv_n) %>% 
+p_bg <- abcd_df_cpd %>% 
+    mutate(obstetric_risk = case_when(obstetric_risk == 1 ~ 'High risk',
+                                      obstetric_risk == 0 ~ 'Typical',
+                                      TRUE ~ NA_character_)) %>%
+    group_by(obstetric_risk) %>% 
+    mutate(n = n()) %>% 
+    ungroup() %>% 
+    mutate(obstetric_risk = str_c(obstetric_risk, '\nN = ', prettyNum(n, big.mark = ','))) %>% 
+    arrange(desc(obstetric_risk)) %>%
+    mutate(obstetric_risk = factor(obstetric_risk, levels = unique(obstetric_risk))) %>%
+    ggplot(aes(x = obstetric_risk, y = cp_pgs.background_HAQER_v2)) +
+    geom_violin(size = 1.4) +
+    geom_boxplot(aes(fill = obstetric_risk), width = .3, alpha = .8, size = 1.4) +
+    xlab("Cephalopelvic disproportion") +
+    ylab("Background CP-PGS") +
+    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    scale_fill_manual(values = c('grey70', 'chocolate1')) +
+    theme_classic(base_size = 18) +
+    theme(legend.position = 'none') +
+    geom_text(aes(x = 1.5, y = 3.75, label = res_obs$lab[res_obs$x == 'cp_pgs.background_HAQER_v2']), check_overlap = TRUE, size = 5)
+
+p_con <- abcd_df_cpd %>% 
+    mutate(obstetric_risk = case_when(obstetric_risk == 1 ~ 'High risk',
+                                      obstetric_risk == 0 ~ 'Typical',
+                                      TRUE ~ NA_character_)) %>%
+    group_by(obstetric_risk) %>% 
+    mutate(n = n()) %>% 
+    ungroup() %>% 
+    mutate(obstetric_risk = str_c(obstetric_risk, '\nN = ', prettyNum(n, big.mark = ','))) %>% 
+    arrange(desc(obstetric_risk)) %>%
+    mutate(obstetric_risk = factor(obstetric_risk, levels = unique(obstetric_risk))) %>%
+    ggplot(aes(x = obstetric_risk, y = cp_pgs.matched_control_HAQER_v2)) +
+    geom_violin(size = 1.4) +
+    geom_boxplot(aes(fill = obstetric_risk), width = .3, alpha = .8, size = 1.4) +
+    xlab("Cephalopelvic disproportion") +
+    ylab("Matched CP-PGS") +
+    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    scale_fill_manual(values = c('grey70', 'chocolate1')) +
+    theme_classic(base_size = 18) +
+    theme(legend.position = 'none') +
+    geom_text(aes(x = 1.5, y = 3.75, label = res_obs$lab[res_obs$x == 'cp_pgs.matched_control_HAQER_v2']), check_overlap = TRUE, size = 5)
+
+
+####################################################################
+## link cephalopelvic disproportion to c-sections and birth weight
+####################################################################
+## csection ~ cephalopelvic disproportion + ...
+n_FALSE = sum(abcd_df_cpd$csection == 0)
+n_TRUE = sum(abcd_df_cpd$csection == 1)
+
+abcd_csection_cpd_stats <- broom::tidy(glm(csection ~ as.factor(obstetric_risk) + pc1 + pc2 + pc3 + pc4 + pc5 + as.factor(sex) + mri_age + premature_weeks + as.factor(preeclampsia_toxemia) + as.factor(bio_mom), data = abcd_df_cpd, family = 'binomial')) %>% 
+    filter(term == 'as.factor(obstetric_risk)1') %>% 
+    rename(beta = estimate, x = term) %>%
+    mutate(x = 'cephalopelvic_disproportion',
+           pheno = 'csection',
+           n = n_FALSE + n_TRUE,
+           n_TRUE = n_TRUE,
+           n_FALSE = n_FALSE) %>% 
     relocate(pheno)
 
-## make labels for figure
-icv_haq_lab = abcd_icv_growth_es_pgs_stats %>% 
-    filter(x == 'cp_pgs.HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
-icv_bg_lab = abcd_icv_growth_es_pgs_stats %>% 
-    filter(x == 'cp_pgs.background_HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+## birth weight ~ cephalopelvic disproportion + ...
+n <- nrow(abcd_df_cpd)
+abcd_bw_cpd_stats <- broom::tidy(lm(birth_weight ~ as.factor(obstetric_risk) + pc1 + pc2 + pc3 + pc4 + pc5 + as.factor(sex) + mri_age + premature_weeks + as.factor(preeclampsia_toxemia) + as.factor(bio_mom) + as.factor(csection), data = abcd_df_cpd)) %>%
+    filter(term == 'as.factor(obstetric_risk)1') %>% 
+    rename(beta = estimate, x = term) %>%
+    mutate(x = 'cephalopelvic_disproportion',
+           pheno = 'birth_weight',
+           n = n) %>% 
+    relocate(pheno)
 
-## make figure
-p_abcd_icv_growth <- abcd_df %>% 
-    select(IID, intracranial_growth_resid, cp_pgs.HAQER, cp_pgs.background_HAQER) %>% 
-    drop_na() %>% 
-    mutate(icv_haq_lab = icv_haq_lab$lab,
-           icv_bg_lab = icv_bg_lab$lab) %>%
-    pivot_longer(cols = matches('cp_pgs'), names_to = 'x') %>% 
-    mutate(x = case_when(x == 'cp_pgs.HAQER' ~ 'HAQERs',
-                         x == 'cp_pgs.background_HAQER' ~ 'Background')) %>%
-    ggplot(aes(x = intracranial_growth_resid, y = value, color = x)) +
-    geom_smooth(method = 'lm', size = 1.5) +
-    geom_text(aes(x = -.1, y = .25, label = icv_bg_lab), check_overlap = TRUE, size = 4, color = 'grey50') +
-    geom_text(aes(x = .5, y = -.15, label = icv_haq_lab), check_overlap = TRUE, size = 4, color = '#762776') +
-    xlab('Postnatal intracranial growth') +
-    ylab('CP-PGS') +
-    scale_color_manual(values = c('grey75', "#762776")) +
-    theme_classic() +
-    labs(color = NULL) +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
-          legend.position = 'bottom')
-## save figure
-p_abcd_icv_growth %>% 
-    ggsave(filename = 'manuscript/figures/ABCD_ICV_postnatal_growth_HAQER_ES-PGS.png',
+## save figures
+p_haq %>% 
+    ggsave(filename = 'manuscript/figures/ABCD_cephalopelvic_disproportion_HAQER_ES-PGS.png',
            device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 5)
+           units = 'in', width = 6, height = 6)
 
-#################################################################
-## sibling birth weight differences vs HAQER CP-PGS difference
-#################################################################
-abcd_df <- read_csv('manuscript/supplemental_materials/ABCD_sibling_birth_phenotypes_long.csv') %>% 
-    filter(pheno == 'bw')
-n_sib_bw <- nrow(abcd_df)
-abcd_sib_bw_es_pgs_res <- broom::tidy(lm(sib_diff ~ sib_diff_cp_pgs.HAQER + sib_diff_cp_pgs.background_HAQER + age_diff + premature_diff + as.factor(sex_female_diff), data = abcd_df)) %>% 
-    filter(term != '(Intercept)') %>% 
-    mutate(pheno = 'sibling_difference_in_birth_weight',
-           n = n_sib_bw) %>%
-    rename(x = term) %>% 
-    relocate(pheno) %>% 
-    rename(beta = estimate)
-## scatterplot with just HAQER CP-PGS
-abcd_sib_bw_lab <- abcd_sib_bw_es_pgs_res %>%
-    filter(x == 'sib_diff_cp_pgs.HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nN = ', n, ' sibling pairs'))
-p_sib_bw <- abcd_df %>% 
-    mutate(sib_diff_resid = scale(resid(lm(sib_diff ~  sib_diff_cp_pgs.background_HAQER + age_diff + premature_diff + as.factor(sex_female_diff))))[,1]) %>% 
-    mutate(abcd_sib_bw_lab = abcd_sib_bw_lab$lab) %>%
-    ggplot(aes(x = sib_diff_resid, y = sib_diff_cp_pgs.HAQER)) +
-    geom_point(size = 0.5, color = "#762776") +
-    geom_smooth(method = 'lm', size = 1.5, color = "#762776") +
-    geom_text(aes(x = 0, y = 3, label = abcd_sib_bw_lab), check_overlap = TRUE, size = 4, color = "#762776") +
-    xlab('Sib. difference in birth weight') +
-    ylab('Sib. difference in HAQER CP-PGS') +
-    theme_classic() +
-    labs(color = NULL) +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
-          legend.position = 'bottom')
-p_sib_bw %>% 
-    ggsave(filename = 'manuscript/figures/ABCD_sibling_birth_weight_HAQER_ES-PGS.png',
+p_all <- p_haq + p_bg + p_con
+p_all %>% 
+    ggsave(filename = 'manuscript/figures/ABCD_cephalopelvic_disproportion_HAQER_ES-PGS_comparison.png',
            device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 4.5)
-
-## scatterplot with just background CP-PGS
-abcd_sib_bw_lab <- abcd_sib_bw_es_pgs_res %>%
-    filter(x == 'sib_diff_cp_pgs.background_HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nN = ', n, ' sibling pairs'))
-p_sib_bw_bg <- abcd_df %>% 
-    mutate(sib_diff_resid = scale(resid(lm(sib_diff ~  sib_diff_cp_pgs.HAQER + age_diff + premature_diff + as.factor(sex_female_diff))))[,1]) %>% 
-    mutate(abcd_sib_bw_lab = abcd_sib_bw_lab$lab) %>%
-    ggplot(aes(x = sib_diff_resid, y = sib_diff_cp_pgs.background_HAQER)) +
-    geom_point(size = 0.5, color = "grey75") +
-    geom_smooth(method = 'lm', size = 1.5, color = "grey75") +
-    geom_text(aes(x = 0, y = 3, label = abcd_sib_bw_lab), check_overlap = TRUE, size = 4, color = "grey50") +
-    xlab('Sib. difference in birth weight') +
-    ylab('Sib. difference in background CP-PGS') +
-    theme_classic() +
-    labs(color = NULL) +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
-          legend.position = 'bottom')
-p_sib_bw_bg %>% 
-    ggsave(filename = 'manuscript/figures/ABCD_sibling_birth_weight_background_ES-PGS.png',
-           device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 4.5)
-
-## show best fit lines for both HAQER + background on same figure
-abcd_sib_bw_bg_lab <- abcd_sib_bw_es_pgs_res %>%
-    filter(x == 'sib_diff_cp_pgs.background_HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
-abcd_sib_bw_haq_lab <- abcd_sib_bw_es_pgs_res %>%
-    filter(x == 'sib_diff_cp_pgs.HAQER') %>% 
-    mutate(lab = str_c('ES-PGS beta = ', round(beta, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
-
-p_bw_lines <- abcd_df %>%
-    mutate(sib_diff_resid = scale(resid(lm(sib_diff ~  sib_diff_cp_pgs.background_HAQER + age_diff + premature_diff + as.factor(sex_female_diff))))[,1]) %>% 
-    mutate(abcd_sib_bw_bg_lab = abcd_sib_bw_bg_lab$lab,
-           abcd_sib_bw_haq_lab = abcd_sib_bw_haq_lab$lab) %>%
-    pivot_longer(cols = matches('cp_pgs'), names_to = 'x') %>% 
-    mutate(x = case_when(x == 'sib_diff_cp_pgs.HAQER' ~ 'HAQERs',
-                         x == 'sib_diff_cp_pgs.background_HAQER' ~ 'Background')) %>%
-    ggplot(aes(x = sib_diff_resid, y = value, color = x)) +
-    geom_smooth(method = 'lm', size = 1.5, aes(color = x)) +
-    geom_text(aes(x = 0, y = .45, label = abcd_sib_bw_haq_lab), check_overlap = TRUE, size = 4, color = '#762776') +
-    geom_text(aes(x = 0, y = -.5, label = abcd_sib_bw_bg_lab), check_overlap = TRUE, size = 4, color = 'grey50') +
-    xlab('Sib. difference in birth weight') +
-    ylab('Sib. difference in CP-PGS') +
-    scale_color_manual(values = c('grey75', "#762776")) +
-    theme_classic() +
-    labs(color = NULL) +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
-          legend.position = 'bottom')
-p_bw_lines %>%
-    ggsave(filename = 'manuscript/figures/ABCD_sibling_birth_weight_HAQER_background_ES-PGS.png',
-           device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 4.5)
-
+           units = 'in', width = 18, height = 6)
 
 #######################################
-## ABCD c-section discordance analysis
+## gather stats
 #######################################
-## read in data
-sib_csec_wd <- read_csv('manuscript/supplemental_materials/ABCD_sibling_csection_data.csv')
-
-## paired t-test of HAQER CP-PGS (sibling born via c-section compared to sibling not born via c-section)
-paired_csec <- broom::tidy(t.test(sib_csec_wd$non_csec_sib_cp_pgs.HAQER, sib_csec_wd$csec_sib_cp_pgs.HAQER, paired = TRUE)) %>% 
-    mutate(n = nrow(sib_csec_wd)) %>% 
-    mutate(pheno = 'comparing_sibling_pairs_where_only_one_born_via_csection') %>%
-    mutate(x = 'cp_pgs.HAQER') %>%
-    mutate(lab = str_c('t-statistic = ', round(abs(statistic), 2), ', p-val = ', formatC(p.value, digits = 2), '\nN=', parameter + 1, ' sibling pairs')) %>% 
-    relocate(pheno, x)
-
-p_paired_haq <- sib_csec_wd %>% 
-    mutate(lab = paired_csec$lab) %>%
-    pivot_longer(cols = c(non_csec_sib_cp_pgs.HAQER, csec_sib_cp_pgs.HAQER)) %>% 
-    mutate(type = ifelse(name == 'non_csec_sib_cp_pgs.HAQER', 'Normal delivery', 'C-section')) %>% 
-    mutate(type = factor(type, levels = c( 'Normal delivery', 'C-section'))) %>%
-    ggplot(aes(x = type, y = value)) +
-    geom_violin(size = 1.1) +
-    geom_boxplot(width = 0.4, aes(fill = type), size = 1.1, alpha = 0.7) +
-    geom_point() +
-    geom_line(aes(group = FID), color = 'grey60', alpha = .4) +
-    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.1) +
-    ylab('HAQER CP-PGS') +
-    xlab('Birth delivery method') +
-    geom_text(aes(x = 1.5, y = 2.7, label = lab), size = 4, check_overlap = TRUE) +
-    scale_fill_manual(values = c('grey70', 'chocolate1')) +
-    theme_classic() +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
-          legend.position = 'none')
-
-## background HAQER CP-PGS
-paired_csec_bg <- broom::tidy(t.test(sib_csec_wd$non_csec_sib_cp_pgs.background_HAQER, sib_csec_wd$csec_sib_cp_pgs.background_HAQER, paired = TRUE)) %>% 
-    mutate(n = nrow(sib_csec_wd)) %>% 
-    mutate(pheno = 'comparing_sibling_pairs_where_only_one_born_via_csection') %>%
-    mutate(x = 'cp_pgs.background_HAQER') %>%
-    mutate(lab = str_c('t-statistic = ', round(abs(statistic), 2), ', p-val = ', formatC(p.value, digits = 2), '\nN=', parameter + 1, ' sibling pairs')) %>% 
-    relocate(pheno, x)
-
-p_paired_bg <- sib_csec_wd %>% 
-    mutate(lab = paired_csec_bg$lab) %>%
-    pivot_longer(cols = c(non_csec_sib_cp_pgs.background_HAQER, csec_sib_cp_pgs.background_HAQER)) %>% 
-    mutate(type = ifelse(name == 'non_csec_sib_cp_pgs.background_HAQER', 'Normal delivery', 'C-section')) %>% 
-    mutate(type = factor(type, levels = c( 'Normal delivery', 'C-section'))) %>%
-    ggplot(aes(x = type, y = scale(value)[,1])) +
-    geom_violin(size = 1.1) +
-    geom_boxplot(width = 0.4, aes(fill = type), size = 1.1, alpha = 0.7) +
-    geom_point() +
-    geom_line(aes(group = FID), color = 'grey60', alpha = .4) +
-    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.1) +
-    xlab('Birth delivery method') +
-    ylab('Background CP-PGS') +
-    geom_text(aes(x = 1.5, y = 3, label = lab), size = 4, check_overlap = TRUE) +
-    scale_fill_manual(values = c('grey70', 'chocolate1')) +
-    theme_classic() +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          strip.text = element_text(size = 14),
-          legend.text = element_text(size = 12),
-          plot.title = element_text(size = 14, hjust = .5),
-          legend.position = 'none')
-
-## save c-section figures
-p_paired_haq %>% 
-    ggsave(filename = 'manuscript/figures/ABCD_sibling_csection_HAQER_ES-PGS.png',
-           device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 5)
-p_paired_bg %>% 
-    ggsave(filename = 'manuscript/figures/ABCD_sibling_csection_HAQER_background_ES-PGS.png',
-           device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 5, height = 5)
-
 ## merge stats results and save to file
-bind_rows(abcd_icv_es_pgs_stats, abcd_icv_growth_es_pgs_stats, abcd_sib_bw_es_pgs_res) %>% 
+bind_rows(abcd_cog_espgs_stats, abcd_cpd_es_pgs_stats, abcd_csection_cpd_stats, abcd_bw_cpd_stats) %>% 
     write_csv('manuscript/supplemental_materials/stats/ABCD_HAQER_ES-PGS_results.csv')
 
-bind_rows(paired_csec, paired_csec_bg) %>% 
-    select(-lab) %>%
-    write_csv('manuscript/supplemental_materials/stats/ABCD_c-section_HAQER_ES-PGS_results.csv')
-
-
-################
+#######################################
 ## save figure objects
-p_abcd_icv %>% 
-    write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_ICV.rds')
-p_abcd_icv_growth  %>% 
-    write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_ICV_growth.rds')  
-p_sib_bw %>%
-    write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_birth_weight.rds')
-p_sib_bw_bg %>%
-    write_rds('manuscript/figures/R_plot_objects/ABCD_background-CP-PGS_sibling_birth_weight.rds')
-p_bw_lines %>% 
-    write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_birth_weight_lines.rds')
-p_paired_bg %>% 
-    write_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_csection.rds')
-p_paired_haq %>% 
-    write_rds('manuscript/figures/R_plot_objects/ABCD_background-CP-PGS_sibling_csection.rds')
+#######################################
+p_haq %>% 
+    write_rds('manuscript/figures/R_plot_objects/ABCD_cephalopelvic_disproportion_HAQER_ES-PGS.rds')
+p_all  %>% 
+    write_rds('manuscript/figures/R_plot_objects/ABCD_cephalopelvic_disproportion_HAQER_ES-PGS_comparison.rds')  
