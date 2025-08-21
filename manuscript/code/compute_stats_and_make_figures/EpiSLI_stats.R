@@ -148,7 +148,7 @@ p_pgs %>%
 ## ES-PGS analysis
 #########################
 ## ES-PGS modelling
-coi <- names(es_pgs)[str_detect(names(es_pgs), pattern = 'pgs') & str_detect(names(es_pgs), 'complement', negate = TRUE)]
+coi <- names(es_pgs)[str_detect(names(es_pgs), pattern = 'pgs') & str_detect(names(es_pgs), 'complement', negate = TRUE) & str_detect(names(es_pgs), 'matched_control', negate = TRUE)]
 tmp <- fc %>% 
   inner_join(es_pgs)
 
@@ -164,14 +164,18 @@ for(evo in coi){
         filter(factor == str_c('F', i)) %>% 
         select(IID, factor_val, matches(str_c(str_remove_all(evo, pattern = 'cp_pgs.'), '$')))
       bdat <- tmp2 %>% 
-        select(IID, factor_val, matches('complement'))
+        select(IID, factor_val, matches('complement|matched'))
 
       baseline <- lm(factor_val ~ ., data = bdat[,-1])
       baseline_plus_anno <- lm(factor_val ~ ., data = tmp2[,-1])
       baseline_rsq = summary(baseline)$r.squared
       baseline_plus_anno_rsq = summary(baseline_plus_anno)$r.squared
+      baseline_complement_coef <- broom::tidy(baseline_plus_anno) %>% 
+        filter(term != '(Intercept)' & str_detect(term, 'complement'))
+      baseline_matched_coef <- broom::tidy(baseline_plus_anno) %>% 
+        filter(term != '(Intercept)' & str_detect(term, 'matched_control'))
       baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
-        filter(term != '(Intercept)' & str_detect(term, 'complement', negate = TRUE))
+        filter(term != '(Intercept)' & str_detect(term, 'complement|matched_control', negate = TRUE))
 
       res <- broom::tidy(anova(baseline, baseline_plus_anno)) %>% 
         drop_na() %>% 
@@ -182,7 +186,14 @@ for(evo in coi){
                baseline_plus_anno_rsq = baseline_plus_anno_rsq,
                annotation_beta = baseline_plus_anno_coef$estimate,
                annotation_std_err = baseline_plus_anno_coef$std.error,
-               annotation_pval = baseline_plus_anno_coef$p.value)
+               annotation_pval = baseline_plus_anno_coef$p.value,
+               matched_beta = baseline_matched_coef$estimate,
+               matched_std_err = baseline_matched_coef$std.error,
+               matched_pval = baseline_matched_coef$p.value,
+               background_beta = baseline_complement_coef$estimate,
+               background_std_err = baseline_complement_coef$std.error,
+               background_pval = baseline_complement_coef$p.value,
+               )
       res_list[[iter]] <- res
   }
 }
@@ -195,7 +206,7 @@ es_pgs_res <- bind_rows(res_list) %>%
   arrange(p.value) %>% 
   select(-term) %>% 
   rename(model = evo, p.value_model_comparison = p.value) %>%
-  inner_join(snp_counts) %>% 
+  left_join(snp_counts) %>% 
   arrange(factor, model) %>%
   relocate(complement_PGS_n_snp, .before = annotation_PGS_n_snp) %>%
   mutate(rsq_gain_per_1000indSNP = (baseline_plus_anno_rsq - baseline_rsq) / (annotation_PGS_n_snp / 1000))
@@ -205,24 +216,23 @@ es_pgs_res %>%
 ## make figures for ES-PGS
 p_es_pgs_forest <- es_pgs_res %>% 
     group_by(factor) %>%
-    filter(factor == 'F1') %>% 
+    filter(factor %in% c('F1')) %>% 
     mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
                                  model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
                                  model == 'LinAR_Homininae' ~ 'Homininae',
                                  model == 'LinAR_Hominoidea' ~ 'Hominoidea',
                                  model == 'LinAR_Simiformes' ~ 'Simiformes',
                                  model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                 model == 'ancient_human_selective_sweep' ~ 'Archaic deserts',
                                  model == 'consPrimates_UCE' ~ 'Primate UCEs',
                                  model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
                                  model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
-                                 model == 'GAQERs' ~ 'GAQERs',
-                                 model == 'CAQERs' ~ 'CAQERs',
                                  model == 'HAQER' ~ 'HAQERs',
                                  model == 'HAR' ~ 'HARs',
                                  TRUE ~ NA_character_)) %>% 
     drop_na(mod_clean) %>%
-    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'GAQERs', 'CAQERs', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
-    filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts')) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'GAQERs', 'CAQERs', 'HAQERs','HARs',  'Neanderthal deserts', 'Archaic deserts', 'Recent selection'))) %>%
+    filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'HAQERs', 'HARs', 'Neanderthal deserts',  'Archaic deserts')) %>%
     mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
     ggplot(aes(x = mod_clean, y = annotation_beta, color = sig)) +
     geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5) +
@@ -245,12 +255,49 @@ p_es_pgs_forest %>%
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 8, height = 7)
 
+## make figure showing effects of a few annotations across all factors 
+## (to show HAQERs are at least nominally associated with most language factors)
+p_es_pgs_factors_forest <- es_pgs_res %>% 
+    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
+                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
+                                 model == 'LinAR_Homininae' ~ 'Homininae',
+                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
+                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
+                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                 model == 'ancient_human_selective_sweep' ~ 'Archaic deserts',
+                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
+                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
+                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                 model == 'HAQER' ~ 'HAQERs',
+                                 model == 'HAR' ~ 'HARs',
+                                 TRUE ~ NA_character_)) %>% 
+    drop_na(mod_clean) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'GAQERs', 'CAQERs', 'HAQERs','HARs',  'Neanderthal deserts', 'Archaic deserts', 'Recent selection'))) %>%
+    filter(mod_clean %in% c('Primate UCEs', 'HAQERs', 'Archaic deserts')) %>%
+    mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
+    ggplot(aes(x = factor, y = annotation_beta, color = mod_clean, group = mod_clean)) +
+    geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5, position = position_dodge(.3)) +
+    geom_point(size = 5, aes(shape = sig), position = position_dodge(.3)) +
+    scale_shape_manual(values = c(1, 16)) +
+    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    xlab('Factor') +
+    ylab('ES-PGS effect on phenotype') +
+    scale_color_manual(values = c('orange', '#762776', 'slategray2'), name = 'Annotation:') +
+    theme_classic() +  
+    theme(axis.text = element_text(size = 18),
+          axis.text.x = element_text(angle = 18, hjust = 1),
+          axis.title = element_text(size = 20),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 20),
+          legend.position = 'bottom') +
+    guides(shape = 'none')
+
 ## forest plot including SPARK
 es_pgs_res_spark <- read_csv('manuscript/supplemental_materials/stats/SPARK_sent_rep_factor_ES-PGS_results.csv') %>% 
   mutate(cohort = 'SPARK')
 p_es_pgs_forest_spark_episli <- es_pgs_res %>% 
     group_by(factor) %>%
-    filter(factor == 'F1') %>% 
+    filter(factor %in% c('F1', 'F3')) %>% 
     mutate(cohort = 'EpiSLI') %>% 
     bind_rows(es_pgs_res_spark) %>%
     mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',

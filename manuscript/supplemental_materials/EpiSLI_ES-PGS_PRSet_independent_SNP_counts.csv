@@ -13,7 +13,6 @@ LinAR_Simiformes,146,302069
 human_singleton_density_score_top5pct,17181,301228
 human_chimp_div_DMG,29706,283053
 NeanderthalSelectiveSweep,1115,302067
-HAQER,1350,302035
 HAR,1328,302047
 diverged_ExN,22954,294582
 diverged_InN,23063,294376
@@ -83,4 +82,4 @@ neanderthal_introgressed_regions_in_HAQER_Iasi2024,NA,302071
 CAQERs,2792,301980
 GAQERs,3109,301994
 SDS_top_1pct,4133,301926
-HAQER_v2,1763,302016
+HAQER,1763,302016
