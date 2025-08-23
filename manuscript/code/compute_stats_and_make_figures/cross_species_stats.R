@@ -157,7 +157,7 @@ p_bs <- cs_dat %>%
     geom_point() +
     geom_smooth(method = 'lm', size = 1.5) +
     # ggrepel::geom_text_repel(aes(label = common_name), size = 3.25, max.overlaps = 3) +
-    xlab('log10(brain size (grams))') +
+    xlab('Log10(brain size)') +
     ylab('HAQER-like sequence score') +
     scale_color_manual(values = cl[1:2]) +
     theme_classic() +
@@ -216,7 +216,7 @@ p_wt <- cs_dat %>%
     ggplot(aes(x = obstetric_risk, y = HAQER_sequence_similarity_scaled)) +
     geom_point() +
     geom_smooth(method = 'lm', size = 1.5) +
-    xlab('Obstetric risk proxy (birth:adult weight ratio)') +
+    xlab('Obstetric risk proxy\n(birth:adult weight ratio)') +
     ylab('HAQER-like sequence score') +
     scale_color_manual(values = cl[1:2]) +
     theme_classic() +

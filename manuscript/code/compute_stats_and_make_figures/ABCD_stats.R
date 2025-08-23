@@ -76,8 +76,11 @@ p_haq <- abcd_df_cpd %>%
     scale_fill_manual(values = c('grey70', 'chocolate1')) +
     theme_classic(base_size = 18) +
     theme(legend.position = 'none') +
-    geom_text(aes(x = 1.5, y = 3.75, label = lab), check_overlap = TRUE, size = 5)
+    # geom_text(aes(x = 1.5, y = 3.75, label = lab), check_overlap = TRUE, size = 5) +
+    geom_linerange(aes(xmin = 1, xmax = 2, y = 3.75), size = 1.075) +
+    geom_text(aes(x = 1.5, y = 3.8, label = "*"), size = 7, check_overlap = TRUE) ## check results to get significance level
 
+##
 p_bg <- abcd_df_cpd %>% 
     mutate(obstetric_risk = case_when(obstetric_risk == 1 ~ 'High risk',
                                       obstetric_risk == 0 ~ 'Typical',

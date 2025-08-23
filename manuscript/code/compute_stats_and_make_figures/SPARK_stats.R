@@ -388,9 +388,10 @@ p_rev_forest_dx <- reversions_spark_dx_res %>%
     arrange(type) %>% 
     mutate(type = factor(type, levels = rev(unique(type)))) %>%
     mutate(sig = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+    mutate(type = 'SPARK parent reported diagnosis') %>%
     ggplot(aes(x = beta, y = pheno_clean, color = x_clean)) +
-    geom_linerange(aes(xmin = beta - 1.96 * std.error, xmax = beta + 1.96 * std.error), size = 1.1, position = position_dodge(.45)) +
-    geom_point(size = 3.5, position = position_dodge(.45), aes(shape = sig)) +
+    geom_linerange(aes(xmin = beta - 1.96 * std.error, xmax = beta + 1.96 * std.error), size = 1.5, position = position_dodge(.45)) +
+    geom_point(size = 5, position = position_dodge(.45), aes(shape = sig)) +
     scale_shape_manual(values = c(1,16)) +
     geom_vline(xintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
     ggforce::facet_col(facets = vars(type), 

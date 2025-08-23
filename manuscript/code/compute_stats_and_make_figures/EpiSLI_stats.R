@@ -325,6 +325,7 @@ p_dx_dat <- es_pgs_res_spark_lang %>%
 
 p_es_pgs_forest_spark_1 <- p_dx_dat %>%
     filter(str_detect(pheno, '^Any ')) %>%
+    mutate(type = 'SPARK self-reported diagnosis') %>%
     ggplot(aes(x = estimate, y = pheno, color = sig)) +
     geom_linerange(aes(xmin = estimate - 1.96 * std_error, xmax = estimate + 1.96 * std_error), size = 1.5) +
     geom_point(size = 5, aes(shape = sig)) +
@@ -653,11 +654,11 @@ p_fstat <- fstat_dat %>%
         strip.text = element_text(size = 20)) +
   geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
   ggsignif::geom_signif(comparisons=list(c("HAQERs", "HARs")), annotations="***", # p_haqer_vs_har_all_1000genomes
-              y_position = .1, tip_length = 0, vjust=0.4, size = 1.1, textsize = 6) +
+              y_position = .06, tip_length = 0, vjust=0.4, size = 1.2, textsize = 7, family = 'bold') +
   ggsignif::geom_signif(comparisons=list(c("HAQERs", "RAND")), annotations="***", # p_haqer_vs_rand_all_1000genomes
-              y_position = .125, tip_length = 0, vjust=0.4, size = 1.1, textsize = 6) +
+              y_position = .0825, tip_length = 0, vjust=0.4, size = 1.2, textsize = 7, family = 'bold') +
   ggsignif::geom_signif(comparisons=list(c("HARs", "RAND")), annotations="*", # p_har_vs_rand_all_1000genomes
-              y_position = .15, tip_length = 0, size = 1.1, textsize = 6)
+              y_position = .105, tip_length = 0, size = 1.2, textsize = 7, family = 'bold')
 
 #####################
 ## save plot objects

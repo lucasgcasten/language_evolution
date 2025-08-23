@@ -75,11 +75,6 @@ write.csv(sel_results[sel_results$x != 'intercept',],
 ## polygenic selection figure
 ###############################
 library(tidyverse)
-## get GRM residual age value and convert to a "raw age" so we can better visualize what LMM is testing
-mn <- mean(data$age)
-sdev <- sd(data$age)
-data$age_resid_scaled <- (scale(data$age)[,1] - lmm_mod$BLUP_omega) * sdev + mn
-data$sample_age_GRM_adj <- round(10^(-1 * data$age_resid_scaled))
 
 ## labs for plot
 sel_results <- sel_results %>% 
@@ -97,8 +92,8 @@ p_sel <- data %>%
            sel_bg_lab = sel_bg_lab) %>%
     ggplot(aes(x = -1 * sample_age, y = value, color = pgs)) +
     geom_smooth(method = 'lm', size = 1.5, alpha = .2) +
-    geom_text(aes(x = -8000, y = -2.1, label = sel_bg_lab), check_overlap = TRUE, size = 4.25, color = 'grey50') +
-    geom_text(aes(x = -8000, y = .5, label = sel_haq_lab), check_overlap = TRUE, size = 4.25, color = '#762776') +
+    geom_text(aes(x = -8000, y = -2.1, label = sel_bg_lab), check_overlap = TRUE, size = 7, color = 'grey50') +
+    geom_text(aes(x = -8000, y = .5, label = sel_haq_lab), check_overlap = TRUE, size = 7, color = '#762776') +
     xlab('Years ago') +
     ylab('CP-PGS') +
     scale_color_manual(values = c('grey70', "#762776")) +
@@ -255,6 +250,77 @@ p_mt_haq %>%
            device = 'png', dpi = 300, bg = 'white',
            units = 'in', width = 6, height = 6)
 
+## -------------------------------------------------
+## make set of ES-PGS boxplots for larger figure
+## -------------------------------------------------
+p_nean_haq_fig5 <- df %>% 
+    ggplot(aes(x = type, y = cp_pgs.HAQER)) +
+    geom_violin(size = 1.5) +
+    geom_boxplot(aes(fill = type), size = 1.5, width = .3, alpha = .75) +
+    geom_hline(yintercept = mean(df$cp_pgs.HAQER), size = 1.075, color = 'red', linetype = 'dashed') +
+    xlab(NULL) +
+    ylab('HAQER CP-PGS') +
+    scale_fill_manual(name = NULL, values = c('slategray2', viridis::viridis(3, option = "D")[2:3])) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.text.x = element_blank(),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 20),
+          legend.position = 'bottom') +
+    ## add significance comparing neanderthals vs ancient europeans
+    geom_linerange(aes(xmin = 1, xmax = 2, y = 4.15), size = 1.075) +
+    geom_text(aes(x = 1.5, y = 4.2, label = "*"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    ## add significance comparing neanderthals vs modern europeans
+    geom_linerange(aes(xmin = 1, xmax = 3, y = 3.8), size = 1.075) +
+    geom_text(aes(x = 2, y = 3.85, label = "*"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
+
+### background PGS
+p_bg_haq_fig5 <- df %>% 
+    ggplot(aes(x = type, y = cp_pgs.background)) +
+    geom_violin(size = 1.5, width = 1.25) +
+    geom_boxplot(aes(fill = type), size = 1.5, width = .2, alpha = .75) +
+    geom_hline(yintercept = mean(df$cp_pgs.background), size = 1.075, color = 'red', linetype = 'dashed') +
+    xlab(NULL) +
+    ylab('Background CP-PGS') +
+    scale_fill_manual(name = NULL, values = c('slategray2', viridis::viridis(3, option = "D")[2:3])) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.text.x = element_blank(),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 20),
+          legend.position = 'bottom') +
+    ## add significance comparing neanderthals vs ancient europeans
+    geom_linerange(aes(xmin = 1, xmax = 2, y = 3.95), size = 1.075) +
+    geom_text(aes(x = 1.5, y = 4, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    ## add significance comparing neanderthals vs modern europeans
+    geom_linerange(aes(xmin = 1, xmax = 3, y = 4.3), size = 1.075) +
+    geom_text(aes(x = 2, y = 4.35, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    ## add significance comparing ancient europeans vs modern europeans
+    geom_linerange(aes(xmin = 2, xmax = 3, y = 4.65), size = 1.075) +
+    geom_text(aes(x = 2.5, y = 4.7, label = "***"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
+
+### matched control PGS
+p_mt_haq_fig5 <- df %>% 
+    ggplot(aes(x = type, y = cp_pgs.matched)) +
+    geom_violin(size = 1.5) +
+    geom_boxplot(aes(fill = type), size = 1.5, width = .2, alpha = .75) +
+    geom_hline(yintercept = mean(df$cp_pgs.matched), size = 1.075, color = 'red', linetype = 'dashed') +
+    xlab(NULL) +
+    ylab('Matched CP-PGS') +
+    scale_fill_manual(name = NULL, values = c('slategray2', viridis::viridis(3, option = "D")[2:3])) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.text.x = element_blank(),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 20),
+          legend.position = 'bottom')
+
+library(patchwork)
+fig5_neand <- (p_nean_haq_fig5 + p_bg_haq_fig5 + p_mt_haq_fig5) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+
 ###################################
 ## save plot objects to merge later
 p_bg_haq %>% 
@@ -265,3 +331,5 @@ p_mt_haq %>%
     write_rds('manuscript/figures/R_plot_objects/AADR_matched-CP-PGS_nean_dist.rds')    
 p_sel %>% 
     write_rds('manuscript/figures/R_plot_objects/AADR_HAQER-CP-PGS_selection.rds')
+fig5_neand %>% 
+    write_rds("manuscript/figures/R_plot_objects/AADR_HAQER-CP-PGS_nean_dist_all_merged.rds")
