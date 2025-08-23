@@ -1,7 +1,7 @@
 library(tidyverse)
-library(patchwork)
 library(GGally)
 library(gridExtra)
+library(patchwork)
 
 ## read in plot objects
 plot_a <- read_rds('manuscript/figures/R_plot_objects/EpiSLI_factor_loadings.rds') + xlab(NULL) + ylab(NULL)
@@ -26,8 +26,9 @@ tmp <- tribble(~Factor, ~Description,
   'F7', 'Vocabulary')
 
 
-layout <- "AAAAABBBBB
-CCCCCCDDDD
+layout <- "
+AAAAABBBBB
+CCCCDDEEEE
 "
 
 mytheme <- gridExtra::ttheme_default(
@@ -43,8 +44,9 @@ fig1 <- plot_a +
                                             legend.text = element_text(size = 10),
                                             legend.title = element_text(size = 12))) + 
          wrap_elements(tab2) +
+         plot_spacer() +
          p_pgs +  
-         plot_layout(design = layout) + plot_annotation(tag_levels = 'a') & 
+         plot_layout(design = layout) + plot_annotation(tag_levels = 'A') & 
          theme(plot.tag = element_text(size = 24, face = 'bold'),
                axis.text = element_text(size = 12),
                axis.title = element_text(size = 14),
@@ -56,5 +58,11 @@ fig1 <- plot_a +
 ggsave(fig1, 
        filename = 'manuscript/figures/paper_figures/fig1.pdf', 
        device = 'pdf', 
+       units = 'in', width = 14.25, height = 14.25,
+       dpi = 300)
+
+ggsave(fig1, 
+       filename = 'manuscript/figures/paper_figures/fig1.png', 
+       device = 'png', 
        units = 'in', width = 14.25, height = 14.25,
        dpi = 300)

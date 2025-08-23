@@ -11,11 +11,9 @@ spark_df <- read_csv('manuscript/supplemental_materials/SPARK_data.csv')
 ## stats for self-reported language diagnosis count (language impairment + dyslexia + stutter + ...)
 ### get number of language related diagoses for everyone
 spark_df$lang_dx_count <- spark_df$dx_lang_impairment + spark_df$dx_hearing_impairment + spark_df$dx_speech_impediment + spark_df$dx_speech_stutter + spark_df$dx_dyslexia
+spark_df$psych_dx_count <- spark_df$dx_mdd + spark_df$dx_bipolar + spark_df$dx_anxiety + spark_df$dx_schizophrenia + spark_df$dx_ocd + spark_df$dx_tourettes + spark_df$dx_substance_abuse
 
 n_self_report_lang_dx <- nrow(spark_df[spark_df$asd == FALSE & is.na(spark_df$lang_dx_count) == FALSE & is.na(spark_df$cp_pgs.background_HAQER_v2) == FALSE,])
-
-### check dispersion so we can select correct model
-var(spark_df$lang_dx_count[spark_df$asd == FALSE], na.rm = TRUE) > mean(spark_df$lang_dx_count[spark_df$asd == FALSE], na.rm = TRUE)
 
 ### fit zero inflated regression models to predict number of language diagnoses
 m_dx_null <- pscl::zeroinfl(lang_dx_count ~ cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5, 
@@ -25,8 +23,16 @@ m_dx_alt <- pscl::zeroinfl(lang_dx_count ~ cp_pgs.HAQER_v2 + cp_pgs.background_H
                            data = spark_df[spark_df$asd == FALSE,], 
                            dist = 'poisson')
 
+m_dx_psych_null <- pscl::zeroinfl(psych_dx_count ~ cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5, 
+                            data = spark_df[spark_df$asd == FALSE,], 
+                            dist = 'poisson')
+m_dx_psych_alt <- pscl::zeroinfl(psych_dx_count ~ cp_pgs.HAQER_v2 + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5, 
+                           data = spark_df[spark_df$asd == FALSE,], 
+                           dist = 'poisson')
+
 ### gather model stats
 mod_sum <- summary(m_dx_alt)
+mod_sum_psych <- summary(m_dx_psych_alt)
 
 count_results <- data.frame(
   component = "count",
@@ -47,18 +53,48 @@ zero_results <- data.frame(
   stringsAsFactors = FALSE
   )
 
+
+count_results_psych <- data.frame(
+  component = "count",
+  variable = rownames(mod_sum_psych$coefficients$count),
+  estimate = mod_sum_psych$coefficients$count[,1],
+  std_error = mod_sum_psych$coefficients$count[,2],
+  z_value = mod_sum_psych$coefficients$count[,3],
+  p_value = mod_sum_psych$coefficients$count[,4],
+  stringsAsFactors = FALSE
+  )
+zero_results_psych <- data.frame(
+  component = "zero",
+  variable = rownames(mod_sum_psych$coefficients$zero),
+  estimate = mod_sum_psych$coefficients$zero[,1],
+  std_error = mod_sum_psych$coefficients$zero[,2],
+  z_value = mod_sum_psych$coefficients$zero[,3],
+  p_value = mod_sum_psych$coefficients$zero[,4],
+  stringsAsFactors = FALSE
+  )
+
 ### save stats
-broom::tidy(lmtest::lrtest(m_dx_null, m_dx_alt)) %>%
+lang_res <- broom::tidy(lmtest::lrtest(m_dx_null, m_dx_alt)) %>% 
+    mutate(group = 'psychiatric')
+psych_res <-  broom::tidy(lmtest::lrtest(m_dx_psych_null, m_dx_psych_alt)) %>% 
+    mutate(group = 'psychiatric')
+
+bind_rows(lang_res, psych_res) %>%
     drop_na() %>%
     select(-df) %>%
     rename(df = X.Df) %>% 
     rename(model = term) %>% 
     mutate(added_x = 'cp_pgs.HAQER_v2') %>% 
     write_csv("manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations_self_reported_language_diagnosis_LRT.csv")
-bind_rows(zero_results, count_results) %>% 
+
+lang_coef_res <- bind_rows(zero_results, count_results) %>% 
+    mutate(y = 'language_diagnosis_count_self_report')
+psych_coef_res <- bind_rows(zero_results_psych, count_results_psych) %>% 
+    mutate(y = 'psychiatric_diagnosis_count_self_report')
+
+bind_rows(lang_coef_res, psych_coef_res) %>% 
     as_tibble() %>% 
     filter(variable == 'cp_pgs.HAQER_v2') %>% 
-    mutate(y = 'language_diagnosis_count_self_report') %>% 
     rename(x = variable) %>%
     relocate(y, x, component) %>% 
     mutate(n = n_self_report_lang_dx) %>% 
@@ -179,7 +215,7 @@ reversions_spark_dx_res <- spark_df %>%
     filter(age_years >= 3) %>%
     drop_na(haqer_rare_variant_reversion_count, sex, age_years) %>%
     mutate(sex_female = ifelse(sex == 'Female', 1, 0)) %>%
-    pivot_longer(cols = matches('dx_')) %>% 
+    pivot_longer(cols = matches('dx_dev_lang|dx_dev_id')) %>% 
     group_by(name) %>% 
     do(res = broom::tidy(glm(value ~ scale(haqer_rare_variant_reversion_count)[,1] + scale(har_rare_variant_reversion_count)[,1] + scale(rand_rare_variant_reversion_count)[,1] + scale(age_years)[,1] + scale(sex_female)[,1], 
                              family = 'binomial', data = .))) %>% 
@@ -279,6 +315,8 @@ ggsave(p_rev_dist,
        dpi = 300, device = 'png', 
        units = 'in', width = 4.5, height = 8)
 
+p_rev_dist_h <- p_dist_haq | p_dist_har | p_dist_rand # + plot_annotation(tag_levels = 'A') & theme(plot.tag = element_text(face = 'bold', size = 18))
+
 ## forest plot of regression betas for language phenos
 cl <- c("#762776", "#e04468", "#dcc699")
 
@@ -329,11 +367,57 @@ p_rev_forest %>%
            units = 'in', width = 8.2, height = 6)
 
 
+p_rev_forest_dx <- reversions_spark_dx_res %>% 
+    mutate(lab = str_c('N ASD cases = ', n)) %>% 
+    mutate(pheno_clean = case_when(pheno == 'dx_dev_lang_disorder' ~ str_c('Dev. language disorder\n(', prettyNum(n_case, big.mark = ','), ' cases)'),
+                                   pheno == 'dx_intellectual_disability' ~ str_c('Intellectual disability\n(', prettyNum(n_case, big.mark = ','), ' cases)'),
+                                   pheno == 'walked_age_mos' ~ 'Age started walking',
+                                   pheno == 'used_words_age_mos' ~ 'Age of first word',
+                                   pheno == 'combined_words_age_mos' ~ 'Age combined words',
+                                   pheno == 'combined_phrases_age_mos' ~ 'Age combined phrases'),
+           x_clean = case_when(str_detect(x, 'haqer_') ~ 'HAQER rare reversions',
+                               str_detect(x, 'har_') ~ 'HAR rare reversions',
+                               str_detect(x, 'rand_') ~ 'RAND rare reversions')) %>% 
+    mutate(type = case_when(str_detect(pheno, 'dx_') ~ str_c('Diagnosis (N = ', prettyNum(n, big.mark = ','), ')'),
+                            str_detect(pheno, 'dx_', negate = TRUE) ~ str_c('Developmental milestones (N = ', prettyNum(n, big.mark = ','), ')'))
+           ) %>%
+    mutate(pheno = factor(pheno, levels = rev(c('dx_dev_lang_disorder', 'dx_intellectual_disability', 'used_words_age_mos', 'combined_words_age_mos', 'combined_phrases_age_mos', 'walked_age_mos')))) %>%
+    arrange(pheno) %>% 
+    mutate(pheno_clean = factor(pheno_clean, levels = unique(pheno_clean))) %>%
+    mutate(x_clean = factor(x_clean, levels = rev(c('HAQER rare reversions', 'HAR rare reversions', 'RAND rare reversions')))) %>%
+    arrange(type) %>% 
+    mutate(type = factor(type, levels = rev(unique(type)))) %>%
+    mutate(sig = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+    ggplot(aes(x = beta, y = pheno_clean, color = x_clean)) +
+    geom_linerange(aes(xmin = beta - 1.96 * std.error, xmax = beta + 1.96 * std.error), size = 1.1, position = position_dodge(.45)) +
+    geom_point(size = 3.5, position = position_dodge(.45), aes(shape = sig)) +
+    scale_shape_manual(values = c(1,16)) +
+    geom_vline(xintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    ggforce::facet_col(facets = vars(type), 
+                       scales = "free", 
+                       space = "free") +
+    labs(color = NULL) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 10),
+          axis.title = element_text(size = 10),
+          strip.text = element_text(size = 12),
+          legend.text = element_text(size = 10),
+          legend.position = 'bottom') +
+    scale_color_manual(values = rev(cl)) +
+    ylab(NULL) +
+    xlab('Rare reversion beta (95% CI)') +
+    guides(shape = 'none')
+
+
 ########################
 ## save plot objects
 spark_p_iq %>% 
     write_rds('manuscript/figures/R_plot_objects/SPARK_HAQER_IQ_replication.rds')
-p_rev_dist  %>% 
+p_rev_dist %>% 
     write_rds('manuscript/figures/R_plot_objects/SPARK_rare_reversion_histograms.rds')
+p_rev_dist_h %>% 
+    write_rds('manuscript/figures/R_plot_objects/SPARK_rare_reversion_histograms_horizontal.rds')
 p_rev_forest %>% 
     write_rds('manuscript/figures/R_plot_objects/SPARK_rare_reversion_forest.rds')
+p_rev_forest_dx %>% 
+    write_rds('manuscript/figures/R_plot_objects/SPARK_rare_reversion_diagnosis_forest.rds')

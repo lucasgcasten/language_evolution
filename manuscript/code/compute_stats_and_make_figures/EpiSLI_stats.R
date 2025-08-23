@@ -206,10 +206,11 @@ es_pgs_res <- bind_rows(res_list) %>%
   arrange(p.value) %>% 
   select(-term) %>% 
   rename(model = evo, p.value_model_comparison = p.value) %>%
-  left_join(snp_counts) %>% 
+  inner_join(snp_counts) %>% 
   arrange(factor, model) %>%
   relocate(complement_PGS_n_snp, .before = annotation_PGS_n_snp) %>%
-  mutate(rsq_gain_per_1000indSNP = (baseline_plus_anno_rsq - baseline_rsq) / (annotation_PGS_n_snp / 1000))
+  mutate(rsq_gain_per_1000indSNP = (baseline_plus_anno_rsq - baseline_rsq) / (annotation_PGS_n_snp / 1000)) %>% 
+  mutate(fdr_model_comparison = p.adjust(p.value_model_comparison, method = 'fdr'))
 es_pgs_res %>% 
   write_csv('manuscript/supplemental_materials/stats/EpiSLI_factor_ES-PGS_results.csv')
 
@@ -249,7 +250,8 @@ p_es_pgs_forest <- es_pgs_res %>%
           legend.text = element_text(size = 18),
           legend.title = element_text(size = 20),
           legend.position = 'none') +
-    guides(shape = 'none')
+    guides(shape = 'none') +
+    coord_cartesian(ylim = c(-.15,.285))
 p_es_pgs_forest %>%
     ggsave(filename = 'manuscript/figures/EpiSLI_factor_ES-PGS_forest.png', 
            device = 'png', dpi = 300, bg = 'white', 
@@ -274,122 +276,145 @@ p_es_pgs_factors_forest <- es_pgs_res %>%
     drop_na(mod_clean) %>%
     mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'GAQERs', 'CAQERs', 'HAQERs','HARs',  'Neanderthal deserts', 'Archaic deserts', 'Recent selection'))) %>%
     filter(mod_clean %in% c('Primate UCEs', 'HAQERs', 'Archaic deserts')) %>%
-    mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
+    mutate(sig = case_when(fdr_model_comparison < .01 ~ 'FDR < 0.01',
+                           p.value_model_comparison < .05 ~ 'p-val < 0.05',
+                           TRUE ~ 'NS'),
+           sig = factor(sig, levels = c('FDR < 0.01', 'p-val < 0.05', 'NS'))) %>%
+    mutate(factor = case_when(factor == 'F1' ~ 'Core language\n(F1)',
+                              factor == 'F2' ~ 'Receptive language\n(F2)',
+                              factor == 'F3' ~ 'Nonverbal IQ\n(F3)',
+                              factor == 'F4' ~ 'Early language\n(F4)',
+                              factor == 'F5' ~ 'Talkativeness\n(F5)',
+                              factor == 'F6' ~ 'Instruction comprehension\n(F6)',
+                              factor == 'F7' ~ 'Vocabulary\n(F7)')) %>%
+    mutate(factor = factor(factor, levels = unique(factor))) %>%
     ggplot(aes(x = factor, y = annotation_beta, color = mod_clean, group = mod_clean)) +
     geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5, position = position_dodge(.3)) +
     geom_point(size = 5, aes(shape = sig), position = position_dodge(.3)) +
-    scale_shape_manual(values = c(1, 16)) +
+    scale_shape_manual(values = c(17,16, 1), name = NULL) +
     geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
-    xlab('Factor') +
-    ylab('ES-PGS effect on phenotype') +
-    scale_color_manual(values = c('orange', '#762776', 'slategray2'), name = 'Annotation:') +
+    xlab(NULL) +
+    ylab('ES-PGS effect on trait') +
+    scale_color_manual(values = c('#dcc699', '#762776', 'slategray2'), name = NULL) +
     theme_classic() +  
     theme(axis.text = element_text(size = 18),
-          axis.text.x = element_text(angle = 18, hjust = 1),
+          axis.text.x = element_text(angle = 30, hjust = 1),
           axis.title = element_text(size = 20),
           legend.text = element_text(size = 18),
           legend.title = element_text(size = 20),
-          legend.position = 'bottom') +
-    guides(shape = 'none')
+          legend.position = c(.5,.99),
+          legend.direction="horizontal",
+          legend.box = "horizontal") +
+    coord_cartesian(ylim = c(-.15,.285))
+p_es_pgs_factors_forest %>%
+    ggsave(filename = 'manuscript/figures/EpiSLI_factor_comparison_ES-PGS_forest.png', 
+           device = 'png', dpi = 300, bg = 'white', 
+           units = 'in', width = 12, height = 6)
 
-## forest plot including SPARK
-es_pgs_res_spark <- read_csv('manuscript/supplemental_materials/stats/SPARK_sent_rep_factor_ES-PGS_results.csv') %>% 
-  mutate(cohort = 'SPARK')
-p_es_pgs_forest_spark_episli <- es_pgs_res %>% 
-    group_by(factor) %>%
-    filter(factor %in% c('F1', 'F3')) %>% 
-    mutate(cohort = 'EpiSLI') %>% 
-    bind_rows(es_pgs_res_spark) %>%
-    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
-                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
-                                 model == 'LinAR_Homininae' ~ 'Homininae',
-                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
-                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
-                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
-                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
-                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
-                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
-                                 model == 'HAQER' ~ 'HAQERs',
-                                 model == 'HAR' ~ 'HARs',
-                                 TRUE ~ NA_character_)) %>% 
-    drop_na(mod_clean) %>%
-    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Recent selection'))) %>%
-    filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'Human-chimp divergence', 'HAQERs','HARs', 'Neanderthal deserts', 'Recent selection')) %>%
-    mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
-    ggplot(aes(x = mod_clean, y = annotation_beta, color = cohort, group = cohort)) +
-    geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5, position = position_dodge2(width = .3)) +
-    geom_point(size = 5, aes(shape = sig), position = position_dodge2(width = .3)) +
-    scale_shape_manual(values = c(1, 16)) +
-    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
-    xlab('ES-PGS model') +
-    ylab('Effect on core language') +
-    # scale_color_manual(values = c('', '')) +
-    scale_color_brewer(palette = "Paired") +
-    theme_classic() +  
+## SPARK language diagnosis replication
+es_pgs_res_spark_lang <- read_csv("manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations_self_reported_language_diagnosis.csv")
+p_dx_dat <- es_pgs_res_spark_lang %>% 
+    mutate(type = case_when(str_detect(y, 'language') ~ 'language',
+                            str_detect(y, 'psychiatric') ~ 'psychiatric')) %>% 
+    mutate(pheno = case_when(component == 'zero' ~ str_c('Any ', type, ' diagnosis'),
+                             component == 'count' ~ str_c('Number of ',  type, ' diagnoses'))) %>%                             
+    mutate(type = str_c('Self-reported diagnosis (N = ', es_pgs_res_spark_lang$n[1],')')) %>% 
+    mutate(sig = ifelse(p_value < .05, TRUE, FALSE)) %>%
+    arrange(pheno) %>% 
+    mutate(pheno = factor(pheno, levels = rev(unique(pheno))))
+
+p_es_pgs_forest_spark_1 <- p_dx_dat %>%
+    filter(str_detect(pheno, '^Any ')) %>%
+    ggplot(aes(x = estimate, y = pheno, color = sig)) +
+    geom_linerange(aes(xmin = estimate - 1.96 * std_error, xmax = estimate + 1.96 * std_error), size = 1.5) +
+    geom_point(size = 5, aes(shape = sig)) +
+    geom_vline(xintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    xlab(NULL) +
+    ylab(NULL) +
+    theme_classic() +
     theme(axis.text = element_text(size = 18),
-          axis.text.x = element_text(angle = 18, hjust = 1),
           axis.title = element_text(size = 20),
           legend.text = element_text(size = 18),
           legend.title = element_text(size = 20),
+          strip.text = element_text(size = 20),
           legend.position=c(.9,.1),
           legend.box.background = element_rect(colour = "black", size = 1)) +
-    guides(shape = 'none') +
-    labs(color = 'Cohort:')
-p_es_pgs_forest_spark_episli %>%
-    ggsave(filename = 'manuscript/figures/EpiSLI_and_SPARK_factor_ES-PGS_forest.png', 
+    scale_color_manual(values = c("grey75", "black")) +
+    scale_shape_manual(values = c(1, 16)) +
+    guides(shape = 'none', color = 'none') +
+    facet_wrap(~type)
+
+p_es_pgs_forest_spark_2 <- p_dx_dat %>%
+    filter(str_detect(pheno, '^Number ')) %>%
+    ggplot(aes(x = estimate, y = pheno, color = sig)) +
+    geom_linerange(aes(xmin = estimate - 1.96 * std_error, xmax = estimate + 1.96 * std_error), size = 1.5) +
+    geom_point(size = 5, aes(shape = sig)) +
+    geom_vline(xintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    xlab("HAQER CP-PGS Beta (95% CI)") +
+    ylab(NULL) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 18),
+          axis.title = element_text(size = 20),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 20),
+          strip.text = element_text(size = 20),
+          legend.position=c(.9,.1),
+          legend.box.background = element_rect(colour = "black", size = 1)) +
+    scale_color_manual(values = c("grey75", "black")) +
+    scale_shape_manual(values = c(1, 16)) +
+    guides(shape = 'none', color = 'none')
+
+library(patchwork)
+p_merged <- p_es_pgs_forest_spark_1 / p_es_pgs_forest_spark_2
+p_merged %>%
+    ggsave(filename = 'manuscript/figures/SPARK_language_diagnosis_ES-PGS_forest.png', 
            device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 11, height = 9)
+           units = 'in', width = 12, height = 5)
 
-
-## scatterplots of residualized F1-F3 and HAQERs
+## scatterplots of F1 with HAQER PGS, background, and matched
 wd <- tmp %>% 
     select(IID, factor, factor_val, matches('HAQER')) %>% 
-    filter(factor %in% str_c('F', 1:3)) %>% 
-    group_by(factor) %>% 
-    mutate(factor_val_resid = resid(lm(factor_val ~ cp_pgs.complement_HAQER)),
-           factor_val_resid = scale(factor_val_resid)[,1])
-es_pgs_cor <- wd %>% 
-    group_by(factor) %>% 
-    do(res = broom::tidy(cor.test(.$factor_val_resid, .$cp_pgs.HAQER))) %>% 
-    unnest(res) %>% 
-    mutate(lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+    filter(factor == 'F1')
+es_pgs_cor <- broom::tidy(cor.test(wd$factor_val, wd$cp_pgs.HAQER)) %>% 
+    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+es_pgs_cor_bg <- broom::tidy(cor.test(wd$factor_val, wd$cp_pgs.complement_HAQER)) %>% 
+    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+es_pgs_cor_matched <- broom::tidy(cor.test(wd$factor_val, wd$cp_pgs.random_matched_control_regions_HAQER)) %>% 
+    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))    
 p_f1 <- wd %>% 
     inner_join(es_pgs_cor) %>%    
-    filter(factor == 'F1') %>%
-    ggplot(aes(x = factor_val_resid, y = cp_pgs.HAQER)) +
-    geom_point(size = 0.7) +
-    geom_smooth(method = 'lm', size = 1.5, color = 'black') +
-    xlab('Core language (F1) adjusted\nfor background CP-PGS') +
+    ggplot(aes(x = factor_val, y = cp_pgs.HAQER)) +
+    geom_point(size = 0.75) +
+    geom_smooth(method = 'lm', size = 2, color = 'black') +
+    xlab('Core language (F1)') +
     ylab('HAQER CP-PGS') +
-    geom_text(aes(x = -1.5, y = 2.85, label = lab), size = 4, check_overlap = TRUE) +
+    geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
           axis.title = element_text(size = 14),
           legend.text = element_text(size = 12),
           legend.title = element_text(size = 14))
-p_f2 <- wd %>% 
-    inner_join(es_pgs_cor) %>%    
-    filter(factor == 'F2') %>%
-    ggplot(aes(x = factor_val_resid, y = cp_pgs.HAQER)) +
-    geom_point(size = 0.7) +
-    geom_smooth(method = 'lm', size = 1.5, color = 'black') +
-    xlab('Receptive language (F2) adjusted\nfor background CP-PGS') +
-    ylab('HAQER CP-PGS') +
-    geom_text(aes(x = -1.5, y = 2.85, label = lab), size = 4, check_overlap = TRUE) +
+p_f1_bg <- wd %>% 
+    inner_join(es_pgs_cor_bg) %>%    
+    ggplot(aes(x = factor_val, y = cp_pgs.complement_HAQER)) +
+    geom_point(size = 0.75) +
+    geom_smooth(method = 'lm', size = 2, color = 'black') +
+    xlab('Core language (F1)') +
+    ylab('Background CP-PGS') +
+    geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
           axis.title = element_text(size = 14),
           legend.text = element_text(size = 12),
           legend.title = element_text(size = 14))
-p_f3 <- wd %>% 
-    inner_join(es_pgs_cor) %>%    
-    filter(factor == 'F3') %>%
-    ggplot(aes(x = factor_val_resid, y = cp_pgs.HAQER)) +
-    geom_point(size = 0.7, color = 'grey75') +
-    geom_smooth(method = 'lm', size = 1.5, color = 'grey60') +
-    xlab('Nonverbal IQ (F3) adjusted\nfor background CP-PGS') +
-    ylab('HAQER CP-PGS') +
-    geom_text(aes(x = -1.5, y = 2.85, label = lab), size = 4, check_overlap = TRUE) +
+p_f1_matched <- wd %>% 
+    inner_join(es_pgs_cor_matched) %>%    
+    ggplot(aes(x = factor_val, y = cp_pgs.random_matched_control_regions_HAQER)) +
+    geom_point(size = 0.75, color = 'grey75') +
+    geom_smooth(method = 'lm', size = 2, color = 'grey60') +
+    xlab('Core language (F1)') +
+    ylab('Matched CP-PGS') +
+    geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
           axis.title = element_text(size = 14),
@@ -399,12 +424,12 @@ p_f1 %>%
     ggsave(filename = 'manuscript/figures/EpiSLI_factor1_HAQER_ES-PGS.png', 
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 5, height = 5)
-p_f2 %>% 
-    ggsave(filename = 'manuscript/figures/EpiSLI_factor2_HAQER_ES-PGS.png', 
+p_f1_bg %>% 
+    ggsave(filename = 'manuscript/figures/EpiSLI_factor1_background_HAQER_ES-PGS.png', 
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 5, height = 5)
-p_f3 %>% 
-    ggsave(filename = 'manuscript/figures/EpiSLI_factor3_HAQER_ES-PGS.png', 
+p_f1_matched %>% 
+    ggsave(filename = 'manuscript/figures/EpiSLI_factor1_matched_HAQER_ES-PGS.png', 
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 5, height = 5)
 
@@ -574,7 +599,7 @@ plot_b <- ph %>%
     #panel.background = element_rect(fill = 'grey99', color = 'grey95'), 
     strip.background = element_blank(), 
     panel.spacing = unit(1/4, 'lines'),
-    axis.text = element_text(size = 12),
+    # axis.text = element_text(size = 12),
     axis.title = element_text(size = 14),
     legend.text = element_text(size = 12),
     legend.title = element_text(size = 14)
@@ -634,29 +659,6 @@ p_fstat <- fstat_dat %>%
   ggsignif::geom_signif(comparisons=list(c("HARs", "RAND")), annotations="*", # p_har_vs_rand_all_1000genomes
               y_position = .15, tip_length = 0, size = 1.1, textsize = 6)
 
-## F-statistic correlation with language (F1)
-fph <- ph %>% 
-  inner_join(fstat_dat)
-lab <- broom::tidy(cor.test(fph$F1, fph$f_HAQERs, method = 's')) %>% 
-    mutate(lab = str_c('rho = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
-
-p_f_haq_f1 <- fph %>% 
-  mutate(lab = lab$lab) %>%
-  ggplot(aes(x = F1, y = f_HAQERs)) +
-  geom_point(size = 0.7) +
-  geom_smooth(method = 'lm', size = 1.25, color = cl[1]) +
-  xlab("Core language (F1)") +
-  ylab("HAQERs F-statistic") +
-  geom_text(aes(x = -1, y = -.09, label = lab), check_overlap = TRUE, size = 5) +
-  theme_classic() +  
-  theme(axis.text = element_text(size = 18),
-        axis.title = element_text(size = 20),
-        legend.text = element_text(size = 18),
-        legend.title = element_text(size = 20),
-        legend.position="none",
-        legend.box.background = element_rect(colour = "black"),
-        strip.text = element_text(size = 20))
-
 #####################
 ## save plot objects
 #####################
@@ -674,10 +676,15 @@ p_es_pgs_forest %>%
   write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor_ES-PGS_forest.rds')
 p_f1 %>% 
   write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor1_HAQER-CP-PGS.rds')
-p_f2 %>% 
-  write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor2_HAQER-CP-PGS.rds')
-p_f3 %>% 
-  write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor3_HAQER-CP-PGS.rds')
+p_f1_bg %>% 
+  write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor1_background_HAQER_ES-PGS.rds')
+p_f1_matched %>% 
+  write_rds('manuscript/figures/R_plot_objects/EpiSLI_factor1_matched_HAQER_ES-PGS.rds')
+p_merged %>% 
+  write_rds("manuscript/figures/R_plot_objects/SPARK_language_diagnosis_ES-PGS_forest.rds")
+p_es_pgs_factors_forest %>% 
+  write_rds("manuscript/figures/R_plot_objects/EpiSLI_factor_comparison_ES-PGS_forest.rds")
+
 ## balancing selection figs
 p_seq_class_comp %>% 
     ggsave(filename = "manuscript/figures/HAQER_SFS_bin_comparisons.png",
@@ -692,10 +699,3 @@ p_fstat %>%
            units = 'in', width = 6, height = 6)
 p_fstat %>% 
     write_rds("manuscript/figures/R_plot_objects/EpiSLI_fstat_comparisons.rds")
-##
-p_f_haq_f1 %>% 
-    ggsave(filename = "manuscript/figures/EpiSLI_Fstat_F1_association.png",
-           device = 'png', dpi = 300, bg = 'white',
-           units = 'in', width = 7, height = 7)
-p_f_haq_f1 %>% 
-    write_rds("manuscript/figures/R_plot_objects/EpiSLI_Fstat_F1_association.rds")

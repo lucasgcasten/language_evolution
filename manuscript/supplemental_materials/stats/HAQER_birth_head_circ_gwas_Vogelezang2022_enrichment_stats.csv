@@ -1,0 +1,4 @@
+evo_annot,set,enrichment_method,n_elements_evo_annot,n_elements_gwas_set,n_overlapping_elements,n_expected_overlaps,enrichment,enrichment_p
+HAQER,birth_head_circumference_EGG_Vogelezang2022,normalApproximate,882,88,15,6.261163,2.395721,4.397602e-4
+HAR,birth_head_circumference_EGG_Vogelezang2022,normalApproximate,2561,88,13,18.124475,0.717262,0.9080634
+RAND,birth_head_circumference_EGG_Vogelezang2022,normalApproximate,1107,88,9,7.85591,1.145634,0.4083215

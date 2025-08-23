@@ -2,93 +2,50 @@
 library(tidyverse)
 
 ###########################################################################################
-## run enrichment analysis for previously associated birth weight / preeclampia SNPs
+## run enrichment analysis for previously associated birth head circumference SNPs
 ###########################################################################################
 ## hg19 chromosome info
 chrom_limits = read_table('manuscript/supplemental_materials/hg19.chrom.sizes', col_names = FALSE)
 names(chrom_limits) = c('#chrom', 'chrom_size')
 
 ## annotation coords
-outbed <- 'manuscript/supplemental_materials/HAQER.hg19.sorted_autosomes_non_overlapping.bed'
+outbed <- 'manuscript/supplemental_materials/HAQER_conservative_set.hg19.bed'
 outbed_har <- 'manuscript/supplemental_materials/HAR.hg19.sorted_autosomes_non_overlapping.bed'
 outbed_rand <- 'manuscript/supplemental_materials/RAND.hg19.sorted_autosomes.bed'
 outbed_uce <- 'manuscript/supplemental_materials/UCE.hg19.sorted_autosomes.bed'
 
-## neurodevelopmental scQTL files (filtered to snpXgene paires with p < 5e-04)
-files = list.files('manuscript/supplemental_materials/single_cell_QTL-Jerber-NatureGenetics-2021', pattern = '.txt', full.names = TRUE)
-
-## GWAS hits 
-# Fetal_BW_European_meta.NG2019.txt, head_circumference_at_birth_reformatted.txt, placental_weight_reformatted.txt
-gw <- read_table("/sdata/gwas_summary_stats/anthropomorphic/birth_early_development/EGG_consortium/Fetal_BW_European_meta.NG2019.txt")
-gw2 <- read_table("/sdata/gwas_summary_stats/anthropomorphic/birth_early_development/EGG_consortium/head_circumference_at_birth_reformatted.txt")
-gw3 <- read_table("/sdata/gwas_summary_stats/anthropomorphic/birth_early_development/EGG_consortium/placental_weight_reformatted.txt")
-
-gw4 <- read_tsv("/sdata/gwas_summary_stats/birth/preeclampsia_JAMAcardiology2023_GCST90269903/GCST90269903.tsv.gz")
-gw4 <- gw4 %>% 
-    filter(effect_allele_frequency >= .01 & effect_allele_frequency <= .99)
-
-gene_coords <- read_tsv("/wdata/lcasten/tools/ref_data/hg19/gene_map.tsv")
-
-goi <- gene_coords %>% 
-    filter(symbol %in% vl$Gene) %>% 
-    # filter(symbol %in% vl_genes) %>% 
-    filter(`#chrom` %in% str_c("chr", 1:22))
+## make tmp file paths for intermediate files
 outf = '/wdata/lcasten/tmp.bed'
 outf2 = '/wdata/lcasten/tmp2.bed'
 
-p_cutoff <- .05 / 9462395 ## number of tests
-gw %>% 
-    filter(eaf >= .01 & eaf <= .99) %>% 
-    filter(p < 5.284074e-09) %>%
+## GWAS sumstats from EGG consortiums birth head circumference GWAS
+gwas <- data.table::fread("/sdata/gwas_summary_stats/anthropomorphic/birth_early_development/EGG_consortium/head_circumference_at_birth_reformatted.txt")
+
+## filter to common SNPs since this is a smaller GWAS (MAF >= 5%) and suggestive hits (p < 5e-05)
+## add 100Kb flank to each hit
+gwas %>% 
+    filter(Freq1 >= .05 & Freq1 <= .95) %>% 
+    filter(p < 5e-5) %>%
     select(chr, pos) %>%
     mutate(chromEnd = pos) %>% 
     arrange(chr, pos) %>%
     mutate(chr = str_c('chr', chr)) %>%
     rename(chromStart = pos) %>%
     inner_join(select(chrom_limits, chr = `#chrom`, chrom_size)) %>%
-    mutate(chromStart = pmax(0, chromStart - 10000),
-           chromEnd = pmin(chromEnd + 10000, chrom_size)) %>%
+    mutate(chromStart = pmax(0, chromStart - 100000),
+           chromEnd = pmin(chromEnd + 100000, chrom_size)) %>%
     write_tsv(outf, col_names = FALSE)
 
-gw4 %>% 
-    filter(p_value < .05 / nrow(gw4)) %>%
-    select(chr = chromosome, pos = base_pair_location) %>%
-    mutate(chromEnd = pos) %>% 
-    arrange(chr, pos) %>%
-    mutate(chr = str_c('chr', chr)) %>%
-    rename(chromStart = pos) %>%
-    inner_join(select(chrom_limits, chr = `#chrom`, chrom_size)) %>%
-    mutate(chromStart = pmax(0, chromStart - 10000),
-           chromEnd = pmin(chromEnd + 10000, chrom_size)) %>%
-    write_tsv(outf, col_names = FALSE)
-
-## 
-hapmap3 <- read_rds("/wdata/lcasten/tools/LDPred2/map_hm3_plus.rds")
-
-efn <- round(4 / (1 / 16743 + 1 / 280081), digits = 0) # 16743 European ancestry cases, 280081 controls
-hapmap3 %>% 
-    rename(chromosome = chr, base_pair_location = pos) %>% 
-    select(rsid, chromosome, base_pair_location, a0, a1) %>%
-    inner_join(gw4) %>% 
-    select(SNP = rsid, chromosome, position = base_pair_location, A1 = effect_allele, A2 = other_allele, beta, se = standard_error, p = p_value, MAF = effect_allele_frequency) %>% 
-    mutate(N = efn) %>%
-    write_tsv("/Dedicated/jmichaelson-sdata/gwas_summary_stats/birth/preeclampsia_JAMAcardiology2023_GCST90269903/GCST90269903_hapmap3plus.tsv")
-
-gw %>%  
-    select(SNP = rsid, chromosome = chr, position = pos, A1 = ea, A2 = nea, beta, se, p, MAF = eaf, N = n) %>% 
-    write_tsv("/Dedicated/jmichaelson-sdata/gwas_summary_stats/anthropomorphic/birth_early_development/EGG_consortium/Fetal_BW_European_meta_reformatted.tsv")
-
-
-## merge overlapping regions for enrichment analysis
+## merge overlapping hit regions for enrichment analysis
 cmd <- str_c('bedtools merge -i ', outf, ' > ', outf2)
 system(cmd)
 
 ## run enrichment: overlapEnrichments method elements1.lift elements2.lift noGap.lift out.txt
-set_name = 'preeclampsia'
-outres = str_c("/wdata/lcasten/tmp_res-", set_name, '.HAQER_enrichment.txt')
-outres_har <- str_c("/wdata/lcasten/tmp_res-", set_name, '.HAR_enrichment.txt')
-outres_rand <- str_c("/wdata/lcasten/tmp_res-", set_name, '.RAND_enrichment.txt')
-outres_uce <- str_c("/wdata/lcasten/tmp_res-", set_name, '.UCE_enrichment.txt')
+set_name = 'birth_head_circ'
+outres = str_c("manuscript/supplemental_materials/stats/birth_head_circ_GWAS_region_enrichment/", set_name, '.HAQER_enrichment.txt')
+outres_har <- str_c("manuscript/supplemental_materials/stats/birth_head_circ_GWAS_region_enrichment/", set_name, '.HAR_enrichment.txt')
+outres_rand <- str_c("manuscript/supplemental_materials/stats/birth_head_circ_GWAS_region_enrichment/", set_name, '.RAND_enrichment.txt')
+outres_uce <- str_c("manuscript/supplemental_materials/stats/birth_head_circ_GWAS_region_enrichment/", set_name, '.UCE_enrichment.txt')
 ## HAQER enrichment
 cmd <- str_c('~/go/bin/overlapEnrichments normalApproximate ', outf2, ' ', outbed, ' manuscript/supplemental_materials/hg19.chrom.sizes.bed ', outres)
 system(cmd)
@@ -111,10 +68,31 @@ system(str_c('cat ', outres_har, ' | cut -f 9,10,11'))
 message('Results UCEs:')
 system(str_c('cat ', outres_uce, ' | cut -f 9,10,11'))
 
-## delete temp file
+## delete temp files
 unlink(outf)
 unlink(outf2)
 
-###############
-## make figure
-###############
+#########################
+## gather stats and save
+#########################
+files <- list.files('manuscript/supplemental_materials/stats/birth_head_circ_GWAS_region_enrichment', full.names = TRUE)
+
+res_list = list()
+for(f in files) {
+    res_list[[basename(f)]] <- read_table(f) %>% 
+        mutate(set = 'birth_head_circumference_EGG_Vogelezang2022',
+               evo_annot = basename(Filename2)) %>% 
+        relocate(evo_annot, set) %>% 
+        select(-matches('Filename')) %>% 
+        mutate(evo_annot = str_split(evo_annot, pattern = '[.]', simplify = TRUE)[,1]) %>% 
+        select(evo_annot, set, enrichment_method = `#Method`, n_elements_evo_annot = LenElements2, n_elements_gwas_set = LenElements1, n_overlapping_elements = OverlapCount, n_expected_overlaps = ExpectedOverlap, enrichment = Enrichment, enrichment_p = EnrichPValue)
+}
+
+gwas_enr <- bind_rows(res_list) %>% 
+    mutate(evo_annot = case_when(str_detect(evo_annot, 'HAQER') ~ 'HAQER',
+                                 TRUE ~ evo_annot))
+
+## save results
+gwas_enr %>% 
+    filter(evo_annot != 'UCE') %>%
+    write_csv('manuscript/supplemental_materials/stats/HAQER_birth_head_circ_gwas_Vogelezang2022_enrichment_stats.csv')

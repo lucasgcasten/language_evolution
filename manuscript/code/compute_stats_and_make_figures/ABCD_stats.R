@@ -1,4 +1,5 @@
 library(tidyverse)
+library(patchwork)
 
 ## read in ABCD imaging data and ES-PGS
 abcd_df <- read_csv('manuscript/supplemental_materials/ABCD_data.csv')
@@ -65,6 +66,7 @@ p_haq <- abcd_df_cpd %>%
     mutate(obstetric_risk = str_c(obstetric_risk, '\nN = ', prettyNum(n, big.mark = ','))) %>% 
     arrange(desc(obstetric_risk)) %>%
     mutate(obstetric_risk = factor(obstetric_risk, levels = unique(obstetric_risk))) %>%
+    mutate(lab = res_obs$lab[res_obs$x == 'cp_pgs.HAQER_v2']) %>%
     ggplot(aes(x = obstetric_risk, y = cp_pgs.HAQER_v2)) +
     geom_violin(size = 1.4) +
     geom_boxplot(aes(fill = obstetric_risk), width = .3, alpha = .8, size = 1.4) +
@@ -74,7 +76,7 @@ p_haq <- abcd_df_cpd %>%
     scale_fill_manual(values = c('grey70', 'chocolate1')) +
     theme_classic(base_size = 18) +
     theme(legend.position = 'none') +
-    geom_text(aes(x = 1.5, y = 3.75, label = res_obs$lab[res_obs$x == 'cp_pgs.HAQER_v2']), check_overlap = TRUE, size = 5)
+    geom_text(aes(x = 1.5, y = 3.75, label = lab), check_overlap = TRUE, size = 5)
 
 p_bg <- abcd_df_cpd %>% 
     mutate(obstetric_risk = case_when(obstetric_risk == 1 ~ 'High risk',
