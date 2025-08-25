@@ -3,37 +3,71 @@ library(patchwork)
 
 cl <- c("#762776", "#e04468", "#dcc699") ## color palette (HAQER, HAR, RAND)
 
-## read in plot objects
-# ABCD stuff
-p_abcd_icv <- read_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_ICV.rds')
-p_abcd_icv_growth <- read_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_ICV_growth.rds')  
-p_sib_bw <- read_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_birth_weight.rds')
-p_sib_bw_bg <- read_rds('manuscript/figures/R_plot_objects/ABCD_background-CP-PGS_sibling_birth_weight.rds')
-p_bw_lines <- read_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_birth_weight_lines.rds')
-p_paired_bg <- read_rds('manuscript/figures/R_plot_objects/ABCD_HAQER-CP-PGS_sibling_csection.rds')
-p_paired_haq <- read_rds('manuscript/figures/R_plot_objects/ABCD_background-CP-PGS_sibling_csection.rds')
+## read in enrichment data
+head_enr <- read_csv('manuscript/supplemental_materials/stats/HAQER_birth_head_circ_gwas_Vogelezang2022_enrichment_stats.csv') %>% 
+       mutate(type = 'Birth head circumference loci')
+vl_enr <- read_csv('manuscript/supplemental_materials/stats/HAQER_vocal_learning_Wirthlin2024_enrichment_stats.csv') %>% 
+       mutate(type = 'Mammalian vocal learning enhancers')
 
+## make figure panels
+### birth head circumference GWAS enrichment
+p_bhc <- head_enr %>% 
+    mutate(evo_annot = factor(evo_annot, levels = c('RAND', 'HAR', 'HAQER'))) %>%
+    arrange(evo_annot, desc(enrichment_p)) %>%
+    mutate(set = str_replace_all(set, pattern = '__', replacement = ' ')) %>%
+    mutate(set = factor(set, levels = unique(set))) %>% 
+    drop_na() %>%
+    mutate(enrichment_p = ifelse(enrichment_p > 0.85, .85, enrichment_p)) %>% ## add a small constant value so they show up on the plot
+    ggplot(aes(x = -log10(enrichment_p), y = type)) +
+    geom_bar(stat = 'identity', aes(fill = evo_annot), position = 'dodge') +
+    geom_vline(xintercept = -log10(0.05), color = 'red', linetype = 'dashed', size = 1.075) +
+    labs(fill = NULL) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          plot.title = element_text(size = 14, hjust = .5),
+          legend.position = 'bottom') +
+    scale_fill_manual(values = rev(cl)) +
+    xlab('-log10(enrichment p-value)') +
+    ylab(NULL)
+
+## make figure panels
+p_vl <- vl_enr %>% 
+    mutate(evo_annot = factor(evo_annot, levels = c('RAND', 'HAR', 'HAQER'))) %>%
+    arrange(evo_annot, desc(enrichment_p)) %>%
+    mutate(set = str_replace_all(set, pattern = '__', replacement = ' ')) %>%
+    mutate(set = factor(set, levels = unique(set))) %>% 
+    drop_na() %>%
+    mutate(enrichment_p = ifelse(enrichment_p > 0.85, .85, enrichment_p)) %>% ## add a small constant value so they show up on the plot
+    ggplot(aes(x = -log10(enrichment_p), y = type)) +
+    geom_bar(stat = 'identity', aes(fill = evo_annot), position = 'dodge') +
+    geom_vline(xintercept = -log10(0.05), color = 'red', linetype = 'dashed', size = 1.075) +
+    labs(fill = NULL) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          plot.title = element_text(size = 14, hjust = .5),
+          legend.position = 'bottom') +
+    scale_fill_manual(values = rev(cl)) +
+    xlab('-log10(enrichment p-value)') +
+    ylab(NULL)
+
+## read in scQTL plot
 # HAQER scQTL
 p_scqtl_enr <- read_rds('manuscript/figures/R_plot_objects/HAQER_scQTL_enrichment.rds')
-# EpiSLI validation
-p_scqtl_valid <- read_rds('manuscript/figures/R_plot_objects/HAQER_scQTL_EpiSLI_validation_F1_F3_scatterplot.rds')
 
-## merge plots
-layout <- "
-AABBCD
-AABBEF
-AABBGH
-"
+## merge panels 
+p_merge <- (p_scqtl_enr & theme(legend.position = 'none')) / ((p_bhc + p_vl) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom'))
 
-fig4 <- p_scqtl_enr +
-       p_paired_bg +
-       p_paired_haq +
-       p_sib_bw_bg +
-       p_sib_bw +
-        p_abcd_icv +
-        p_abcd_icv_growth +
-        plot_layout(design = layout) + plot_annotation(tag_levels = 'a') & 
-        theme(plot.tag = element_text(size = 28, face = 'bold'),
+## adjust formatting
+fig_supp <- p_merge +
+        plot_layout(heights = c(1,.2)) +
+        plot_annotation(tag_levels = 'A') & 
+        theme(plot.tag = element_text(size = 24, face = 'bold'),
                axis.text = element_text(size = 14),
                axis.title = element_text(size = 16),
                legend.text = element_text(size = 20),
@@ -42,8 +76,13 @@ fig4 <- p_scqtl_enr +
                plot.title = element_text(size = 20, face = 'bold'))
 
 ## save figure
-ggsave(fig4,
-       filename = 'manuscript/figures/paper_figures/fig4.pdf', 
+ggsave(fig_supp,
+       filename = 'manuscript/figures/paper_figures/supp_fig_HAQER_enrichment.pdf', 
        device = 'pdf', 
-       units = 'in', width = 30, height = 16,
+       units = 'in', width = 14, height = 14,
+       dpi = 300)
+ggsave(fig_supp,
+       filename = 'manuscript/figures/paper_figures/supp_fig_HAQER_enrichment.png', 
+       device = 'png', 
+       units = 'in', width = 14, height = 14,
        dpi = 300)

@@ -211,10 +211,57 @@ es_pgs_res <- bind_rows(res_list) %>%
   relocate(complement_PGS_n_snp, .before = annotation_PGS_n_snp) %>%
   mutate(rsq_gain_per_1000indSNP = (baseline_plus_anno_rsq - baseline_rsq) / (annotation_PGS_n_snp / 1000)) %>% 
   mutate(fdr_model_comparison = p.adjust(p.value_model_comparison, method = 'fdr'))
-es_pgs_res %>% 
+
+es_pgs_res_table <- es_pgs_res %>% 
+    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
+                                model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
+                                model == 'LinAR_Homininae' ~ 'Homininae',
+                                model == 'LinAR_Hominoidea' ~ 'Hominoidea',
+                                model == 'LinAR_Simiformes' ~ 'Simiformes',
+                                model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                model == 'ancient_human_selective_sweep' ~ 'Archaic deserts',
+                                model == 'consPrimates_UCE' ~ 'Primate UCEs',
+                                model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
+                                model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                model == 'HAQER' ~ 'HAQERs',
+                                model == 'HAR' ~ 'HARs',
+                                TRUE ~ NA_character_)) %>% 
+  drop_na(mod_clean) %>%
+  mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Archaic deserts', 'Recent selection'))) %>%
+  filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'HAQERs', 'HARs', 'Archaic deserts')) %>%
+  rename(annotation_name_clean = mod_clean) %>% 
+  mutate(fdr.model_comparison = p.adjust(p.value_model_comparison, method = 'fdr')) %>%
+  relocate(fdr.model_comparison, .after = p.value_model_comparison) %>%
+  relocate(annotation_name_clean, .after = model) %>%
   write_csv('manuscript/supplemental_materials/stats/EpiSLI_factor_ES-PGS_results.csv')
 
 ## make figures for ES-PGS
+### heatmap for all annotations + factors
+p_es_pgs_ht <- es_pgs_res_table %>% 
+  arrange(annotation_name_clean) %>%
+  mutate(annotation_name_clean = factor(annotation_name_clean, levels = rev(unique(annotation_name_clean)))) %>%
+  mutate(sig = case_when(fdr.model_comparison < .05 ~ '**',
+                         p.value_model_comparison < .05 ~ '*',
+                         TRUE ~ NA_character_
+                         )) %>%
+  ggplot(aes(x = factor, y = annotation_name_clean, fill = annotation_beta)) +
+  geom_tile() +
+  scale_fill_gradient2(low = 'blue', mid = 'white', high = 'chocolate', midpoint = 0, name = 'Annotation beta:') +
+  xlab(NULL) +
+  ylab("ES-PGS model") +
+  geom_text(aes(label = sig), size = 11, check_overlap = TRUE) +
+  theme_classic() +  
+  theme(axis.text = element_text(size = 18),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 20),
+        legend.position = 'bottom')
+p_es_pgs_ht %>%
+    ggsave(filename = 'manuscript/figures/EpiSLI_factor_ES-PGS_heatmap.png', 
+           device = 'png', dpi = 300, bg = 'white', 
+           units = 'in', width = 12, height = 7)
+
+### forest plot for F1
 p_es_pgs_forest <- es_pgs_res %>% 
     group_by(factor) %>%
     filter(factor %in% c('F1')) %>% 
@@ -232,7 +279,7 @@ p_es_pgs_forest <- es_pgs_res %>%
                                  model == 'HAR' ~ 'HARs',
                                  TRUE ~ NA_character_)) %>% 
     drop_na(mod_clean) %>%
-    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'GAQERs', 'CAQERs', 'HAQERs','HARs',  'Neanderthal deserts', 'Archaic deserts', 'Recent selection'))) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'HAQERs','HARs',  'Neanderthal deserts', 'Archaic deserts', 'Recent selection'))) %>%
     filter(mod_clean %in% c('Primate UCEs', 'Great ape acceleration', 'HAQERs', 'HARs', 'Neanderthal deserts',  'Archaic deserts')) %>%
     mutate(sig = ifelse(p.value_model_comparison < 0.05, TRUE, FALSE)) %>%
     ggplot(aes(x = mod_clean, y = annotation_beta, color = sig)) +

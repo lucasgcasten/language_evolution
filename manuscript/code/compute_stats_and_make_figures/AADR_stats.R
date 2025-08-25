@@ -74,8 +74,6 @@ write.csv(sel_results[sel_results$x != 'intercept',],
 ###############################
 ## polygenic selection figure
 ###############################
-library(tidyverse)
-
 ## labs for plot
 sel_results <- sel_results %>% 
     mutate(lab = str_c('selection coef. = ', round(beta, digits = 3), ', p-val = ', formatC(pval, digits = 2)))
@@ -91,7 +89,7 @@ p_sel <- data %>%
     mutate(sel_haq_lab = sel_haq_lab,
            sel_bg_lab = sel_bg_lab) %>%
     ggplot(aes(x = -1 * sample_age, y = value, color = pgs)) +
-    geom_smooth(method = 'lm', size = 1.5, alpha = .2) +
+    geom_smooth(method = 'lm', size = 2, alpha = .2) +
     geom_text(aes(x = -8000, y = -2.1, label = sel_bg_lab), check_overlap = TRUE, size = 7, color = 'grey50') +
     geom_text(aes(x = -8000, y = .5, label = sel_haq_lab), check_overlap = TRUE, size = 7, color = '#762776') +
     xlab('Years ago') +
@@ -112,6 +110,35 @@ p_sel %>%
            device = 'png', dpi = 300, bg = 'white',
            units = 'in', width = 5, height = 5)
 
+
+p_sel2 <- data %>% 
+    pivot_longer(cols = matches('cp_pgs')) %>% 
+    mutate(pgs = case_when(name == 'cp_pgs.HAQER' ~ 'HAQERs',
+                           name == 'cp_pgs.background' ~ 'Background')) %>%
+    drop_na(pgs) %>%                           
+    mutate(sel_haq_lab = sel_haq_lab,
+           sel_bg_lab = sel_bg_lab) %>%
+    ggplot(aes(x = -1 * sample_age, y = value, color = pgs)) +
+    geom_smooth(size = 2, alpha = .2) +
+    geom_text(aes(x = -8000, y = -2.1, label = sel_bg_lab), check_overlap = TRUE, size = 7, color = 'grey50') +
+    geom_text(aes(x = -8000, y = .5, label = sel_haq_lab), check_overlap = TRUE, size = 7, color = '#762776') +
+    xlab('Years ago') +
+    ylab('CP-PGS') +
+    scale_color_manual(values = c('grey70', "#762776")) +
+    theme_classic() +
+    labs(color = NULL) +
+    theme(axis.text = element_text(size = 16),
+          axis.title = element_text(size = 18),
+          strip.text = element_text(size = 18),
+          legend.text = element_text(size = 16),
+          plot.title = element_text(size = 18, hjust = .5),
+          legend.position = 'bottom') +
+    scale_x_continuous(breaks = c(seq(-20000, -5000, 5000), -100), labels = c('20,000', '15,000', '10,000', '5,000', '100')) +
+    labs(color = 'CP-PGS:')
+p_sel2 %>% 
+    ggsave(filename = 'manuscript/figures/AADR_HAQER_polygenic_selection2.png',
+           device = 'png', dpi = 300, bg = 'white',
+           units = 'in', width = 5, height = 5)
 
 ## ---------------------------------------------------
 ## neanderthal ES-PGS

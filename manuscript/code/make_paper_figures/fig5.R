@@ -1,8 +1,6 @@
 library(tidyverse)
 library(patchwork)
 
-cl <- c("#762776", "#e04468", "#dcc699") ## color palette (HAQER, HAR, RAND)
-
 ## read in plot objects
 # neanderthal + denisovan WGS PGS figures
 p_nean_bg <- read_rds('manuscript/figures/R_plot_objects/AADR_background-CP-PGS_nean_dist.rds')
@@ -15,7 +13,7 @@ p_sel <- read_rds('manuscript/figures/R_plot_objects/AADR_HAQER-CP-PGS_selection
 p_sfs <- read_rds("manuscript/figures/R_plot_objects/HAQER_SFS_bin_comparisons.rds")
 p_f_comp <- read_rds("manuscript/figures/R_plot_objects/EpiSLI_fstat_comparisons.rds")
 ## ABCD cephalopelvic disprortion
-p_cpd <- read_rds('manuscript/figures/R_plot_objects/ABCD_cephalopelvic_disproportion_HAQER_ES-PGS.rds')
+p_cpd <- read_rds('manuscript/figures/R_plot_objects/ABCD_cephalopelvic_disproportion_HAQER_ES-PGS.rds') + scale_fill_manual(values = c('grey70', 'seagreen'))
 ## cross species validation figures
 p_vl <- read_rds('manuscript/figures/R_plot_objects/vocal_learners_HAQER-like_no_primates.rds')
 p_bs <- read_rds('manuscript/figures/R_plot_objects/brain_size_HAQER-like_no_primates.rds')
