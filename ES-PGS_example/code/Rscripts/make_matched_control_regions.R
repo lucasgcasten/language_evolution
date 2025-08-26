@@ -1,3 +1,7 @@
+## -----------------------------------------
+## load all dependencies (there are a lot)
+## -----------------------------------------
+## required
 library(tidyverse)
 library(regioneR)  # This has randomizeRegions
 library(nullranges)
@@ -5,13 +9,13 @@ library(BSgenome.Hsapiens.UCSC.hg19)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(GenomicRanges)
 library(GenomicFeatures)  # Add this for cds(), exons(), genes(), promoters()
-## for parallelization of random sampling
+## recommended: for parallelization of random sampling 
 library(future)
 library(furrr)
 # Set up parallel processing
 plan(multisession, workers = 6)  # Adjust based on your CPU cores
 
-# chromosome of interest (tweak to match your data - sex chromosomes will probably be dropped in PGS calculations)
+# chromosomes of interest (tweak to match your data - sex chromosomes will probably be dropped in PGS calculations)
 target_chroms <- c(paste0("chr", 1:22), "chrX", "chrY")
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 hg19_granges <- GRanges(seqinfo(BSgenome.Hsapiens.UCSC.hg19))
@@ -19,21 +23,7 @@ hg19_filtered <- hg19_granges[seqnames(hg19_granges) %in% target_chroms]
 hg19_filtered <- keepSeqlevels(hg19_filtered, target_chroms, pruning.mode = "coarse")
 
 ## get annotation file list to loop over
-files <- list.files("/wdata/lcasten/sli_wgs/prs/gene_sets", pattern = '.bed$')
-files = files[str_detect(files, 'matched_control_sequences|_flank|complement|human_specific_evolution_brain_expression|human_specific_brain_CRE_|human_brain_expression_divergence|brainCREs|human_specific_variants_in_brain_CRE|Kb|1700b', negate = TRUE)]
-
-## drop SNP level annotations (matching too inefficient for this right now)
-message("Getting annotations to work on...")
-file_elements <- data.frame(file = files)
-nrow_in_files <- vector()
-for(f in files) {
-    cnt <- nrow(read_tsv(str_c("/wdata/lcasten/sli_wgs/prs/gene_sets/", f), col_names = FALSE, show_col_types = FALSE))
-    nrow_in_files <- c(nrow_in_files, cnt)
-}
-file_elements$n_rows <- nrow_in_files
-files_kp <- file_elements %>% 
-    filter(n_rows < 50000)
-files <- files[files %in% files_kp$file]
+files <- c("ES-PGS_example/example_data/HAQERs.bed", "ES-PGS_example/example_data/HARs.bed")
 
 ## for each annotation, find matched random regions
 for(f in files) {
@@ -42,8 +32,8 @@ for(f in files) {
     message('Working on: ', f)
     message(rep('<>', times = 15))
     message("Reading / prepping data...")
-    # Load your regions and make sure we're only working with autosomes + sex chromosomes
-    original_regions <- import(str_c("/wdata/lcasten/sli_wgs/prs/gene_sets/", f))
+    # Load your regions and make sure we're only working with chromosomes of interest
+    original_regions <- import(f)
     original_regions <- original_regions[seqnames(original_regions) %in% target_chroms]
 
     # Create buffer zones around regions of interest
@@ -57,6 +47,7 @@ for(f in files) {
     message("Generating random chromosome/size matched sequences so we can make a matched control set, might take a few minutes...")
 
     # Parallelized random sequence generation
+    ## this will sample 1,000 random size matched sequences for each input region (later we will identify the closest matching one)
     random_sets <- future_map(1:1000, function(i) {
                                             set.seed(i + 42)
                                             randomizeRegions(
@@ -67,16 +58,6 @@ for(f in files) {
                                                             mask = ## mask regions of interest + buffer zone
                                                             )  
                                                             }, .options = furrr_options(seed = TRUE))
-    ## will run serially (very slow)
-    # random_sets <- replicate(n = 500, {
-    #                                 randomizeRegions(
-    #                                     A = original_regions,
-    #                                     genome = hg19_filtered,
-    #                                     allow.overlaps = FALSE,
-    #                                     per.chromosome = TRUE,
-    #                                     mask = ## mask regions of interest + buffer zone
-    #                                 )
-    #                                 }, simplify = FALSE)
 
     # Combine and deduplicate
     random_pool <- do.call(c, random_sets)
@@ -233,7 +214,7 @@ for(f in files) {
     tmp[,1:3] %>% 
         write_tsv(outf, col_names = FALSE)
     # Save genomic info about regions of interest
-    outf2 <- str_c("/wdata/lcasten/sli_wgs/prs/gene_sets/genomic_info/", str_replace_all(f, '.bed', '_genomic_annotation_info.csv'))
+    outf2 <- str_c("ES-PGS_example/example_data/", str_replace_all(f, '.bed', '_genomic_annotation_info.csv'))
     original_df <- as.data.frame(original_regions) %>% 
         as_tibble() %>% 
         mutate(chr = as.numeric(str_remove_all(seqnames, pattern = 'chr'))) %>% 
@@ -243,7 +224,7 @@ for(f in files) {
         write_csv(outf2)
 
     # Save genomic info about matched control regions
-    outf3 <- str_c("/wdata/lcasten/sli_wgs/prs/gene_sets/genomic_info/matched_control.", str_replace_all(f, '.bed', '_genomic_annotation_info.csv'))
+    outf3 <- str_c("ES-PGS_example/example_data/matched_control.", str_replace_all(f, '.bed', '_genomic_annotation_info.csv'))
     matched_df <- as.data.frame(matched_regions) %>% 
         as_tibble() %>% 
         mutate(chr = as.numeric(str_remove_all(seqnames, pattern = 'chr'))) %>% 

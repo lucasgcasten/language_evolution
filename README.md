@@ -18,12 +18,13 @@ In this repository we adapt established tools for our ES-PGS calculation, which 
 ## Example usage
 We provide an example implementation and output of ES-PGS in the `ES-PGS_example` directory, we hope this code can be easily adapted to a wide range of research areas.
 
-A general ES-PGS analysis has 5 steps, which are covered in our example:
+A general ES-PGS analysis has 6 steps, which are covered in our example:
 1. Gather evolutionary annotations and identify "background" regions with `BEDTools`
-2. Compute ES-PGS with `PRSet`
-3. Adjust ES-PGS for genetic PCs and reformat data in `R`
-4. ES-PGS analysis with your phenotype(s) in `R`
-5. Visualize results with `R`
+2. Generate matched control regions for your evolutionary annotations using R
+3. Compute ES-PGS with `PRSet`
+4. Adjust ES-PGS for genetic PCs and reformat data in `R`
+5. ES-PGS analysis with your phenotype(s) in `R`
+6. Visualize results with `R`
 
 ## Citations
 If you use this method, please cite our manuscript describing [ES-PGS](https://www.biorxiv.org/content/10.1101/2025.03.07.641231v1).

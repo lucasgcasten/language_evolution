@@ -14,7 +14,7 @@ long_corr <- function(x, y) {
         relocate(fdr, .after = p.value) %>% 
         mutate(sig = case_when(fdr < 0.05 ~ '**',
                                fdr >= 0.05 & p.value < 0.05 ~ '*',
-                               p.value >= 0.05 ~ '')
+                               p.value >= 0.05 ~ NA_character_)
             )
     return(corr_res)
 }
@@ -232,7 +232,9 @@ es_pgs_res_table <- es_pgs_res %>%
   rename(annotation_name_clean = mod_clean) %>% 
   mutate(fdr.model_comparison = p.adjust(p.value_model_comparison, method = 'fdr')) %>%
   relocate(fdr.model_comparison, .after = p.value_model_comparison) %>%
-  relocate(annotation_name_clean, .after = model) %>%
+  relocate(annotation_name_clean, .after = model)
+es_pgs_res_table %>% 
+  select(-fdr_model_comparison) %>%
   write_csv('manuscript/supplemental_materials/stats/EpiSLI_factor_ES-PGS_results.csv')
 
 ## make figures for ES-PGS
@@ -288,7 +290,7 @@ p_es_pgs_forest <- es_pgs_res %>%
     scale_shape_manual(values = c(1, 16)) +
     geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
     xlab('ES-PGS model') +
-    ylab('Effect on core language (F1)') +
+    ylab('ES-PGS effect on core language (F1)') +
     scale_color_manual(values = c('grey75', 'black')) +
     theme_classic() +  
     theme(axis.text = element_text(size = 18),
@@ -358,6 +360,35 @@ p_es_pgs_factors_forest %>%
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 12, height = 6)
 
+## SPARK SCQ replication
+es_pgs_res_spark_scq <- read_csv('manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations.csv')
+p_scq_dat <- es_pgs_res_spark_scq %>%
+    filter(str_detect(pheno, '^SCQ')) %>%    
+    mutate(type = str_c('SPARK SCQ (N = ', prettyNum(n, big.mark = ','),')')) %>% 
+    mutate(sig = ifelse(p.value < .05, TRUE, FALSE)) %>%
+    arrange(desc(beta)) %>% 
+    mutate(pheno_clean = factor(pheno_clean, levels = rev(unique(pheno_clean))))
+
+p_es_pgs_forest_spark_0 <- p_scq_dat %>%
+    ggplot(aes(x = beta, y = pheno_clean, color = sig)) +
+    geom_linerange(aes(xmin = beta - 1.96 * std.error, xmax = beta + 1.96 * std.error), size = 1.5) +
+    geom_point(size = 5, aes(shape = sig)) +
+    geom_vline(xintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    xlab("HAQER CP-PGS Beta (95% CI)") +
+    ylab(NULL) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 18),
+          axis.title = element_text(size = 20),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 20),
+          strip.text = element_text(size = 20),
+          legend.position=c(.9,.1),
+          legend.box.background = element_rect(colour = "black", size = 1)) +
+    scale_color_manual(values = c("grey75", "black")) +
+    scale_shape_manual(values = c(1, 16)) +
+    guides(shape = 'none', color = 'none') +
+    facet_wrap(~type)
+
 ## SPARK language diagnosis replication
 es_pgs_res_spark_lang <- read_csv("manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations_self_reported_language_diagnosis.csv")
 p_dx_dat <- es_pgs_res_spark_lang %>% 
@@ -372,7 +403,7 @@ p_dx_dat <- es_pgs_res_spark_lang %>%
 
 p_es_pgs_forest_spark_1 <- p_dx_dat %>%
     filter(str_detect(pheno, '^Any ')) %>%
-    mutate(type = 'SPARK self-reported diagnosis') %>%
+    mutate(type = str_c('SPARK self-reported diagnosis (N = ', n, ')')) %>%
     ggplot(aes(x = estimate, y = pheno, color = sig)) +
     geom_linerange(aes(xmin = estimate - 1.96 * std_error, xmax = estimate + 1.96 * std_error), size = 1.5) +
     geom_point(size = 5, aes(shape = sig)) +
@@ -413,29 +444,32 @@ p_es_pgs_forest_spark_2 <- p_dx_dat %>%
     guides(shape = 'none', color = 'none')
 
 library(patchwork)
-p_merged <- p_es_pgs_forest_spark_1 / p_es_pgs_forest_spark_2
+p_merged <- p_es_pgs_forest_spark_0 / p_es_pgs_forest_spark_1 / p_es_pgs_forest_spark_2
 p_merged %>%
     ggsave(filename = 'manuscript/figures/SPARK_language_diagnosis_ES-PGS_forest.png', 
            device = 'png', dpi = 300, bg = 'white', 
-           units = 'in', width = 12, height = 5)
+           units = 'in', width = 12, height = 7.5)
 
 ## scatterplots of F1 with HAQER PGS, background, and matched
 wd <- tmp %>% 
     select(IID, factor, factor_val, matches('HAQER')) %>% 
     filter(factor == 'F1')
 es_pgs_cor <- broom::tidy(cor.test(wd$factor_val, wd$cp_pgs.HAQER)) %>% 
-    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+    mutate(es_pgs_beta = es_pgs_res_table$annotation_beta[es_pgs_res_table$factor == 'F1' & es_pgs_res_table$model == 'HAQER']) %>%
+    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nES-PGS Beta = ', round(es_pgs_beta, digits = 2)))
 es_pgs_cor_bg <- broom::tidy(cor.test(wd$factor_val, wd$cp_pgs.complement_HAQER)) %>% 
-    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))
+    mutate(es_pgs_beta = es_pgs_res_table$background_beta[es_pgs_res_table$factor == 'F1' & es_pgs_res_table$model == 'HAQER']) %>%
+    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nES-PGS Beta = ', round(es_pgs_beta, digits = 2)))
 es_pgs_cor_matched <- broom::tidy(cor.test(wd$factor_val, wd$cp_pgs.random_matched_control_regions_HAQER)) %>% 
-    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2)))    
+    mutate(es_pgs_beta = es_pgs_res_table$matched_beta[es_pgs_res_table$factor == 'F1' & es_pgs_res_table$model == 'HAQER']) %>%
+    mutate(factor = 'F1', lab = str_c('r = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nES-PGS Beta = ', round(es_pgs_beta, digits = 2)))
 p_f1 <- wd %>% 
     inner_join(es_pgs_cor) %>%    
-    ggplot(aes(x = factor_val, y = cp_pgs.HAQER)) +
+    ggplot(aes(x = cp_pgs.HAQER, y = factor_val)) +
     geom_point(size = 0.75) +
     geom_smooth(method = 'lm', size = 2, color = 'black') +
-    xlab('Core language (F1)') +
-    ylab('HAQER CP-PGS') +
+    xlab('HAQER CP-PGS') +
+    ylab('Core language (F1)') +
     geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
@@ -444,11 +478,11 @@ p_f1 <- wd %>%
           legend.title = element_text(size = 14))
 p_f1_bg <- wd %>% 
     inner_join(es_pgs_cor_bg) %>%    
-    ggplot(aes(x = factor_val, y = cp_pgs.complement_HAQER)) +
+    ggplot(aes(x = cp_pgs.complement_HAQER, y = factor_val)) +
     geom_point(size = 0.75) +
     geom_smooth(method = 'lm', size = 2, color = 'black') +
-    xlab('Core language (F1)') +
-    ylab('Background CP-PGS') +
+    xlab('Background CP-PGS') +
+    ylab('Core language (F1)') +
     geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
@@ -457,11 +491,11 @@ p_f1_bg <- wd %>%
           legend.title = element_text(size = 14))
 p_f1_matched <- wd %>% 
     inner_join(es_pgs_cor_matched) %>%    
-    ggplot(aes(x = factor_val, y = cp_pgs.random_matched_control_regions_HAQER)) +
+    ggplot(aes(x = cp_pgs.random_matched_control_regions_HAQER, y = factor_val)) +
     geom_point(size = 0.75, color = 'grey75') +
     geom_smooth(method = 'lm', size = 2, color = 'grey60') +
-    xlab('Core language (F1)') +
-    ylab('Matched CP-PGS') +
+    xlab('Matched CP-PGS') +
+    ylab('Core language (F1)') +
     geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),

@@ -1,3 +1,3 @@
 model,df,LogLik,statistic,p.value,group,added_x
-lang_dx_count ~ cp_pgs.HAQER_v2 + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5,22,-477.1335663256868,18.88124102904078,7.943110510129966e-5,psychiatric,cp_pgs.HAQER_v2
+lang_dx_count ~ cp_pgs.HAQER_v2 + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5,22,-477.1335663256868,18.88124102904078,7.943110510129966e-5,language,cp_pgs.HAQER_v2
 psych_dx_count ~ cp_pgs.HAQER_v2 + cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5,22,-945.4242037090204,1.0817184117124725,0.5822477667037376,psychiatric,cp_pgs.HAQER_v2

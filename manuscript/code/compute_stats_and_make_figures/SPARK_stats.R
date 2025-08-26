@@ -9,11 +9,16 @@ spark_df <- read_csv('manuscript/supplemental_materials/SPARK_data.csv')
 ## ES-PGS analysis
 ####################
 ## stats for self-reported language diagnosis count (language impairment + dyslexia + stutter + ...)
-### get number of language related diagoses for everyone
-spark_df$lang_dx_count <- spark_df$dx_lang_impairment + spark_df$dx_hearing_impairment + spark_df$dx_speech_impediment + spark_df$dx_speech_stutter + spark_df$dx_dyslexia
-spark_df$psych_dx_count <- spark_df$dx_mdd + spark_df$dx_bipolar + spark_df$dx_anxiety + spark_df$dx_schizophrenia + spark_df$dx_ocd + spark_df$dx_tourettes + spark_df$dx_substance_abuse
+### make diagnosis count traits
+spark_df$lang_dx_count <- spark_df$dx_lang_impairment + spark_df$dx_dyslexia + spark_df$dx_hearing_impairment + spark_df$dx_speech_impediment + spark_df$dx_speech_stutter
+spark_df$psych_dx_count <- spark_df$dx_mdd + spark_df$dx_bipolar + spark_df$dx_schizophrenia + spark_df$dx_substance_abuse + spark_df$dx_anxiety + spark_df$dx_ocd + spark_df$dx_tourettes
 
+### get number of language related diagoses for everyone
 n_self_report_lang_dx <- nrow(spark_df[spark_df$asd == FALSE & is.na(spark_df$lang_dx_count) == FALSE & is.na(spark_df$cp_pgs.background_HAQER_v2) == FALSE,])
+ncas_self_report_lang_dx <- sum(spark_df$lang_dx_count > 0, na.rm = TRUE)
+ncon_self_report_lang_dx <- n_self_report_lang_dx - ncas_self_report_lang_dx 
+ncas_self_report_psych_dx <- sum(spark_df$psych_dx_count > 0, na.rm = TRUE)
+ncon_self_report_psych_dx <- n_self_report_lang_dx - ncas_self_report_psych_dx 
 
 ### fit zero inflated regression models to predict number of language diagnoses
 m_dx_null <- pscl::zeroinfl(lang_dx_count ~ cp_pgs.background_HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + age_self_report_dx + as.factor(sex) + pc1 + pc2 + pc3 + pc4 + pc5, 
@@ -41,6 +46,7 @@ count_results <- data.frame(
   std_error = mod_sum$coefficients$count[,2],
   z_value = mod_sum$coefficients$count[,3],
   p_value = mod_sum$coefficients$count[,4],
+  n = n_self_report_lang_dx,
   stringsAsFactors = FALSE
   )
 zero_results <- data.frame(
@@ -50,6 +56,9 @@ zero_results <- data.frame(
   std_error = mod_sum$coefficients$zero[,2],
   z_value = mod_sum$coefficients$zero[,3],
   p_value = mod_sum$coefficients$zero[,4],
+  n = n_self_report_lang_dx,
+  n_case = ncas_self_report_lang_dx,
+  n_control = ncon_self_report_lang_dx,
   stringsAsFactors = FALSE
   )
 
@@ -61,6 +70,7 @@ count_results_psych <- data.frame(
   std_error = mod_sum_psych$coefficients$count[,2],
   z_value = mod_sum_psych$coefficients$count[,3],
   p_value = mod_sum_psych$coefficients$count[,4],
+  n = n_self_report_lang_dx,
   stringsAsFactors = FALSE
   )
 zero_results_psych <- data.frame(
@@ -70,12 +80,15 @@ zero_results_psych <- data.frame(
   std_error = mod_sum_psych$coefficients$zero[,2],
   z_value = mod_sum_psych$coefficients$zero[,3],
   p_value = mod_sum_psych$coefficients$zero[,4],
+  n = n_self_report_lang_dx,
+  n_case = ncas_self_report_psych_dx,
+  n_control = ncon_self_report_psych_dx,  
   stringsAsFactors = FALSE
   )
 
 ### save stats
 lang_res <- broom::tidy(lmtest::lrtest(m_dx_null, m_dx_alt)) %>% 
-    mutate(group = 'psychiatric')
+    mutate(group = 'language')
 psych_res <-  broom::tidy(lmtest::lrtest(m_dx_psych_null, m_dx_psych_alt)) %>% 
     mutate(group = 'psychiatric')
 
@@ -102,8 +115,11 @@ bind_rows(lang_coef_res, psych_coef_res) %>%
 
 ## SCQ stats for HAQERs
 n_mod <- spark_df %>% 
-    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, matches("^SCQ_q"), cp_pgs.HAQER_v2, cp_pgs.background_HAQER, cp_pgs.matched_control_HAQER_v2, str_c('pc', 1:5)) %>% 
+    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, matches('^SCQ_q'), cp_pgs.HAQER_v2, cp_pgs.background_HAQER, cp_pgs.matched_control_HAQER_v2, str_c('pc', 1:5)) %>% 
+    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, SCQ_q01_phrases, SCQ_q08_particular_way, SCQ_q10_hand_tool, SCQ_q31_comfort, matches("HAQER_v2"), matches('pc')) %>% 
+    filter(SCQ_age_at_eval_years >= 2) %>%
     drop_na(SCQ_final_score, cp_pgs.HAQER_v2) %>% 
+    drop_na(matches("^SCQ_q")) %>%
     pivot_longer(cols = matches('SCQ_q')) %>% 
     drop_na(value) %>%
     group_by(name, value) %>% 
@@ -112,20 +128,27 @@ n_mod <- spark_df %>%
     mutate(value = str_c(as.logical(value), '_n')) %>% 
     pivot_wider(names_from = 'value', values_from = 'n')
 rep_scq_stat_es_pgs <- spark_df %>% 
-    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, SCQ_q01_phrases, matches("HAQER_v2"), matches('pc')) %>% 
-    drop_na(SCQ_final_score, cp_pgs.HAQER_v2) %>% 
+    filter(SCQ_age_at_eval_years >= 2) %>%
+    select(IID, SCQ_final_score, SCQ_age_at_eval_years, SCQ_sex, SCQ_q01_phrases, SCQ_q08_particular_way, SCQ_q10_hand_tool, matches("HAQER_v2"), matches('pc')) %>% 
+    drop_na(SCQ_final_score, cp_pgs.HAQER_v2) %>%
+    drop_na(matches("^SCQ_q")) %>%
     pivot_longer(cols = matches('^SCQ_q')) %>%
-    group_by(name) %>% 
-    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + SCQ_age_at_eval_years + as.factor(SCQ_sex) + pc1 + pc2 + pc3 + pc4 + pc5, data = ., family = 'binomial'))) %>% 
-    unnest(res) %>% 
-    filter(term == 'cp_pgs.HAQER_v2') %>% 
+    group_by(name) %>%
+    do(res = broom::tidy(glm(value ~ cp_pgs.HAQER_v2 + cp_pgs.matched_control_HAQER_v2 + cp_pgs.background_HAQER_v2 + SCQ_age_at_eval_years + as.factor(SCQ_sex) + pc1 + pc2 + pc3 + pc4 + pc5, data = ., family = 'binomial'))) %>%
+    unnest(res) %>%
+    filter(term == 'cp_pgs.HAQER_v2') %>%
     mutate(pheno = str_c(name),
            x = 'cp_pgs.HAQER_v2'
-           ) %>% 
+           ) %>%
     inner_join(n_mod) %>%
-    relocate(pheno, x) %>%  
-    select(-c(term, name)) %>% 
-    mutate(n = FALSE_n + TRUE_n)
+    relocate(pheno, x) %>%
+    select(-c(term, name)) %>%
+    mutate(n = FALSE_n + TRUE_n) %>% 
+    mutate(pheno_clean = case_when(str_detect(pheno, 'q01') ~ 'Able to talk using short phrases or sentences',
+                                   str_detect(pheno, 'q08') ~ 'Does things in a very particular way or order',
+                                   str_detect(pheno, 'q10') ~ 'Used your hand like a tool',
+                                   str_detect(pheno, 'q31') ~ 'Ever tried to comfort you when you were sad or hurt',
+                                   TRUE ~ pheno))
 
 ## IQ ES-PGS stats
 iq_cnt <- spark_df %>%
@@ -148,14 +171,16 @@ spark_iq_es_pgs_res <- spark_df %>%
     inner_join(iq_cnt) %>%
     rename(pheno = name) %>%
     relocate(pheno, x) %>% 
-    select(-term)
+    select(-term) %>% 
+    mutate(pheno_clean = case_when(pheno == 'viq_score' ~ 'Verbal IQ',
+                                   pheno == 'fsiq_score' ~ 'Full-scale IQ',
+                                   pheno == 'nviq_score' ~ 'Nonverbal IQ'))
 
 spark_iq_es_pgs_res_lab <- spark_iq_es_pgs_res %>%  
     mutate(lab = str_c('ES-PGS beta = ', round(estimate, digits = 2), ', p-val = ', formatC(p.value, digits = 2), '\nN = ', prettyNum(n, big.mark = ',')))
 
 spark_p_iq <- spark_df %>%
     filter(asd == TRUE) %>%
-    # filter(age_years >= 4) %>%
     pivot_longer(cols = matches('iq_score')) %>% 
     rename(pheno = name) %>%
     inner_join(spark_iq_es_pgs_res_lab) %>% 
@@ -375,20 +400,20 @@ p_rev_forest_dx <- reversions_spark_dx_res %>%
                                    pheno == 'used_words_age_mos' ~ 'Age of first word',
                                    pheno == 'combined_words_age_mos' ~ 'Age combined words',
                                    pheno == 'combined_phrases_age_mos' ~ 'Age combined phrases'),
-           x_clean = case_when(str_detect(x, 'haqer_') ~ 'HAQER rare reversions',
-                               str_detect(x, 'har_') ~ 'HAR rare reversions',
-                               str_detect(x, 'rand_') ~ 'RAND rare reversions')) %>% 
+           x_clean = case_when(str_detect(x, 'haqer_') ~ 'HAQER',
+                               str_detect(x, 'har_') ~ 'HAR',
+                               str_detect(x, 'rand_') ~ 'RAND')) %>% 
     mutate(type = case_when(str_detect(pheno, 'dx_') ~ str_c('Diagnosis (N = ', prettyNum(n, big.mark = ','), ')'),
                             str_detect(pheno, 'dx_', negate = TRUE) ~ str_c('Developmental milestones (N = ', prettyNum(n, big.mark = ','), ')'))
            ) %>%
     mutate(pheno = factor(pheno, levels = rev(c('dx_dev_lang_disorder', 'dx_intellectual_disability', 'used_words_age_mos', 'combined_words_age_mos', 'combined_phrases_age_mos', 'walked_age_mos')))) %>%
     arrange(pheno) %>% 
     mutate(pheno_clean = factor(pheno_clean, levels = unique(pheno_clean))) %>%
-    mutate(x_clean = factor(x_clean, levels = rev(c('HAQER rare reversions', 'HAR rare reversions', 'RAND rare reversions')))) %>%
+    mutate(x_clean = factor(x_clean, levels = rev(c('HAQER', 'HAR', 'RAND')))) %>%
     arrange(type) %>% 
     mutate(type = factor(type, levels = rev(unique(type)))) %>%
     mutate(sig = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-    mutate(type = 'SPARK parent reported diagnosis') %>%
+    mutate(type = str_c('SPARK parent reported diagnosis (N = ', prettyNum(n, big.mark = ','), ')')) %>%
     ggplot(aes(x = beta, y = pheno_clean, color = x_clean)) +
     geom_linerange(aes(xmin = beta - 1.96 * std.error, xmax = beta + 1.96 * std.error), size = 1.5, position = position_dodge(.45)) +
     geom_point(size = 5, position = position_dodge(.45), aes(shape = sig)) +
