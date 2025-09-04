@@ -360,6 +360,62 @@ p_es_pgs_factors_forest %>%
            device = 'png', dpi = 300, bg = 'white', 
            units = 'in', width = 12, height = 6)
 
+
+## make figure showing effects of a few annotations across all factors 
+## (to show HAQERs are at least nominally associated with most language factors)
+p_es_pgs_factors_forest_haq <- es_pgs_res %>% 
+    mutate(mod_clean = case_when(model == 'LinAR_Catarrhini' ~ 'Catarrhini',
+                                 model == 'LinAR_Hominidae' ~ 'Great ape acceleration',
+                                 model == 'LinAR_Homininae' ~ 'Homininae',
+                                 model == 'LinAR_Hominoidea' ~ 'Hominoidea',
+                                 model == 'LinAR_Simiformes' ~ 'Simiformes',
+                                 model == 'NeanderthalSelectiveSweep' ~ 'Neanderthal deserts',
+                                 model == 'ancient_human_selective_sweep' ~ 'Archaic deserts',
+                                 model == 'consPrimates_UCE' ~ 'Primate UCEs',
+                                 model == 'human_chimp_div_DMG' ~ 'Human-chimp divergence',
+                                 model == 'human_singleton_density_score_top5pct' ~ 'Recent selection',
+                                 model == 'HAQER' ~ 'HAQERs',
+                                 model == 'HAR' ~ 'HARs',
+                                 TRUE ~ NA_character_)) %>% 
+    drop_na(mod_clean) %>%
+    mutate(mod_clean = factor(mod_clean, levels = c('Primate UCEs', 'Simiformes', 'Catarrhini', 'Hominoidea', 'Great ape acceleration', 'Homininae', 'Human-chimp divergence', 'GAQERs', 'CAQERs', 'HAQERs','HARs',  'Neanderthal deserts', 'Archaic deserts', 'Recent selection'))) %>%
+    filter(mod_clean %in% c('HAQERs')) %>%
+    mutate(sig = case_when(fdr_model_comparison < .01 ~ 'FDR < 0.01',
+                           p.value_model_comparison < .05 ~ 'p-val < 0.05',
+                           TRUE ~ 'NS'),
+           sig = factor(sig, levels = c('FDR < 0.01', 'p-val < 0.05', 'NS'))) %>%
+    mutate(factor = case_when(factor == 'F1' ~ 'Core language\n(F1)',
+                              factor == 'F2' ~ 'Receptive language\n(F2)',
+                              factor == 'F3' ~ 'Nonverbal IQ\n(F3)',
+                              factor == 'F4' ~ 'Early language\n(F4)',
+                              factor == 'F5' ~ 'Talkativeness\n(F5)',
+                              factor == 'F6' ~ 'Instruction comprehension\n(F6)',
+                              factor == 'F7' ~ 'Vocabulary\n(F7)')) %>%
+    mutate(factor = factor(factor, levels = unique(factor))) %>%
+    ggplot(aes(x = factor, y = annotation_beta, group = mod_clean)) +
+    geom_linerange(aes(ymin = annotation_beta - 1.96 * annotation_std_err, ymax = annotation_beta + 1.96 * annotation_std_err), size = 1.5, position = position_dodge(.3), color = '#762776') +
+    geom_point(size = 5, aes(shape = sig), position = position_dodge(.3), color = '#762776') +
+    scale_shape_manual(values = c(17,16, 1), name = NULL) +
+    geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
+    xlab(NULL) +
+    ylab('HAQER ES-PGS effect on trait') +
+    scale_color_manual(values = c('#762776'), name = NULL) +
+    theme_classic() +  
+    theme(axis.text = element_text(size = 18),
+          axis.text.x = element_text(angle = 30, hjust = 1),
+          axis.title = element_text(size = 20),
+          legend.text = element_text(size = 18),
+          legend.title = element_text(size = 20),
+          legend.position = c(.5,.99),
+          legend.direction="horizontal",
+          legend.box = "horizontal") +
+    coord_cartesian(ylim = c(-.15,.285))
+
+p_es_pgs_factors_forest_haq %>%
+    ggsave(filename = 'manuscript/figures/EpiSLI_factor_comparison_HAQER_only_ES-PGS_forest.png', 
+           device = 'png', dpi = 300, bg = 'white', 
+           units = 'in', width = 12, height = 7)
+
 ## SPARK SCQ replication
 es_pgs_res_spark_scq <- read_csv('manuscript/supplemental_materials/stats/SPARK_ES-PGS_HAQER_validations.csv')
 p_scq_dat <- es_pgs_res_spark_scq %>%
@@ -710,9 +766,9 @@ p_seq_class_comp <- binned_sfs_comp %>%
   geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075)
 
 ## F-statistic comparison across classes 
-broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_HARs))
-broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_RAND))
-broom::tidy(t.test(fstat_dat$f_HARs, fstat_dat$f_RAND))
+broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_HARs, paired = T))
+broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_RAND, paired = T))
+broom::tidy(t.test(fstat_dat$f_HARs, fstat_dat$f_RAND, paired = T))
 
 cl <- c("#762776", "#e04468", "#dcc699")
 p_fstat <- fstat_dat %>%  
