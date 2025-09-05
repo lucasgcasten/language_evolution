@@ -210,11 +210,11 @@ for(f in files) {
 
     ##
     message("Saving files now...")
-    outf <- str_c("/wdata/lcasten/sli_wgs/prs/gene_sets/", str_replace_all(f, '.bed', '.matched_control_sequences.bed'))
+    outf <- str_c("ES-PGS_example/example_data/", str_replace_all(basename(f), '.bed', '.matched_control_sequences.bed'))
     tmp[,1:3] %>% 
         write_tsv(outf, col_names = FALSE)
     # Save genomic info about regions of interest
-    outf2 <- str_c("ES-PGS_example/example_data/", str_replace_all(f, '.bed', '_genomic_annotation_info.csv'))
+    outf2 <- str_c("ES-PGS_example/example_data/", str_replace_all(basename(f), '.bed', '_genomic_annotation_info.csv'))
     original_df <- as.data.frame(original_regions) %>% 
         as_tibble() %>% 
         mutate(chr = as.numeric(str_remove_all(seqnames, pattern = 'chr'))) %>% 
@@ -224,7 +224,7 @@ for(f in files) {
         write_csv(outf2)
 
     # Save genomic info about matched control regions
-    outf3 <- str_c("ES-PGS_example/example_data/matched_control.", str_replace_all(f, '.bed', '_genomic_annotation_info.csv'))
+    outf3 <- str_c("ES-PGS_example/example_data/matched_control.", str_replace_all(basename(f), '.bed', '_genomic_annotation_info.csv'))
     matched_df <- as.data.frame(matched_regions) %>% 
         as_tibble() %>% 
         mutate(chr = as.numeric(str_remove_all(seqnames, pattern = 'chr'))) %>% 

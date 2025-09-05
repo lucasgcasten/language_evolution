@@ -24,7 +24,7 @@ pgs_evo_wide <- dat %>%
   select(-cohort) %>%
   mutate(pgs = str_split(pgs_name, pattern = '[.]', simplify = TRUE)[,1],
          gs = str_split(pgs_name, pattern = '[.]', simplify = TRUE)[,2],
-         anno = str_remove_all(gs, pattern = '_5e_08$|_0.0005$|_0.05$|_0.2$|_1$|_0$')) %>%
+         anno = str_remove_all(gs, pattern = '_1$')) %>%
   select(IID, pgs, anno, matches('pgs_pc_corrected')) %>%
   distinct() %>%
   pivot_wider(id_cols = -matches('anno|pgs_pathway'), 
@@ -46,7 +46,7 @@ tmp <- fc %>%
 ##########################################
 ## this code chunk will loop over each phenotype and ES-PGS annotation
 ## cols of interest 
-coi <- names(pgs_wide)[str_detect(names(pgs_wide), pattern = 'pgs_') & str_detect(names(pgs_wide), 'complement|pgs_genome_wide', negate = TRUE)]
+coi <- names(pgs_wide)[str_detect(names(pgs_wide), pattern = 'pgs_') & str_detect(names(pgs_wide), 'complement|pgs_genome_wide|matched', negate = TRUE)]
 ## initilialize variables
 iter = 0
 res_list = list()
@@ -62,26 +62,37 @@ for(c in coi){
         filter(name == str_c('Factor', i)) %>% ## you'll need to change to match your phenotype names
         select(IID, value, matches(str_c(str_remove_all(c, pattern = 'pgs_'), '$')))
       bdat <- tmp2 %>% 
-        select(IID, value, matches('complement'))
-      ## reduced model stats
-      baseline <- lm(value ~ . - IID, data = bdat)
-      baseline_plus_anno <- lm(value ~ . - IID, data = tmp2)
+        select(IID, value, matches('complement|matched'))
+      ## run stats
+      baseline <- lm(value ~ ., data = bdat[,-1])
+      baseline_plus_anno <- lm(value ~ ., data = tmp2[,-1])
       baseline_rsq = summary(baseline)$r.squared
-      ## full model stats
       baseline_plus_anno_rsq = summary(baseline_plus_anno)$r.squared
+      baseline_complement_coef <- broom::tidy(baseline_plus_anno) %>% 
+        filter(term != '(Intercept)' & str_detect(term, 'complement'))
+      baseline_matched_coef <- broom::tidy(baseline_plus_anno) %>% 
+        filter(term != '(Intercept)' & str_detect(term, 'matched'))
       baseline_plus_anno_coef <- broom::tidy(baseline_plus_anno) %>% 
-        filter(term != '(Intercept)' & str_detect(term, 'complement', negate = TRUE))
-      ## compare reduced vs full ES-PGS model and get summary stats
+        filter(term != '(Intercept)' & str_detect(term, 'complement|matched', negate = TRUE))
+      ## compare reduced vs full models and gather stats
       res <- broom::tidy(anova(baseline, baseline_plus_anno)) %>% 
         drop_na() %>% 
-        mutate(factor = str_c('Factor', i)) %>% 
-        mutate(c = str_remove_all(c, 'pgs_')) %>% 
-        relocate(factor, c) %>% 
+        mutate(factor = str_c('F', i)) %>% 
+        mutate(evo = str_remove_all(c, 'pgs_')) %>% 
+        relocate(factor, evo) %>% 
         mutate(baseline_rsq = baseline_rsq,
                baseline_plus_anno_rsq = baseline_plus_anno_rsq,
                annotation_beta = baseline_plus_anno_coef$estimate,
                annotation_std_err = baseline_plus_anno_coef$std.error,
-               annotation_pval = baseline_plus_anno_coef$p.value)
+               annotation_pval = baseline_plus_anno_coef$p.value,
+               matched_beta = baseline_matched_coef$estimate,
+               matched_std_err = baseline_matched_coef$std.error,
+               matched_pval = baseline_matched_coef$p.value,
+               background_beta = baseline_complement_coef$estimate,
+               background_std_err = baseline_complement_coef$std.error,
+               background_pval = baseline_complement_coef$p.value,
+               )
+      ## save results to list
       res_list[[iter]] <- res
       message('model comparison p = ', formatC(res$p.value, digits = 2), ', ES-PGS term beta = ', round(res$annotation_beta, digits = 3))
   }
@@ -91,8 +102,10 @@ for(c in coi){
 snp_counts <- read_table('ES-PGS_example/example_data/ES-PGS_raw.prsice') %>% 
   filter(Threshold == 1) %>% 
   select(anno = Set, Num_SNP)  %>% 
-  mutate(model = str_remove_all(anno, pattern = 'complement_')) %>% 
-  mutate(complement = ifelse(str_detect(anno, pattern = 'complement_'), 'complement_PGS_n_snp', 'annotation_PGS_n_snp')) %>%
+  mutate(model = str_remove_all(anno, pattern = 'complement_|matched_')) %>% 
+  mutate(complement = case_when(str_detect(anno, pattern = 'complement_') ~ 'complement_PGS_n_snp', 
+                                str_detect(anno, pattern = 'matched_') ~ 'matched_PGS_n_snp',
+                                TRUE ~ 'annotation_PGS_n_snp')) %>%
   pivot_wider(id_cols = model, names_from = complement, values_from = Num_SNP) %>% 
   mutate(model = str_replace_all(model, pattern = '-', replacement = '_'))
 
@@ -100,7 +113,7 @@ snp_counts <- read_table('ES-PGS_example/example_data/ES-PGS_raw.prsice') %>%
 espgs_res <- bind_rows(res_list) %>%
   arrange(p.value) %>% 
   select(-term) %>% 
-  rename(model = c, p.value_model_comparison = p.value) %>%
+  rename(model = evo, p.value_model_comparison = p.value) %>%
   inner_join(snp_counts) %>% 
   mutate(model = factor(model, levels = c('HAQERs', 'HARs'))) %>%
   drop_na(model) %>%

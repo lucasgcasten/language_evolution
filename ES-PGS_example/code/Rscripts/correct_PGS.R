@@ -84,15 +84,23 @@ dat <- pgs_gw %>%
   relocate(cohort, .after = IID) %>%
   select(-population)
 
-## make df w/ cols for complement + anno scores
+## make df w/ cols for complement scores
 datc <- dat %>% 
   filter(str_detect(pgs_name, 'complement_')) %>% 
   mutate(pgs_name = str_remove_all(pgs_name, pattern = 'complement_')) 
 names(datc)[5:6] <- str_c(names(datc)[5:6], '_complement')
 
+## make df w/ cols for matched scores
+datm <- dat %>% 
+  filter(str_detect(pgs_name, 'matched_')) %>% 
+  mutate(pgs_name = str_remove_all(pgs_name, pattern = 'matched_')) 
+names(datm)[5:6] <- str_c(names(datm)[5:6], '_matched')
+
+## merge all PGS together in long format
 data <- dat %>% 
   filter(str_detect(pgs_name, 'complement_|Base_', negate = TRUE)) %>% 
   inner_join(datc) %>% 
+  inner_join(datm) %>%
   select(-matches('pgs_raw'))
 
 ################################################

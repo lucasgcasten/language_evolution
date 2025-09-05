@@ -2,5 +2,7 @@ Pheno	Set	Threshold	Num_SNP
 -	Base	1	302072
 -	HAQERs	1	1350
 -	complement_HAQERs	1	302035
+-	matched_HAQERs	1	1752
 -	HARs	1	1328
 -	complement_HARs	1	302047
+-	matched_HARs	1	1125

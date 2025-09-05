@@ -20,7 +20,7 @@ We provide an example implementation and output of ES-PGS in the `ES-PGS_example
 
 A general ES-PGS analysis has 6 steps, which are covered in our example:
 1. Gather evolutionary annotations and identify "background" regions with `BEDTools`
-2. Generate matched control regions for your evolutionary annotations using R
+2. Generate matched control regions for your evolutionary annotations using `R`
 3. Compute ES-PGS with `PRSet`
 4. Adjust ES-PGS for genetic PCs and reformat data in `R`
 5. ES-PGS analysis with your phenotype(s) in `R`

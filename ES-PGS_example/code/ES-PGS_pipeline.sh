@@ -29,8 +29,11 @@ do
     printf "\n\n\n"
 done 
 
-## step 2: compute ES-PGS with PRSet
-#### replace the file paths to match your data (genotype + sumstats data)
+## step 2: generate biologically matched control regions
+Rscript ES-PGS_example/code/Rscripts/make_matched_control_regions.R
+
+## step 3: compute ES-PGS with PRSet
+## ***replace the file paths to match your data (genotype + sumstats data) and annotations of interest ***
 Rscript /wdata/lcasten/tools/PRSice/PRSice.R --prsice /wdata/lcasten/tools/PRSice/PRSice_linux \
     --base /wdata/lcasten/sli_wgs/polygenic_neanderthal_introgression/sumstats/cogPerf.tsv \
     --target /wdata/lcasten/sli_wgs/prs/1000_genomes_EUR_merge/merged.1000_genomes_EUR.SLI_WGS.qc \
@@ -40,14 +43,14 @@ Rscript /wdata/lcasten/tools/PRSice/PRSice.R --prsice /wdata/lcasten/tools/PRSic
     --bar-levels 1 \
     --fastscore --no-regress \
     --thread 10 \
-    --bed ES-PGS_example/example_data/HAQERs.bed:HAQERs,data/complement_HAQERs.bed:complement_HAQERs,data/HARs.bed:HARs,data/complement_HARs.bed:complement_HARs \
+    --bed ES-PGS_example/example_data/HAQERs.bed:HAQERs,ES-PGS_example/example_data/complement_HAQERs.bed:complement_HAQERs,ES-PGS_example/example_data/HAQERs.matched_control_sequences.bed:matched_HAQERs,ES-PGS_example/example_data/HARs.bed:HARs,ES-PGS_example/example_data/complement_HARs.bed:complement_HARs,ES-PGS_example/example_data/HARs.matched_control_sequences.bed:matched_HARs \
     --out ES-PGS_example/example_data/ES-PGS_raw
 
-## step 3: adjust PGS for population stratification
+## step 4: adjust PGS for population stratification
 Rscript ES-PGS_example/code/Rscripts/correct_PGS.R
 
-## step 4: phenotypic associations with ES-PGS
+## step 5: phenotypic associations with ES-PGS
 Rscript ES-PGS_example/code/Rscripts/analyze_PGS.R
 
-## step 5: visualize ES-PGS results
+## step 6: visualize ES-PGS results
 Rscript ES-PGS_example/code/Rscripts/plot_ES-PGS_results.R
