@@ -8,6 +8,7 @@ head_enr <- read_csv('manuscript/supplemental_materials/stats/HAQER_birth_head_c
        mutate(type = 'Birth head circumference loci')
 vl_enr <- read_csv('manuscript/supplemental_materials/stats/HAQER_vocal_learning_Wirthlin2024_enrichment_stats.csv') %>% 
        mutate(type = 'Mammalian vocal learning enhancers')
+ca_enr <- read_csv("manuscript/supplemental_materials/stats/HAQER_chromatin_accessibility_evo_Li2023_enrichment_stats.csv")
 
 ## make figure panels
 ### birth head circumference GWAS enrichment
@@ -56,16 +57,76 @@ p_vl <- vl_enr %>%
     xlab('-log10(enrichment p-value)') +
     ylab(NULL)
 
+## make chromatin accessibility evo figs
+hs_df <- ca_enr %>% 
+    filter(type == 'human_specific_chromatin_accessibility') %>%
+    mutate(evo_annot = factor(evo_annot, levels = c('RAND', 'HAR', 'HAQER'))) %>%
+    arrange(desc(evo_annot), desc(enrichment_p)) %>%
+    mutate(chromatin_accessibility_set = factor(chromatin_accessibility_set, levels = unique(chromatin_accessibility_set))) %>% 
+    drop_na() %>%
+    mutate(enrichment_p = ifelse(enrichment_p > 0.65, .65, enrichment_p)) %>% ## add a small constant value so they show up on the plot
+    mutate(class = factor(class, levels = c('GABA+', 'vGlut+', 'Non-neuronal')))
+
+p_hs <- hs_df %>% 
+    ggplot(aes(x = -log10(enrichment_p), y = chromatin_accessibility_set)) +
+    geom_bar(stat = 'identity', aes(fill = evo_annot), position = 'dodge') +
+    geom_vline(xintercept = -log10(0.05), color = 'red', linetype = 'dashed', size = 1.075) +
+    ggforce::facet_col(facets = vars(class), 
+                       scales = "free_y", 
+                       space = "free") +
+    labs(fill = NULL) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          plot.title = element_text(size = 14, hjust = .5),
+          legend.position = 'bottom') +
+    scale_fill_manual(values = rev(cl)) +
+    xlab('-log10(enrichment p-value)') +
+    ylab('Cell-type') +
+    ggtitle('Human-specific cCREs')
+
+p_cons <- ca_enr %>%
+    filter(type == 'conserved_chromatin_accessibility') %>%
+    mutate(evo_annot = factor(evo_annot, levels = c('RAND', 'HAR', 'HAQER'))) %>%
+    mutate(chromatin_accessibility_set = factor(chromatin_accessibility_set, levels = levels(hs_df$chromatin_accessibility_set))) %>% 
+    drop_na() %>%
+    mutate(enrichment_p = ifelse(enrichment_p > 0.65, .65, enrichment_p)) %>% ## add a small constant value so they show up on the plot
+    mutate(class = case_when(str_detect(chromatin_accessibility_set, 'FOXP2|LAMP|MSN|PVALB|SST|VIP') ~ 'GABA+',
+                             str_detect(chromatin_accessibility_set, '^CT|^IT|L6|NP') ~ 'vGlut+',
+                             str_detect(chromatin_accessibility_set, 'ASCT|MGC|OGC|OPC') ~ 'Non-neuronal'),
+           class = factor(class, levels = c('GABA+', 'vGlut+', 'Non-neuronal'))) %>% 
+    ggplot(aes(x = -log10(enrichment_p), y = chromatin_accessibility_set)) +
+    geom_bar(stat = 'identity', aes(fill = evo_annot), position = 'dodge') +
+    geom_vline(xintercept = -log10(0.05), color = 'red', linetype = 'dashed', size = 1.075) +
+    ggforce::facet_col(facets = vars(class), 
+                       scales = "free_y", 
+                       space = "free") +
+    labs(fill = NULL) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          plot.title = element_text(size = 14, hjust = .5),
+          legend.position = 'bottom') +
+    scale_fill_manual(values = rev(cl)) +
+    xlab('-log10(enrichment p-value)') +
+    ylab('Cell-type') +
+    ggtitle('Conserved cCREs')
+
+
 ## read in scQTL plot
 # HAQER scQTL
 p_scqtl_enr <- read_rds('manuscript/figures/R_plot_objects/HAQER_scQTL_enrichment.rds')
 
 ## merge panels 
-p_merge <- (p_scqtl_enr & theme(legend.position = 'none')) / ((p_bhc + p_vl) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom'))
+p_merge <- (p_hs + p_cons & theme(legend.position = 'none')) / (p_scqtl_enr & theme(legend.position = 'none')) / ((p_bhc + p_vl) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom'))
 
 ## adjust formatting
 fig_supp <- p_merge +
-        plot_layout(heights = c(1,.2)) +
+        plot_layout(heights = c(1,.7,.1)) +
         plot_annotation(tag_levels = 'A') & 
         theme(plot.tag = element_text(size = 24, face = 'bold'),
                axis.text = element_text(size = 14),
@@ -79,10 +140,10 @@ fig_supp <- p_merge +
 ggsave(fig_supp,
        filename = 'manuscript/figures/paper_figures/supp_fig_HAQER_enrichment.pdf', 
        device = 'pdf', 
-       units = 'in', width = 14, height = 14,
+       units = 'in', width = 14, height = 21,
        dpi = 300)
 ggsave(fig_supp,
        filename = 'manuscript/figures/paper_figures/supp_fig_HAQER_enrichment.png', 
        device = 'png', 
-       units = 'in', width = 14, height = 14,
+       units = 'in', width = 14, height = 21,
        dpi = 300)

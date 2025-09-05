@@ -1,0 +1,109 @@
+evo_annot,chromatin_accessibility_set,type,class,enrichment_method,n_elements_evo_annot,n_elements_chromatin_accessibility_set,n_overlapping_elements,n_expected_overlaps,enrichment,enrichment_p
+HAQER,ASCT,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,892,3248,724,664.256885,1.08994,2.678869e-6
+HAR,ASCT,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,2645,3248,1805,1967.916318,0.917214,1
+RAND,ASCT,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,1388,3248,859,1033.684674,0.831008,1
+HAQER,CT,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,3467,690,640.403399,1.077446,1.291476e-4
+HAR,CT,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,3467,1731,1897.057996,0.912466,1
+RAND,CT,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,3467,817,996.571351,0.819811,1
+HAQER,FOXP2,human_specific_chromatin_accessibility,GABA+,normalApproximate,892,3893,473,423.694651,1.11637,5.321324e-4
+HAR,FOXP2,human_specific_chromatin_accessibility,GABA+,normalApproximate,2645,3893,956,1254.223493,0.762225,1
+RAND,FOXP2,human_specific_chromatin_accessibility,GABA+,normalApproximate,1388,3893,499,659.36777,0.756786,1
+HAQER,ITL 2-3,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,1589,819,775.254094,1.056428,8.734709e-6
+HAR,ITL 2-3,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,1589,2331,2297.952237,1.014381,0.03041786
+RAND,ITL 2-3,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,1589,1028,1206.369485,0.852144,1
+HAQER,ITL 4,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,3123,717,678.133565,1.057314,0.001307715
+HAR,ITL 4,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,3123,1912,2009.125722,0.951658,0.9999956
+RAND,ITL 4,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,3123,875,1055.274763,0.829168,1
+HAQER,ITL 5,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,2299,783,740.591487,1.057263,9.234802e-5
+HAR,ITL 5,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,2299,2183,2194.780179,0.994633,0.7374215
+RAND,ITL 5,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,2299,971,1152.446786,0.842555,1
+HAQER,ITL 6_2,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,3534,694,629.483288,1.102492,1.273104e-6
+HAR,ITL 6_2,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,3534,1645,1864.639267,0.882208,1
+RAND,ITL 6_2,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,3534,804,979.580224,0.82076,1
+HAQER,ITL 6,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,2847,743,701.676571,1.058892,4.229411e-4
+HAR,ITL 6,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,2847,1967,2079.089619,0.946087,1
+RAND,ITL 6,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,2847,907,1091.903588,0.830659,1
+HAQER,L6B,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,3450,687,648.053625,1.060097,0.001934775
+HAR,L6B,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,3450,1777,1919.752497,0.92564,1
+RAND,L6B,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,3450,829,1008.475364,0.822033,1
+HAQER,LAMP5,human_specific_chromatin_accessibility,GABA+,normalApproximate,892,3909,581,532.112919,1.091874,4.782369e-4
+HAR,LAMP5,human_specific_chromatin_accessibility,GABA+,normalApproximate,2645,3909,1255,1575.706214,0.796468,1
+RAND,LAMP5,human_specific_chromatin_accessibility,GABA+,normalApproximate,1388,3909,667,828.073636,0.805484,1
+HAQER,MGC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,892,3422,638,583.78331,1.092871,7.74968e-5
+HAR,MGC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,2645,3422,1472,1729.195072,0.851263,1
+RAND,MGC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,1388,3422,754,908.466132,0.82997,1
+HAQER,MSN,human_specific_chromatin_accessibility,GABA+,normalApproximate,892,2558,784,722.556381,1.085036,9.779168e-8
+HAR,MSN,human_specific_chromatin_accessibility,GABA+,normalApproximate,2645,2558,2066,2141.160197,0.964897,0.9999104
+RAND,MSN,human_specific_chromatin_accessibility,GABA+,normalApproximate,1388,2558,962,1124.387872,0.855577,1
+HAQER,NP,human_specific_chromatin_accessibility,vGlut+,normalApproximate,892,3891,542,491.075274,1.1037,3.434994e-4
+HAR,NP,human_specific_chromatin_accessibility,vGlut+,normalApproximate,2645,3891,1191,1454.025363,0.819105,1
+RAND,NP,human_specific_chromatin_accessibility,vGlut+,normalApproximate,1388,3891,585,764.215864,0.765491,1
+HAQER,OGC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,892,3144,739,676.69295,1.092076,6.579287e-7
+HAR,OGC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,2645,3144,1855,2004.84978,0.925256,1
+RAND,OGC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,1388,3144,891,1053.033697,0.846127,1
+HAQER,OPC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,892,3355,671,619.097064,1.083837,9.356119e-5
+HAR,OPC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,2645,3355,1633,1833.9451550000001,0.89043,1
+RAND,OPC,human_specific_chromatin_accessibility,Non-neuronal,normalApproximate,1388,3355,754,963.415406,0.782632,1
+HAQER,PVALB,human_specific_chromatin_accessibility,GABA+,normalApproximate,892,3327,697,637.304493,1.093669,5.687933e-6
+HAR,PVALB,human_specific_chromatin_accessibility,GABA+,normalApproximate,2645,3327,1642,1887.945453,0.869729,1
+RAND,PVALB,human_specific_chromatin_accessibility,GABA+,normalApproximate,1388,3327,777,991.746543,0.783466,1
+HAQER,SST,human_specific_chromatin_accessibility,GABA+,normalApproximate,892,3556,695,636.98266,1.091082,1.00773e-5
+HAR,SST,human_specific_chromatin_accessibility,GABA+,normalApproximate,2645,3556,1649,1886.866253,0.873936,1
+RAND,SST,human_specific_chromatin_accessibility,GABA+,normalApproximate,1388,3556,792,991.250082,0.798991,1
+HAQER,VIP,human_specific_chromatin_accessibility,GABA+,normalApproximate,892,3584,717,650.655842,1.101965,3.457379e-7
+HAR,VIP,human_specific_chromatin_accessibility,GABA+,normalApproximate,2645,3584,1697,1927.398416,0.880461,1
+RAND,VIP,human_specific_chromatin_accessibility,GABA+,normalApproximate,1388,3584,869,1012.527456,0.858248,1
+HAQER,ASCT,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,892,2999,514,547.968994,0.938009,0.9911416
+HAR,ASCT,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,2645,2999,1640,1623.218171,1.010339,0.2577668
+RAND,ASCT,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,1388,2999,575,852.728606,0.674306,1
+HAQER,CT,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,3192,532,581.735686,0.914505,0.999794
+HAR,CT,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,3192,1740,1723.241263,1.009725,0.2535017
+RAND,CT,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,3192,655,905.275641,0.723537,1
+HAQER,FOXP2,conserved_chromatin_accessibility,GABA+,normalApproximate,892,3456,467,509.141123,0.917231,0.9980434
+HAR,FOXP2,conserved_chromatin_accessibility,GABA+,normalApproximate,2645,3456,1431,1507.834584,0.949043,0.9988075
+RAND,FOXP2,conserved_chromatin_accessibility,GABA+,normalApproximate,1388,3456,531,792.319086,0.670185,1
+HAQER,ITL 2-3,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,2880,570,628.377842,0.907098,0.9999923
+HAR,ITL 2-3,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,2880,1970,1861.716748,1.058163,2.208605e-6
+RAND,ITL 2-3,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,2880,706,977.847064,0.721994,1
+HAQER,ITL 4,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,3265,516,544.270615,0.948058,0.9758975
+HAR,ITL 4,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,3265,1570,1612.107994,0.97388,0.9552721
+RAND,ITL 4,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,3265,581,846.978764,0.685968,1
+HAQER,ITL 5,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,2974,572,617.474822,0.926354,0.9995747
+HAR,ITL 5,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,2974,1943,1829.336903,1.062133,9.450595e-7
+RAND,ITL 5,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,2974,720,960.883237,0.749311,1
+HAQER,ITL 6_2,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,3251,498,552.265211,0.901741,0.9999206
+HAR,ITL 6_2,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,3251,1633,1635.821386,0.998275,0.5528861
+RAND,ITL 6_2,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,3251,575,859.418717,0.669057,1
+HAQER,ITL 6,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,2936,559,616.200891,0.907172,0.9999855
+HAR,ITL 6,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,2936,1947,1825.578992,1.066511,1.837927e-7
+RAND,ITL 6,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,2936,700,958.899913,0.730003,1
+HAQER,L6B,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,3238,526,575.009573,0.914767,0.9997341
+HAR,L6B,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,3238,1720,1703.270006,1.009822,0.2549134
+RAND,L6B,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,3238,644,894.810056,0.719706,1
+HAQER,LAMP5,conserved_chromatin_accessibility,GABA+,normalApproximate,892,3192,531,582.184099,0.912083,0.9998612
+HAR,LAMP5,conserved_chromatin_accessibility,GABA+,normalApproximate,2645,3192,1822,1724.572355,1.056494,3.796424e-5
+RAND,LAMP5,conserved_chromatin_accessibility,GABA+,normalApproximate,1388,3192,628,905.973412,0.693177,1
+HAQER,MGC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,892,2642,358,375.049856,0.95454,0.8830974
+HAR,MGC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,2645,2642,777,1110.669276,0.699578,1
+RAND,MGC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,1388,2642,350,583.649722,0.599675,1
+HAQER,MSN,conserved_chromatin_accessibility,GABA+,normalApproximate,892,3021,562,617.406419,0.910259,0.9999751
+HAR,MSN,conserved_chromatin_accessibility,GABA+,normalApproximate,2645,3021,1945,1829.105794,1.063361,5.917129e-7
+RAND,MSN,conserved_chromatin_accessibility,GABA+,normalApproximate,1388,3021,694,960.77788,0.722331,1
+HAQER,NP,conserved_chromatin_accessibility,vGlut+,normalApproximate,892,3380,468,507.389915,0.922368,0.996506
+HAR,NP,conserved_chromatin_accessibility,vGlut+,normalApproximate,2645,3380,1388,1502.681582,0.923682,0.9999969
+RAND,NP,conserved_chromatin_accessibility,vGlut+,normalApproximate,1388,3380,528,789.592689,0.668699,1
+HAQER,OGC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,892,3078,464,488.752263,0.949356,0.9553557
+HAR,OGC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,2645,3078,1350,1447.58417,0.932588,0.9999364
+RAND,OGC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,1388,3078,464,760.585271,0.610057,1
+HAQER,OPC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,892,3115,514,545.184598,0.9428,0.985248
+HAR,OPC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,2645,3115,1616,1614.902784,1.000679,0.4904999
+RAND,OPC,conserved_chromatin_accessibility,Non-neuronal,normalApproximate,1388,3115,578,848.398344,0.681284,1
+HAQER,PVALB,conserved_chromatin_accessibility,GABA+,normalApproximate,892,2700,598,634.095588,0.943075,0.9965679
+HAR,PVALB,conserved_chromatin_accessibility,GABA+,normalApproximate,2645,2700,1964,1878.771704,1.045364,1.405589e-4
+RAND,PVALB,conserved_chromatin_accessibility,GABA+,normalApproximate,1388,2700,709,986.74066,0.718527,1
+HAQER,SST,conserved_chromatin_accessibility,GABA+,normalApproximate,892,2853,611,640.167542,0.954438,0.9863536
+HAR,SST,conserved_chromatin_accessibility,GABA+,normalApproximate,2645,2853,1999,1896.693958,1.053939,5.532705e-6
+RAND,SST,conserved_chromatin_accessibility,GABA+,normalApproximate,1388,2853,731,996.192338,0.733794,1
+HAQER,VIP,conserved_chromatin_accessibility,GABA+,normalApproximate,892,2944,601,629.48728,0.954745,0.9834223
+HAR,VIP,conserved_chromatin_accessibility,GABA+,normalApproximate,2645,2944,2011,1864.977223,1.078297,2.7238e-10
+RAND,VIP,conserved_chromatin_accessibility,GABA+,normalApproximate,1388,2944,698,979.574428,0.712554,1
