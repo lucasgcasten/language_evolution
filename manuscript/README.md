@@ -1,4 +1,4 @@
-# Rapidly evolved genomic regions shape individual language abilities in contemporary humans
+# Ancient regulatory evolution shapes individual language abilities in present-day humans
 
 This repo contains the code necessary to reproduce all analyses for this [paper](https://www.biorxiv.org/content/10.1101/2025.03.07.641231v1)
 
