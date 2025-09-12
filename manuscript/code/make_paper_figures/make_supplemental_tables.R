@@ -65,6 +65,8 @@ scqtl_enr <- read_csv('manuscript/supplemental_materials/stats/HAQER_scQTL_enric
 bhc_enr <- read_csv("manuscript/supplemental_materials/stats/HAQER_birth_head_circ_gwas_Vogelezang2022_enrichment_stats.csv")
 ## mammalian vocal learning regions
 vl_enr <- read_csv("manuscript/supplemental_materials/stats/HAQER_vocal_learning_Wirthlin2024_enrichment_stats.csv")
+## chromatin accessibility enrichment
+ca_enr <- read_csv("/wdata/lcasten/sli_wgs/git/language_evolution_v2/manuscript/supplemental_materials/stats/HAQER_chromatin_accessibility_evo_Li2023_enrichment_stats.csv")
 
 ## EpiSLI TFBS selection
 tfbs_sel <- read_csv('manuscript/supplemental_materials/stats/TFBS_reversion_core_language_selection_results.csv')
@@ -90,7 +92,7 @@ rownames(episli_wgs_cov) <- c("Coverage", "Insert-size")
 ## gather data and write to huge excel spreadsheet
 ####################################################
 out <- "manuscript/supplemental_materials/supplemental_tables.xlsx" ## path to gathered table
-tb <- data.frame(table = str_c("SupplementaryTable", 1:17),
+tb <- data.frame(table = str_c("SupplementaryTable", 1:18),
                  description = c("Correlation results from EpiSLI cohort factor scores with CBCL scales",
                                  'Correlation results from EpiSLI cohort factor scores with genome wide polygenic scores',
                                  'ES-PGS results from EpiSLI cohort factor scores',
@@ -107,7 +109,8 @@ tb <- data.frame(table = str_c("SupplementaryTable", 1:17),
                                  'Enrichment of mammalian vocal learning enhancer regions in HAQERs',
                                  "Results from hominin-gained TFBS analysis in relation to EpiSLI core language (F1)",
                                  "Enrichment results of TF families with both hominin-gained TF motif integrity and positive motif integrity-language associations",
-                                 "EpiSLI whole genome sequencing coverage statistics"
+                                 "EpiSLI whole genome sequencing coverage statistics",
+                                 'Enrichment of human-specific and conserved cCREs in HAQERs'
                                  ))
 export(list(README = tb,
             SupplementaryTable1 = cbcl_res, 
@@ -126,5 +129,6 @@ export(list(README = tb,
             SupplementaryTable14 = vl_enr, 
             SupplementaryTable15 = tfbs_sel, 
             SupplementaryTable16 = tfbs_conv,
-            SupplementaryTable17 = episli_wgs_cov),
+            SupplementaryTable17 = episli_wgs_cov,
+            SupplementaryTable18 = ca_enr),
         out)

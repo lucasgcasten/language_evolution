@@ -156,6 +156,7 @@ for(f in files) {
 ################################
 ## neurodevelopmental scQTLs
 files <- list.files('manuscript/supplemental_materials/stats/HAQER_scQTL_enrichment', pattern = 'D[0-9]', full.names = TRUE)
+files <- files[grep(x = files, pattern = "ROT_treated", invert = TRUE)]
 
 res_list_pre = list()
 for(f in files) {
@@ -196,8 +197,8 @@ for(f in files) {
         relocate(evo_annot, scQTL_set) %>% 
         select(-matches('Filename')) %>% 
         mutate(evo_annot = str_split(evo_annot, pattern = '[.]', simplify = TRUE)[,1],
-            scQTL_set = str_split(scQTL_set, pattern = '[.]', simplify = TRUE)[,2],
-            scQTL_set = str_remove_all(scQTL_set, pattern = '_sig_QTLs')) %>% 
+               scQTL_set = str_remove_all(scQTL_set, 'adult_scQTL.|_sig_QTLs.*'),
+               scQTL_set = str_replace_all(scQTL_set, '[.]', replacement = ' ')) %>% 
         select(evo_annot, scQTL_set, enrichment_method = `#Method`, n_elements_evo_annot = LenElements2, n_elements_scQTL_set = LenElements1, n_overlapping_elements = OverlapCount, n_expected_overlaps = ExpectedOverlap, enrichment = Enrichment, enrichment_p = EnrichPValue)
 }
 
@@ -205,12 +206,14 @@ adult_scqtl <- bind_rows(res_list_adult) %>%
     mutate(scQTL_type = 'adult_brain_post_mortem.Emani-Science2024') %>% 
     mutate(evo_annot = case_when(str_detect(evo_annot, 'HAQER') ~ 'HAQER',
                                  TRUE ~ evo_annot)) %>%
-    relocate(scQTL_type, .after = scQTL_set)
+    relocate(scQTL_type, .after = scQTL_set) %>% 
+    mutate(scQTL_set = str_replace_all(scQTL_set, '2 3', replacement = '2-3'),
+           scQTL_set = str_replace_all(scQTL_set, '5 6', replacement = '5-6'))
 
 #########
 ## merge results
 bind_rows(pre_scqtl, adult_scqtl) %>% 
-    filter(evo_annot != 'UCE') %>% 
+    filter(evo_annot != 'UCE') %>%
     write_csv('manuscript/supplemental_materials/stats/HAQER_scQTL_enrichment_stats.csv')
 
 
