@@ -1,0 +1,209 @@
+species_name,common_name,vocal_learning_status_Wirthlin2024,vocal_learner_binary,species_class,group_living,brain_mass_g,adult_body_mass_g,neonate_body_mass_g_PanTHERIA,adult_body_mass_g_PanTHERIA,obstetric_risk,HAQER_sequence_similarity,HAR_sequence_similarity
+Lepus_americanus,Snowshoe hare,non_vocal_learner,0,Non-primates,0,9.72,1500,67.84,1568.42,0.15018512689183283,44.89287400424157,84.89925527547553
+Oryctolagus_cuniculus,European rabbit,non_vocal_learner,0,Non-primates,NA,11.09,2157.6,39.11,1590.57,-0.1841181557728962,44.71828875402713,85.15650434863494
+Ochotona_princeps,American pika,non_vocal_learner,0,Non-primates,0,2.39,169,11,157.63,-0.28766683671020316,41.34915166652313,81.49062947753718
+Castor_canadensis,North american beaver,non_vocal_learner,0,Non-primates,0,52.21,27670,415.17,18124.41,0.33411214968679104,45.420729868302,84.80735615975557
+Dipodomys_ordii,Ord's kangaroo rat,non_vocal_learner,0,Non-primates,0,1.45,57.1,4.99,50.4,-0.5690676155793946,39.68656142086825,81.61384190322829
+Dipodomys_stephensi,Stephen's kangaroo rat,non_vocal_learner,0,Non-primates,0,NA,NA,4.4,68.49,-0.8315829683119674,39.98933565052532,81.50571247937786
+Perognathus_longimembris,Little pocket mouse,non_vocal_learner,0,Non-primates,NA,0.33,8.15,1.25,8.07,-1.9062173680229408,39.74632984128096,81.4270968433823
+Fukomys_damarensis,Damara mole-rat,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,41.53272447292416,82.6759389694649
+Heterocephalus_glaber,Naked mole-rat,non_vocal_learner,0,Non-primates,0,0.52,60.8,1.86,39.36,-1.632321076312606,43.247699333600075,83.71939113170086
+Cavia_aperea,Brazilian guinea pig,non_vocal_learner,0,Non-primates,0,4.04,306.45,58.38,524.38,0.4866528156678081,38.30182371949634,69.06467752335939
+Cavia_porcellus,Domestic guinea pig,non_vocal_learner,0,Non-primates,0,4.83,476,79.91,727.99,0.5541492189276804,41.76951113961676,81.86982484407052
+Cavia_tschudii,Montane guinea pig,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,42.04764442986592,82.12020423336821
+Dolichotis_patagonum,Patagonian mara,non_vocal_learner,0,Non-primates,1,30.5,8000,578.96,8000,0.7440472559463257,41.98093474608237,82.30685391799234
+Chinchilla_lanigera,Long-tailed chinchilla,non_vocal_learner,0,Non-primates,0,6.8,372,39.59,480.28,0.2499850876780507,43.60988264613059,83.80356494942514
+Ctenodactylus_gundi,Common gundi,non_vocal_learner,0,Non-primates,1,NA,NA,29.89,288.41,0.2677271046302356,44.03615010551427,82.70038842246197
+Ctenomys_sociabilis,Social tuco-tuco,non_vocal_learner,0,Non-primates,1,NA,NA,NA,NA,NA,40.29561633183897,80.745784181775
+Dasyprocta_punctata,Central american agouti,non_vocal_learner,0,Non-primates,0,18.34,3172,NA,NA,NA,43.69076236551569,84.07007093823383
+Dinomys_branickii,Pacarana,non_vocal_learner,0,Non-primates,0,26.95,14000,769.43,12500,0.7293350255319893,42.78086331522849,82.512732612678093
+Hydrochoerus_hydrochaeris,Capybara,non_vocal_learner,0,Non-primates,NA,NA,NA,1500,48144.91,0.6138236357939454,41.97141592232485,82.17153447144445
+Hystrix_cristata,Crested porcupine,non_vocal_learner,0,Non-primates,0,32.4,15000,NA,NA,NA,46.30562200571292,85.0827409240276
+Myocastor_coypus,Coypu,non_vocal_learner,0,Non-primates,1,17.09,7052,205.7,6361.55,0.304643719556747,40.05924234042933,80.1645741965262
+Octodon_degus,Degu,non_vocal_learner,0,Non-primates,1,2.1,210,14.19,203.27,-0.17635029530507024,41.1227365712137,81.55975272901118
+Petromus_typicus,Dassie rat,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,39.88678344985143,81.33805494661733
+Thryonomys_swinderianus,Greater cane rat,non_vocal_learner,0,Non-primates,1,13.28,1625,118.89,3750.85,0.1830384733633906,39.797037437653984,81.14426921331491
+Allactaga_bullata,Gobi jerboa,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,39.966533659415624,81.66442997774425
+Jaculus_jaculus,Lesser egyptian jerboa,non_vocal_learner,0,Non-primates,0,1.53,64.2,2,59.8,-1.6302739760868927,39.59753227644442,80.84824298488023
+Zapus_hudsonius,Meadow jumping mouse,non_vocal_learner,0,Non-primates,NA,0.55,17.47,0.78,18.43,-2.753522750292088,39.95197338995784,80.87226739536123
+Ellobius_lutescens,Transcaucasian mole vole,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,37.19699056162485,78.7977857549344
+Ellobius_talpinus,Northern mole vole,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,37.95514591347602,79.01707547028629
+Microtus_ochrogaster,Prairie vole,non_vocal_learner,0,Non-primates,0,0.71,43.8,2.94,42.5,-1.1090759185999923,37.477366616858575,79.47936339824813
+Ondatra_zibethicus,Muskrat,non_vocal_learner,0,Non-primates,0,5.03,1136.45,21.99,991.31,-0.4018648321701133,37.92935558029949,79.24418450350986
+Cricetulus_griseus,Chinese hamster,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,37.84918806589182,80.0827785673324
+Mesocricetus_auratus,Golden hamster,non_vocal_learner,0,Non-primates,0,1,120,2.35,98.6,-1.5567494901419483,37.24095337273411,78.97765406904446
+Onychomys_torridus,Scorpion mouse,non_vocal_learner,0,Non-primates,0,0.59,20.02,2.33,21.68,-1.1649043042130711,39.05919026359751,80.618030524193955
+Peromyscus_maniculatus,Deer mouse,non_vocal_learner,0,Non-primates,NA,0.57,21.65,1.73,19.98,-1.5703112979200966,39.12316559702408,81.0310451445102
+Sigmodon_hispidus,Hispid cotton rat,non_vocal_learner,0,Non-primates,0,1.14,132.5,6.6,110.65,-0.6092021572235173,37.67748590472076,79.76710868261479
+Acomys_cahirinus,Cairo spiny mouse,non_vocal_learner,0,Non-primates,1,0.7,31,5.49,41.16,-0.35726112518688635,37.407343783551646,79.84144997942633
+Meriones_unguiculatus,Mongolian jird,non_vocal_learner,0,Non-primates,1,1.13,57.4,2.85,57.75,-1.2387648411569068,37.21994752483433,80.27617133240732
+Psammomys_obesus,Fat sand rat,non_vocal_learner,0,Non-primates,0,1.3,69.1,6.2,102.15,-0.6382491316515584,37.27406555692024,80.31199014417474
+Mus_pahari,Shrew mouse,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,36.87993816557884,80.52009054612506
+Mus_caroli,Ryukyu mouse,non_vocal_learner,0,Non-primates,NA,NA,NA,1.2,14.26,-2.074923330746657,37.12068660947793,80.54984742200689
+Mus_musculus,House mouse,non_vocal_learner,0,Non-primates,NA,0.4,15.1,1.06,19.3,-2.2906791418427166,37.11667359952656,80.54440554432226
+Mus_spretus,Western mediterranean mouse,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,36.95928119327462,80.4732900881596
+Rattus_norvegicus,Brown rat,non_vocal_learner,0,Non-primates,1,8.03,359.5,5.8,282.89,-1.0041864698450291,36.84012321649205,79.70531637801945
+Cricetomys_gambianus,Gambian pouched rat,non_vocal_learner,0,Non-primates,0,6.57,1150,22.68,1267.52,-0.4507584073279567,39.477147371504245,81.47588169125918
+Nannospalax_galili,Upper galilee mountains blind mole rat,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,40.46529127735624,82.55529351880467
+Aplodontia_rufa,Mountain beaver,non_vocal_learner,0,Non-primates,0,7.04,806,23.12,806.21,-0.3078288249663054,44.465546916730965,85.18975907058649
+Glis_glis,Edible dormouse,non_vocal_learner,0,Non-primates,NA,1.9,148,NA,NA,NA,47.67298323024596,86.31884410426461
+Graphiurus_murinus,Woodland doormouse,non_vocal_learner,0,Non-primates,0,NA,NA,3.49,20.07,-0.539606586657566,46.18594179249375,85.74367265390353
+Muscardinus_avellanarius,Hazel dormouse,non_vocal_learner,0,Non-primates,0,NA,NA,0.8,29.19,-2.669175925288667,44.42694056733566,84.48740842719235
+Ictidomys_tridecemlineatus,Thirteen-lined ground squirrel,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,44.84243928392788,86.09882012054165
+Marmota_marmota,Alpine marmot,non_vocal_learner,0,Non-primates,NA,14.25,3813.65,29.74,4059.15,-0.5768136484595461,45.11917156766187,86.08151644441232
+Spermophilus_dauricus,Daurian ground squirrel,non_vocal_learner,0,Non-primates,NA,2.75,223.8,NA,NA,NA,44.998818716504395,85.90387104172468
+Xerus_inauris,Cape ground squirrel,non_vocal_learner,0,Non-primates,1,7.65,400,20,572.6,-0.2969896168723445,46.36381809700927,86.56662690601597
+Tupaia_chinensis,Northern tree shrew,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,49.59864581941289,87.10159346197919
+Antilocapra_americana,Pronghorn,non_vocal_learner,0,Non-primates,1,125.6,46750,3454.7,47450.01,0.959563771300237,47.705744214886934,86.02078032512439
+Beatragus_hunteri,Hirola,non_vocal_learner,0,Non-primates,NA,NA,NA,8350,79132.17,1.15331923425777,47.65724881666911,85.8984474273005
+Pantholops_hodgsonii,Chiru,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,47.24659262749026,85.8417682502436
+Saiga_tatarica,Steppe saiga,non_vocal_learner,0,Non-primates,NA,NA,NA,3326.46,37734.01,1.016285096453985,46.86914330931656,84.40698950165579
+Bison_bison,Bison,non_vocal_learner,0,Non-primates,NA,458,431500,20000,624577.07,0.8953635249221579,47.7747093118149,86.26736585729552
+Bos_indicus,Zebu cattle,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,47.69281746817974,86.14058286392553
+Bos_mutus,Wild yak,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,47.77297346799937,86.19726050982197
+Bos_taurus,Cattle,non_vocal_learner,0,Non-primates,NA,452.8,46100,NA,NA,NA,47.960371066197744,86.03621650436895
+Bubalus_bubalis,Water buffalo,non_vocal_learner,0,Non-primates,1,NA,NA,NA,NA,NA,47.978896758684115,86.31643280200342
+Ammotragus_lervia,Aoudad,non_vocal_learner,0,Non-primates,0,209,110000,4500,94202.22,0.8615422387773165,47.34726141226703,85.90565575344915
+Capra_aegagrus,Wild goat,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,46.970155737812824,85.77838004597731
+Capra_hircus,Goat,non_vocal_learner,0,Non-primates,1,115,27660,2136.11,47386.47,0.7630489984192034,47.3878834544384,85.95029416488799
+Hemitragus_hylocrius,Nilgiri tahr,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,47.38984666512145,86.03821448790295
+Ovis_aries,Sheep,non_vocal_learner,0,Non-primates,0,175,55500,2376.24,39097.89,0.8645875553777129,47.17059441511783,85.82069774298596
+Ovis_canadensis,Bighorn sheep,non_vocal_learner,0,Non-primates,NA,NA,NA,4115.85,74644.87,0.8936445952452252,47.46432947186226,86.0436985833137
+Elaphurus_davidianus,Pere david's deer,non_vocal_learner,0,Non-primates,NA,NA,NA,10467.5,165989.17,1.0186330082434312,47.999535525823475,86.70441747275774
+Odocoileus_virginianus,White-tailed deer,non_vocal_learner,0,Non-primates,NA,210,65090,2949.99,75901.25,0.7580798931359702,48.1816506637008,86.28209263428114
+Rangifer_tarandus,Siberian reindeer,non_vocal_learner,0,Non-primates,NA,278,71700,5490.62,109088.5,0.8962183108552488,48.21966124468676,86.37042896600344
+Giraffa_tippelskirchi,Giraffe,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,48.32712663618754,86.17773659898133
+Okapia_johnstoni,Okapi,non_vocal_learner,0,Non-primates,0,501,240000,18325.61,230001.14,1.1289613257909208,48.31521597115159,86.11745643858903
+Moschus_moschiferus,Siberian musk deer,non_vocal_learner,0,Non-primates,0,NA,NA,498.39,13315.57,0.5069897957257337,47.87475261150504,86.25766952399711
+Tragulus_javanicus,Java lesser chevrotain,non_vocal_learner,0,Non-primates,0,15.8,2037,NA,NA,NA,46.77033050827531,85.39934229481486
+Sus_scrofa,Pig,non_vocal_learner,0,Non-primates,1,169.8,86772.73,807.77,84471.54,0.22495993326649,47.672152881937,86.48871327673464
+Catagonus_wagneri,Chacoan peccary,non_vocal_learner,0,Non-primates,1,NA,NA,600.2,35566.4,0.314784150539458,47.59873763296646,86.22117286032685
+Camelus_bactrianus,Bactrian camel,non_vocal_learner,0,Non-primates,1,575,400000,34346.64,554515.91,1.1051252808397587,49.50523346219799,86.4084497763372
+Camelus_dromedarius,Arabian camel,non_vocal_learner,0,Non-primates,NA,762,400000,36751.19,492714.47,1.1592876703789468,49.471111983222755,86.46043314634198
+Camelus_ferus,Wild bactrian camel,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,49.323075401363745,86.60386575479919
+Vicugna_pacos,Alpaca,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,49.60682336992039,86.6841672152732
+Eubalaena_japonica,North pacific right whale,high_confidence_vocal_learner,1,Non-primates,0,NA,NA,NA,NA,NA,51.38234562983507,87.53433340376084
+Balaenoptera_bonaerensis,Antarctic minke whale,suspected_vocal_learner,1,Non-primates,NA,NA,NA,NA,NA,NA,51.2063108371689,87.30444960648121
+Balaenoptera_acutorostrata,Common minke whale,suspected_vocal_learner,1,Non-primates,NA,2850,5587093.59,NA,NA,NA,50.98070901313202,87.21952275806859
+Eschrichtius_robustus,Grey whale,suspected_vocal_learner,1,Non-primates,0,4316.67,30000000.02,500000,27324024.19,1.0021982504249638,51.38591403542549,87.22750630235217
+Orcinus_orca,Killer whale,high_confidence_vocal_learner,1,Non-primates,1,6052,3273000,158745.07,5628758.66,1.0201938413673326,50.94423038545968,86.67445051320615
+Tursiops_truncatus,Bottlenose dolphin,high_confidence_vocal_learner,1,Non-primates,1,1573,170480,24369.6,281040.55,1.1731423156383878,50.894170216015056,86.55962782253489
+Inia_geoffrensis,Amazon river dolphin,high_confidence_vocal_learner,1,Non-primates,0,633.645,92003.5,6799.99,121430.76,0.946815578132602,50.86677042992304,86.27998419844619
+Lipotes_vexillifer,Yangtze river dolphin,suspected_vocal_learner,1,Non-primates,0,558,180000,NA,NA,NA,50.668347657631344,86.40822954359993
+Delphinapterus_leucas,Beluga whale,high_confidence_vocal_learner,1,Non-primates,1,1921,498250,57000,1381640.73,1.0382559578575956,51.0147337389832,86.81089984271773
+Monodon_monoceros,Narwhal,suspected_vocal_learner,1,Non-primates,1,2993.7,1578329.998,79999.99,938126.44,1.243126502749733,50.934603634857346,86.70592955465186
+Neophocaena_asiaeorientalis,Narrow-ridged finless porpoise,suspected_vocal_learner,1,Non-primates,NA,NA,NA,NA,NA,NA,50.76285337720422,86.40723653260484
+Phocoena_phocoena,Harbor porpoise,suspected_vocal_learner,1,Non-primates,0,1735,142430,8892.16,52730.93,1.310650095784133,50.97275787057918,86.56802060420988
+Kogia_breviceps,Pygmy sperm whale,suspected_vocal_learner,1,Non-primates,1,1019,334000,82000,431500,1.4682307344618797,50.79445207123905,86.66568753321077
+Mesoplodon_bidens,Sowerby’s beaked whale,suspected_vocal_learner,1,Non-primates,0,NA,NA,NA,NA,NA,51.073987203420934,86.57327904262313
+Ziphius_cavirostris,Cuvier's beaked whale,high_confidence_vocal_learner,1,Non-primates,0,2004,2273000.001,NA,NA,NA,50.97160132920347,86.60374308648827
+Ailurus_fulgens,Lesser panda,non_vocal_learner,0,Non-primates,0,46.8,5590,104.04,5170.08,0.01812657328690696,47.771566424403474,87.7498294246908
+Lycaon_pictus,African hunting dog,non_vocal_learner,0,Non-primates,0,129,22050,297.45,21999.99,0.13448973447154286,44.68707988395953,87.6597393805505
+Vulpes_lagopus,Arctic fox,non_vocal_learner,0,Non-primates,0,35.5,3415,69.17,3584.37,-0.09461612862161813,47.054926380586814,88.05931398003273
+Spilogale_gracilis,Western spotted skunk,non_vocal_learner,0,Non-primates,0,6.81,420,NA,NA,NA,47.031326561593474,86.23856210753131
+Pteronura_brasiliensis,Giant otter,non_vocal_learner,0,Non-primates,0,85.6,24000,204.25,26000,-0.06986234257784796,47.551292315413384,86.94201827904969
+Mellivora_capensis,Honey badger,non_vocal_learner,0,Non-primates,0,72.97,8080,210,8999.99,0.21246003167365515,47.60626978928654,86.94937035862253
+Mustela_putorius,European polecat,non_vocal_learner,0,Non-primates,NA,7.87,915,9.5,975.55,-0.9350254852923058,46.757001893143894,86.86470452382629
+Odobenus_rosmarus,Walrus,high_confidence_vocal_learner,1,Non-primates,NA,1410.25,1022225,59090.9,1042996.25,1.119027317095561,49.35543440028139,87.74847850303647
+Zalophus_californianus,California sea lion,high_confidence_vocal_learner,1,Non-primates,1,405,91000,6347.89,137194.86,0.8868645963475844,49.31850162190985,87.52675706786621
+Leptonychotes_weddellii,Weddell seal,high_confidence_vocal_learner,1,Non-primates,1,564.17,378666.67,27395.84,400000,1.1160051649207725,49.071907005141775,87.71631774613525
+Mirounga_angustirostris,Northern elephant seal,high_confidence_vocal_learner,1,Non-primates,1,670,700000,34381.77,1112390.81,0.9313007020116651,49.44261279272328,87.64743077306146
+Neomonachus_schauinslandi,Hawaiian monk seal,suspected_vocal_learner,1,Non-primates,0,NA,NA,NA,NA,NA,49.55269729976902,87.85318314800149
+Ailuropoda_melanoleuca,Giant panda,non_vocal_learner,0,Non-primates,0,205,87500,104.39,117999.99,-0.6222153186135295,48.91275206900571,87.96667816184005
+Ursus_maritimus,Polar bear,non_vocal_learner,0,Non-primates,0,507,317000,670.48,371703.81,-0.13973644566724625,48.42453365486914,87.88390299540337
+Cryptoprocta_ferox,Fossa,non_vocal_learner,0,Non-primates,0,32.1,6775,99.96,9500,-0.1602687931506512,48.65421831991103,87.67707696782142
+Acinonyx_jubatus,Cheetah,non_vocal_learner,0,Non-primates,0,111,43000,441.66,50577.92,0.10237374855796394,48.518088150946085,87.56515934384173
+Felis_catus,Domestic cat,non_vocal_learner,0,Non-primates,NA,25.6,3300,113,2884.8,0.2392846690093295,48.569641281672226,87.593719794143
+Felis_nigripes,Black-footed cat,non_vocal_learner,0,Non-primates,0,20.1,1100,72,1362.77,0.23577539835368913,48.78014397120576,87.39885190342326
+Puma_concolor,Puma,non_vocal_learner,0,Non-primates,0,154,54432,409.87,53954.05,0.05743189960451798,47.891492422250906,87.15641785363901
+Panthera_onca,Jaguar,non_vocal_learner,0,Non-primates,0,149,77700,817.3,83943.09,0.2309626159109292,48.921231879839326,87.89281058122668
+Panthera_pardus,Leopard,non_vocal_learner,0,Non-primates,0,135,48000,553.39,52399.99,0.18582340171656475,48.887196584128056,87.94957136310934
+Panthera_tigris,Tiger,non_vocal_learner,0,Non-primates,NA,269.73,195000,1313.5,161914.66,0.26254207184389067,48.60219127339202,87.7894840166214
+Helogale_parvula,Dwarf mongoose,non_vocal_learner,0,Non-primates,0,4.8,267,NA,NA,NA,47.48076269809621,86.95623045272869
+Mungos_mungo,South african banded mongoose,non_vocal_learner,0,Non-primates,1,10.5,860,24.2,1260,-0.4090785964133056,47.426184782640824,86.9697415286083
+Suricata_suricatta,Meerkat,non_vocal_learner,0,Non-primates,0,10.3,725,30.5,729.99,-0.09134594305407703,47.06513979773944,86.69562732209202
+Hyaena_hyaena,Striped hyena,non_vocal_learner,0,Non-primates,0,97.5,36300,653.23,35070.51,0.35407578081790936,48.22875077206784,87.44180887539025
+Paradoxurus_hermaphroditus,Asian palm civet,non_vocal_learner,0,Non-primates,0,25.95,2773.5,92.07,3200,0.09373559798899136,48.41168996188056,87.69212944453601
+Macroglossus_sobrinus,Long-tongued fruit bat,suspected_vocal_learner,1,Non-primates,NA,0.692,21.7,NA,NA,NA,48.53700572746694,84.57874978679575
+Eidolon_helvum,Straw-colored fruit bat,suspected_vocal_learner,1,Non-primates,1,4.4325,266.75,48.28,254.61,0.7089679358288236,49.291539125789186,85.40295943543894
+Pteropus_alecto,Black flying fox,high_confidence_vocal_learner,1,Non-primates,1,7.03967,595,NA,NA,NA,48.84538474356838,85.32573675420487
+Pteropus_vampyrus,Large flying fox,high_confidence_vocal_learner,1,Non-primates,1,9.654,1078.07,NA,NA,NA,48.935001944679584,85.11474119137647
+Rousettus_aegyptiacus,Egyptian fruit bat,high_confidence_vocal_learner,1,Non-primates,1,2.26075,129.62,19.13,134,0.2798919416453877,48.127975549068395,85.0692878284546
+Craseonycteris_thonglongyai,Bumblebee bat,suspected_vocal_learner,1,Non-primates,0,0.087,2.56,NA,NA,NA,47.58716555259027,82.37197488536628
+Hipposideros_armiger,Great roundleaf bat,high_confidence_vocal_learner,1,Non-primates,NA,0.8,56,NA,NA,NA,50.92246889554048,85.41021387047356
+Hipposideros_galeritus,Cantor's leaf-nosed bat,high_confidence_vocal_learner,1,Non-primates,0,0.279,10.4,NA,NA,NA,48.681591635956295,84.96652085806286
+Megaderma_lyra,Greater false vampire bat,high_confidence_vocal_learner,1,Non-primates,NA,0.8935,35.3,10.22,39.27,0.4152577442038914,47.6753160068416,82.63299482811678
+Tadarida_brasiliensis,Mexican free-tailed bat,high_confidence_vocal_learner,1,Non-primates,1,NA,NA,3.19,12.61,-0.35900025904435456,49.28010731979439,84.68610198590224
+Mormoops_blainvillei,Ghost-faced bat,suspected_vocal_learner,1,Non-primates,NA,NA,NA,NA,NA,NA,47.9948108578046,84.36360810817514
+Pteronotus_parnellii,Parnell's mustached bat,high_confidence_vocal_learner,1,Non-primates,NA,0.5315,19.1,NA,NA,NA,47.57882776964722,84.09790791301732
+Noctilio_leporinus,Greater bulldog bat,suspected_vocal_learner,1,Non-primates,1,1.184,59.16,NA,NA,NA,47.15570341579103,82.23638030690279
+Carollia_perspicillata,Seba's short-tailed bat,high_confidence_vocal_learner,1,Non-primates,1,0.50867,17.07,4.89,19.23,-0.009896037469724,46.76711491227762,83.05437342788132
+Desmodus_rotundus,Common vampire bat,high_confidence_vocal_learner,1,Non-primates,1,0.916,33.26,6.94,33.16,0.06264493353896342,47.39112487100103,83.62502614776226
+Anoura_caudifer,Tailed tailless bat,suspected_vocal_learner,1,Non-primates,NA,0.4225,10.5,2.14,10.81,-0.9679999370644208,47.36206896551724,83.2681582365964
+Micronycteris_hirsuta,Hairy big-eared bat,suspected_vocal_learner,1,Non-primates,NA,NA,NA,NA,NA,NA,47.00568763786491,83.33300029640287
+Tonatia_saurophila,Stripe-headed round-eared bat,suspected_vocal_learner,1,Non-primates,NA,NA,NA,NA,NA,NA,47.14417367082643,83.31919621324765
+Artibeus_jamaicensis,Jamacian fruit-eating bat,suspected_vocal_learner,1,Non-primates,1,0.98025,39.33,10.57,43.63,0.37671467647956014,46.76972864077496,82.70035092864451
+Rhinolophus_sinicus,Chinese rufous horseshoe bat,high_confidence_vocal_learner,1,Non-primates,NA,NA,NA,NA,NA,NA,48.71555408975284,85.42480969306497
+Eptesicus_fuscus,Big brown bat,suspected_vocal_learner,1,Non-primates,1,0.21433,11.23,3.21,17.49,-0.5801204651059089,46.76703510451079,82.5951524074377
+Lasiurus_borealis,Eastern red bat,suspected_vocal_learner,1,Non-primates,0,0.17,7.7,4.29,12.33,0.17916750262281425,45.94261649874055,81.08260095806001
+Miniopterus_natalensis,Atal long-fingered bat,suspected_vocal_learner,1,Non-primates,NA,NA,NA,3,10.43,-0.31110588931725297,47.68265076640824,83.67660127087514
+Miniopterus_schreibersii,Common bent-wing bat,suspected_vocal_learner,1,Non-primates,NA,0.2703,11.78,2.86,11.46,-0.4773177905155569,47.89161250703648,83.67009778864688
+Myotis_brandtii,Brandt's bat,high_confidence_vocal_learner,1,Non-primates,1,NA,NA,NA,NA,NA,47.43513271696988,83.23190623628362
+Myotis_davidii,David's myotis,suspected_vocal_learner,1,Non-primates,NA,NA,NA,NA,NA,NA,47.09280604680612,82.65024892561368
+Myotis_lucifugus,Little brown bat,suspected_vocal_learner,1,Non-primates,1,0.16133,8,2.18,7.8,-0.7043079079261657,47.549431537320814,83.26299342387665
+Myotis_myotis,Greater mouse-eared bat,high_confidence_vocal_learner,1,Non-primates,1,0.489,27.92,6,25.59,0.05970946480729172,47.48094753980569,82.93176356058531
+Pipistrellus_pipistrellus,Common pipistrelle,high_confidence_vocal_learner,1,Non-primates,1,NA,NA,1.28,5.3,-1.7246874692124432,45.01685023836923,81.04360991050063
+Erinaceus_europaeus,Western european hedgehog,non_vocal_learner,0,Non-primates,0,NA,NA,15.54,777.95,-0.5599387871303392,40.14286633631508,79.93678119678165
+Solenodon_paradoxus,Hispaniolan solenodon,non_vocal_learner,0,Non-primates,1,4.67,900,89.99,899.99,0.5397605416910685,47.41690804896252,84.92930770416478
+Sorex_araneus,Common shrew,non_vocal_learner,0,Non-primates,0,0.23,8.9,0.42,9.18,-4.103132249484656,37.58282551878971,80.2974684212564
+Condylura_cristata,Star-nosed mole,non_vocal_learner,0,Non-primates,0,1.37,50,1.5,48.15,-1.9159512825849871,41.18905127291147,83.1292247403872
+Scalopus_aquaticus,Eastern mole,non_vocal_learner,0,Non-primates,0,1.48,39.6,5.35,87.15,-0.7219790433239741,43.49263021803253,84.38891157509991
+Uropsilus_gracilis,Gracile shrew mole,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,43.19803836464761,82.88579846949214
+Equus_asinus,African wild ass,non_vocal_learner,0,Non-primates,NA,434,234000,29249.99,164998.49,1.3975506708029974,51.602831600751955,88.16022738927226
+Equus_caballus,Horse,non_vocal_learner,0,Non-primates,1,693,340722,37899.99,403598.53,1.2244684443433225,51.34519942689728,87.89842826581746
+Equus_przewalskii,Przewalski's horse,non_vocal_learner,0,Non-primates,NA,NA,NA,NA,NA,NA,51.57387481939484,88.00162733930024
+Ceratotherium_simum,White rhinoceros,non_vocal_learner,0,Non-primates,NA,643,1400000,48500,2285939.43,0.8721597647500792,52.26967750450966,88.09048450052157
+Dicerorhinus_sumatrensis,Sumatran rhinoceros,non_vocal_learner,0,Non-primates,NA,NA,NA,22849.5,1046156.04,0.8159492291634151,52.338025113226486,88.25150667626077
+Diceros_bicornis,Black rhinoceros,non_vocal_learner,0,Non-primates,0,655,765450,34999.99,995940.54,0.963482582586598,52.28172852710359,88.15183837043253
+Tapirus_indicus,Malayan tapir,non_vocal_learner,0,Non-primates,0,265,201000,6848.35,311209.19,0.701933493302328,52.05932515588544,87.99737131907403
+Tapirus_terrestris,South american tapir,non_vocal_learner,0,Non-primates,0,180.5,160000,4507.91,169496.64,0.7041721307859964,52.01659181805171,88.0055102960239
+Manis_javanica,Malayan pangolin,non_vocal_learner,0,Non-primates,0,NA,NA,NA,NA,NA,48.60727518727928,85.55508557565862
+Manis_pentadactyla,Chinese pangolin,non_vocal_learner,0,Non-primates,0,NA,NA,88.67,4675,-0.03676536954971146,48.137925958636934,85.77693756306164
+Pan_troglodytes,Chimpanzee,nonVocalLearner,0,Primates,1,354.81,60433.16,NA,NA,NA,83.56197380423883,97.28605696291388
+Gorilla_gorilla,Gorilla,nonVocalLearner,0,Primates,NA,454.55,120975,NA,NA,NA,82.98267766288923,96.9787481778398
+Pongo_abelii,Sumatran orangutan,nonVocalLearner,0,Primates,0,389.495,62815,NA,NA,NA,80.80881162766661,95.8710061748181
+Macaca_mulatta,Rhesus monkey,nonVocalLearner,0,Primates,1,87.99,4612.78,NA,NA,NA,77.43032380512913,94.60961815605586
+Macaca_fascicularis,Crab-eating macaque,nonVocalLearner,0,Primates,1,66.93,3109.45,NA,NA,NA,77.26778602093952,94.55017090955454
+Pan_paniscus,Bonobo,nonVocalLearner,0,Primates,1,329.7,39700,NA,NA,NA,77.07812725388948,96.80045293649782
+Erythrocebus_patas,Patas monkey,nonVocalLearner,0,Primates,1,100.2,7376,NA,NA,NA,76.15789419693691,94.2148116583504
+Chlorocebus_sabaeus,Green monkey,nonVocalLearner,0,Primates,1,64.91330945,4311.8,NA,NA,NA,76.1421003839302,94.59274034158288
+Nasalis_larvatus,Proboscis monkey,nonVocalLearner,0,Primates,1,83.8,9730,NA,NA,NA,76.08175707286803,94.19002569227244
+Mandrillus_leucophaeus,Drill,nonVocalLearner,0,Primates,1,148,15000,NA,NA,NA,76.00144379146354,94.75138372610856
+Rhinopithecus_roxellana,Golden snub-nosed monkey,nonVocalLearner,0,Primates,1,117.75699,14750,NA,NA,NA,75.74351320233929,94.32810869825272
+Cercopithecus_neglectus,De brazza's monkey,nonVocalLearner,0,Primates,1,60.9,4130,NA,NA,NA,75.72658695244552,94.5513417851174
+Piliocolobus_tephrosceles,Ugandan red colobus,nonVocalLearner,0,Primates,1,70.95189469,8408.8,NA,NA,NA,75.60642422707744,94.33434211285176
+Rhinopithecus_bieti,Black snub-nosed monkey,nonVocalLearner,0,Primates,1,NA,NA,NA,NA,NA,75.4587364930119,94.17162509701276
+Semnopithecus_entellus,Northern plains gray langur,nonVocalLearner,0,Primates,1,111.5,7010,NA,NA,NA,75.4332233495944,94.16039921744652
+Papio_anubis,Olive baboon,nonVocalLearner,0,Primates,1,152.4,13300,NA,NA,NA,75.30569409229798,94.26909115170116
+Macaca_nemestrina,Southern pig-tailed macaque,nonVocalLearner,0,Primates,1,110,4456,NA,NA,NA,75.23718703383787,94.4964029867488
+Cercocebus_atys,Sooty mangabey,nonVocalLearner,0,Primates,1,86.8,6200,NA,NA,NA,74.85818108598144,94.385904353566
+Ateles_geoffroyi_a,NA,nonVocalLearner,0,Primates,1,104.96,5774,NA,NA,NA,72.72214201013153,92.56003417258393
+Pithecia_pithecia,White-faced saki,nonVocalLearner,0,Primates,0,32.6,1580,NA,NA,NA,72.65441171147037,92.87118187324624
+Colobus_angolensis,NA,nonVocalLearner,0,Primates,NA,74.4,9670,NA,NA,NA,72.5988365644613,93.9831648607374
+Alouatta_palliata,Mantled howler,nonVocalLearner,0,Primates,1,50.04,5952,NA,NA,NA,71.86918518481616,92.15448906139076
+Cebus_albifrons,White-fronted capuchin,nonVocalLearner,0,Primates,1,62.95,1620,NA,NA,NA,71.74462705436156,92.37153830855664
+Aotus_nancymaae,Nancy ma’s night monkey,nonVocalLearner,0,Primates,0,NA,NA,NA,NA,NA,71.52960859866153,92.6440464025034
+Saimiri_boliviensis,NA,nonVocalLearner,0,Primates,NA,24.06,750,NA,NA,NA,71.43718826411974,92.52655126729364
+Saguinus_imperator,Emperor tamarin,nonVocalLearner,0,Primates,0,NA,NA,NA,NA,NA,70.83316389292722,92.14665375110216
+Callithrix_jacchus,Common marmoset,nonVocalLearner,0,Primates,0,7.73,347.45,NA,NA,NA,70.10881121451166,91.63459414487696
+Daubentonia_madagascariensis,Aye-aye,nonVocalLearner,0,Primates,0,45.15,2800,NA,NA,NA,60.16524404008096,90.46358918786424
+Lemur_catta,Ring tailed lemur,nonVocalLearner,0,Primates,1,21.63,2090,NA,NA,NA,58.36573719162457,90.14823515150324
+Eulemur_fulvus,Common brown lemur,nonVocalLearner,0,Primates,1,25.8,2292,NA,NA,NA,58.279318929492305,90.18588228049737
+Eulemur_flavifrons,Sclater's lemur,nonVocalLearner,0,Primates,1,NA,NA,NA,NA,NA,58.2612890306049,90.12756283416832
+Indri_indri,Indri,nonVocalLearner,0,Primates,0,38.3,6250,NA,NA,NA,57.9376886589047,89.62291425405763
+Cheirogaleus_medius,Fat-tailed dwarf lemur,nonVocalLearner,0,Primates,0,3.34,179.67,NA,NA,NA,57.43448713541529,89.80489504398571
+Microcebus_murinus,Gray mouse lemur,nonVocalLearner,0,Primates,1,1.84,58,NA,NA,NA,56.27049401844913,88.7328056583622
+Propithecus_coquerelli,NA,nonVocalLearner,0,Primates,1,30.1941,3728.5,NA,NA,NA,56.26604586397459,88.03906267930505
+Nycticebus_coucang,Sunda slow loris,nonVocalLearner,0,Primates,0,12.74,655.5,NA,NA,NA,54.23721292874484,86.62401870396265
+Otolemur_garnettii,Small-eared galago,nonVocalLearner,0,Primates,0,11.49575776,764,NA,NA,NA,53.247746643279115,86.55351766552585
+Homo sapiens,Humans,vocalLearner,1,Primates,NA,1250.43,65142.86,NA,NA,NA,100,100

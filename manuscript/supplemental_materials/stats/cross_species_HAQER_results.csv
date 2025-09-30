@@ -1,4 +1,5 @@
 y,x,beta,std.error,statistic,p.value,n_species,n_vocal_learning_species,n_non_vocal_learning_species
 vocal_learner_binary,HAQER_sequence_similarity_scaled,1.4069079360983994,0.36237598249968683,3.8824535952782555,1.0340775449036226e-4,170,49,121
+vocal_learner_binary,HAR_sequence_similarity_scaled,-0.15400548063387268,0.3558521948819901,-0.43277934729317863,0.6651750786189072,170,49,121
 log10(brain_mass_g),HAQER_sequence_similarity_scaled,0.42494536284854223,0.1522033550779373,2.7919579212359973,0.0061450469221283315,116,NA,NA
 birth_weight_to_adult_weight_ratio,HAQER_sequence_similarity_scaled,0.44202665270090946,0.1327971703179547,3.32858487603742,0.0011789167026170222,115,NA,NA

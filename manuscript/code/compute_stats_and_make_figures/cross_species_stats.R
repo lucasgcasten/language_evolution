@@ -27,6 +27,9 @@ rownames(cs_dat) <- cs_dat$species_name
 fit = phyloglm(vocal_learner_binary ~ HAQER_sequence_similarity_scaled, phy = tr, data = cs_dat, method = 'logistic_IG10')
 summary(fit)
 
+fit_har = phyloglm(vocal_learner_binary ~ HAR_sequence_similarity_scaled, phy = tr, data = cs_dat, method = 'logistic_IG10')
+summary(fit_har)
+
 ## pull stats for figure
 b <- fit$coefficients['HAQER_sequence_similarity_scaled']
 b_plot <- unname(round(b, digits = 2))
@@ -56,6 +59,17 @@ res_vl <- as.data.frame(summary(fit)$coefficients) %>%
     relocate(y) %>% 
     rename(beta = Estimate, std.error = StdErr, statistic = z.value) %>% 
     filter(x == 'HAQER_sequence_similarity_scaled') %>% 
+    mutate(n_species = n,
+           n_vocal_learning_species = n_voc,
+           n_non_vocal_learning_species = n_nonvoc)
+
+res_vl_har <- as.data.frame(summary(fit_har)$coefficients) %>% 
+    rownames_to_column(var = 'x') %>% 
+    mutate(y = 'vocal_learner_binary') %>% 
+    as_tibble() %>% 
+    relocate(y) %>% 
+    rename(beta = Estimate, std.error = StdErr, statistic = z.value) %>% 
+    filter(x == 'HAR_sequence_similarity_scaled') %>% 
     mutate(n_species = n,
            n_vocal_learning_species = n_voc,
            n_non_vocal_learning_species = n_nonvoc)
@@ -110,6 +124,89 @@ p_comp <- cs_dat %>%
           legend.position = 'bottom') +
     labs(fill = 'Vocal learner (Wirthlin, et al.):') +
     scale_fill_manual(values = cl[1:2])
+
+## -------------------------------------------------
+## NEW HAQER/HAR SEQ SIMILARITY FIGURES
+## -------------------------------------------------
+## make figure comparing vocal learners and non-vocal learners for HAQER-like seq sim
+set.seed(65666)
+cl <- sample(RColorBrewer::brewer.pal(name="Dark2",n=3))
+p_vl <- cs_dat %>%
+    group_by(vocal_learner_binary) %>% 
+    mutate(n = n()) %>%
+    ungroup() %>%
+    mutate(vlab = as.logical(vocal_learner_binary),
+            vlab = str_c(vlab, '\nN = ', n, ' species')
+            ) %>%
+    mutate(common_name = case_when(str_detect(common_name, pattern = 'Egyptian fruit bat| red bat|ottlenose dolphin|Brazilian gu|tree shrew|Sumatran rhino|Cuvier|Orca|Killer|dog|Domestic cat') ~ common_name,
+                                   TRUE ~ NA_character_)) %>%
+    ggplot(aes(x = vlab, y = HAQER_sequence_similarity, color = vlab, fill = vlab)) +
+    # geom_violin(linewidth = 0, aes(fill = vlab), alpha = 0.4) +
+    geom_boxplot(alpha = .4, size = 1.5) +
+    geom_point(aes(color = vlab), size = .7) +
+    ggrepel::geom_text_repel(aes(label = common_name, color = vlab), size = 3.25, max.overlaps = 15) +
+    xlab('Vocal learner (Wirthlin, et al.)') +
+    ylab('HAQER-like sequence identity') +
+    scale_fill_manual(values = cl[1:2]) +
+    scale_color_manual(values = cl[1:2]) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          plot.title = element_text(size = 14, hjust = .5),
+          legend.position = 'none') +
+    geom_text(aes(x = 1.5, y = 53.5), label = stats_expr_vl, 
+              check_overlap = TRUE, size = 5, parse = TRUE, color = 'black')
+
+
+
+#####
+## pull stats for figure
+b <- fit_har$coefficients[2]
+b_plot <- unname(round(b, digits = 2))
+p <- summary(fit_har)$coefficients[2,'p.value']
+# p_plot <- formatC(p, digits = 2)
+p_plot <- format(round(p, 7), nsmall = 3)
+# p_vl_lab <- str_c('beta = ', round(b, digits = 2), '\np = ', formatC(p, digits = 2))
+p_vl_lab <- bquote(beta == .(b_plot) ~ " " ~ italic(p) == .(p_plot))
+
+b_part <- bquote(beta == .(b_plot))
+p_parts <- strsplit(format(p, scientific = TRUE, digits = 2), "e")[[1]]
+base <- as.numeric(p_parts[1])
+exponent <- as.numeric(p_parts[2])
+p_text <- bquote(italic(p) == .(round(p, 2))) #  %*% 10^.(exponent)
+# Combine all expressions
+stats_expr_vl_har <- as.expression(bquote(.(b_part) ~ "" ~ .(p_text)))
+
+p_vl_har <- cs_dat %>%
+    group_by(vocal_learner_binary) %>% 
+    mutate(n = n()) %>%
+    ungroup() %>%
+    mutate(vlab = as.logical(vocal_learner_binary),
+            vlab = str_c(vlab, '\nN = ', n, ' species')
+            ) %>%
+    mutate(common_name = case_when(str_detect(common_name, pattern = 'Egyptian fruit bat| red bat|ottlenose dolphin|Brazilian gu|tree shrew|Sumatran rhino|Cuvier|Orca|Killer|dog|Domestic cat') ~ common_name,
+                                   TRUE ~ NA_character_)) %>%
+    ggplot(aes(x = vlab, y = HAR_sequence_similarity, color = vlab, fill = vlab)) +
+    # geom_violin(linewidth = 0, aes(fill = vlab), alpha = 0.4) +
+    geom_boxplot(alpha = .4, size = 1.5) +
+    geom_point(aes(color = vlab), size = .7) +
+    ggrepel::geom_text_repel(aes(label = common_name, color = vlab), size = 3.25, max.overlaps = 15) +
+    xlab('Vocal learner (Wirthlin, et al.)') +
+    ylab('HAR-like sequence identity') +
+    scale_fill_manual(values = cl[1:2]) +
+    scale_color_manual(values = cl[1:2]) +
+    theme_classic() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          strip.text = element_text(size = 14),
+          legend.text = element_text(size = 12),
+          plot.title = element_text(size = 14, hjust = .5),
+          legend.position = 'none') +
+    geom_text(aes(x = 1.5, y = 90), label = stats_expr_vl_har, 
+              check_overlap = TRUE, size = 5, parse = TRUE, color = 'black')
+
 
 ## ------------------------------------------------------------------------------------------
 ## phylogenetic regression predicting log(brain size) using HAQER sequence identity
@@ -232,7 +329,7 @@ p_wt <- cs_dat %>%
 ## ---------------------------------
 ## save all stats
 ## ---------------------------------
-bind_rows(res_vl, res_bs, res_wt) %>% 
+bind_rows(res_vl, res_vl_har, res_bs, res_wt) %>% 
     write_csv('manuscript/supplemental_materials/stats/cross_species_HAQER_results.csv')
 
 ## ---------------------------------

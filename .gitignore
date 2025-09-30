@@ -11,8 +11,7 @@ manuscript/supplemental_materials/stats/HAQER_vocal_learning_region_enrichment/*
 manuscript/supplemental_materials/AADR_1000_genomes_ES-PGS_data.csv
 manuscript/supplemental_materials/stats/birth_head_circ_GWAS_region_enrichment/*
 manuscript/supplemental_materials/1000_genomes_eur_ES-PGS_with_AADR_SNPs_data.csv
-manuscript/supplemental_materials/AADR_data.csv
-manuscript/supplemental_materials/AADR_GCTA_GRM.rds
+manuscript/supplemental_materials/AADR*
 manuscript/supplemental_materials/EpiSLI_ES-PGS_data.csv
 manuscript/supplemental_materials/EpiSLI_F_statistics_data.csv
 manuscript/supplemental_materials/EpiSLI_factor_analysis_data.rds
@@ -21,3 +20,4 @@ manuscript/supplemental_materials/EpiSLI_pheno_data.csv
 manuscript/supplemental_materials/neanderthal_1000Genomes_raw_ES-PGS_data.csv
 .RData
 manuscript/supplemental_materials/stats/chromatin_accessibility_evo/*
+manuscript/supplemental_materials/EpiSLI_HAQER_*
