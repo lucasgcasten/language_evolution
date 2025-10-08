@@ -18,7 +18,7 @@ You will not be able to run this example without access to the EpiSLI / 1000 Gen
 Additionally, you will likely want to use imputed SNP genotypes or high-coverage whole genome sequencing data. Many evolutionary annotations make up a very small proportion of the genome, relying only on directly genotyped SNPs from SNP array data may not provide enough coverage for ES-PGS analysis.
 
 ## Citations
-If you use this method, please cite our manuscript describing [ES-PGS](https://www.biorxiv.org/content/10.1101/2025.03.07.641231v1).
+If you use this method, please cite our manuscript describing [ES-PGS](https://www.biorxiv.org/content/10.1101/2025.03.07.641231v2).
 
 If you use the recommended software to compute and run the ES-PGS analysis, cite the following papers:
 - [BEDTools](https://pubmed.ncbi.nlm.nih.gov/20110278/)

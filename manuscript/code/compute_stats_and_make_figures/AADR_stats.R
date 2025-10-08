@@ -146,7 +146,7 @@ p_sel2 %>%
 cl <- c("#762776", "#e04468", "#dcc699") ## color palette (HAQER, HAR, RAND)
 
 ## read in PGS data
-df <- read_csv("manuscript/supplemental_materials/AADR_1000_genomes_ES-PGS_data.csv") %>% 
+df <- read_csv("manuscript/supplemental_materials/AADR_1000_genomes_ES-PGS_normed_data.csv") %>% 
     ## add each group's N for figure
     mutate(type = factor(type, levels = rev(c('Modern Europeans', 'Ancient Europeans', 'Neanderthals and Denisovans')))) %>% 
     arrange(type) %>% 
@@ -284,7 +284,7 @@ p_nean_haq_fig5 <- df %>%
     ggplot(aes(x = type, y = cp_pgs.HAQER)) +
     geom_violin(size = 1.5) +
     geom_boxplot(aes(fill = type), size = 1.5, width = .3, alpha = .75) +
-    geom_hline(yintercept = mean(df$cp_pgs.HAQER), size = 1.075, color = 'red', linetype = 'dashed') +
+    geom_hline(yintercept = 0, size = 1.075, color = 'red', linetype = 'dashed') +
     xlab(NULL) +
     ylab('HAQER CP-PGS') +
     scale_fill_manual(name = NULL, values = c('slategray2', viridis::viridis(3, option = "D")[2:3])) +
@@ -296,18 +296,18 @@ p_nean_haq_fig5 <- df %>%
           legend.text = element_text(size = 20),
           legend.position = 'bottom') +
     ## add significance comparing neanderthals vs ancient europeans
-    geom_linerange(aes(xmin = 1, xmax = 2, y = 4.15), size = 1.075) +
-    geom_text(aes(x = 1.5, y = 4.2, label = "*"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    geom_linerange(aes(xmin = 1, xmax = 2, y = 4.65), size = 1.075) +
+    geom_text(aes(x = 1.5, y = 4.7, label = "*"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
     ## add significance comparing neanderthals vs modern europeans
-    geom_linerange(aes(xmin = 1, xmax = 3, y = 3.8), size = 1.075) +
-    geom_text(aes(x = 2, y = 3.85, label = "*"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
+    geom_linerange(aes(xmin = 1, xmax = 3, y = 4.3), size = 1.075) +
+    geom_text(aes(x = 2, y = 4.35, label = "*"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
 
 ### background PGS
 p_bg_haq_fig5 <- df %>% 
     ggplot(aes(x = type, y = cp_pgs.background)) +
     geom_violin(size = 1.5, width = 1.25) +
     geom_boxplot(aes(fill = type), size = 1.5, width = .2, alpha = .75) +
-    geom_hline(yintercept = mean(df$cp_pgs.background), size = 1.075, color = 'red', linetype = 'dashed') +
+    geom_hline(yintercept = 0, size = 1.075, color = 'red', linetype = 'dashed') +
     xlab(NULL) +
     ylab('Background CP-PGS') +
     scale_fill_manual(name = NULL, values = c('slategray2', viridis::viridis(3, option = "D")[2:3])) +
@@ -319,21 +319,21 @@ p_bg_haq_fig5 <- df %>%
           legend.text = element_text(size = 20),
           legend.position = 'bottom') +
     ## add significance comparing neanderthals vs ancient europeans
-    geom_linerange(aes(xmin = 1, xmax = 2, y = 3.95), size = 1.075) +
-    geom_text(aes(x = 1.5, y = 4, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    geom_linerange(aes(xmin = 1, xmax = 2, y = 3.85), size = 1.075) +
+    geom_text(aes(x = 1.5, y = 3.9, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
     ## add significance comparing neanderthals vs modern europeans
-    geom_linerange(aes(xmin = 1, xmax = 3, y = 4.3), size = 1.075) +
-    geom_text(aes(x = 2, y = 4.35, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
+    geom_linerange(aes(xmin = 1, xmax = 3, y = 4.2), size = 1.075) +
+    geom_text(aes(x = 2, y = 4.25, label = "***"), size = 7, check_overlap = TRUE) + ## check t-test results to get significance level
     ## add significance comparing ancient europeans vs modern europeans
-    geom_linerange(aes(xmin = 2, xmax = 3, y = 4.65), size = 1.075) +
-    geom_text(aes(x = 2.5, y = 4.7, label = "***"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
+    geom_linerange(aes(xmin = 2, xmax = 3, y = 4.55), size = 1.075) +
+    geom_text(aes(x = 2.5, y = 4.6, label = "***"), size = 7, check_overlap = TRUE) ## check t-test results to get significance level
 
 ### matched control PGS
 p_mt_haq_fig5 <- df %>% 
     ggplot(aes(x = type, y = cp_pgs.matched)) +
     geom_violin(size = 1.5) +
     geom_boxplot(aes(fill = type), size = 1.5, width = .2, alpha = .75) +
-    geom_hline(yintercept = mean(df$cp_pgs.matched), size = 1.075, color = 'red', linetype = 'dashed') +
+    geom_hline(yintercept = 0, size = 1.075, color = 'red', linetype = 'dashed') +
     xlab(NULL) +
     ylab('Matched CP-PGS') +
     scale_fill_manual(name = NULL, values = c('slategray2', viridis::viridis(3, option = "D")[2:3])) +
@@ -346,7 +346,14 @@ p_mt_haq_fig5 <- df %>%
           legend.position = 'bottom')
 
 library(patchwork)
-fig5_neand <- (p_nean_haq_fig5 + p_bg_haq_fig5 + p_mt_haq_fig5) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+fig5_neand <- (p_nean_haq_fig5 + p_bg_haq_fig5 + p_mt_haq_fig5) + 
+    plot_layout(guides = 'collect') & 
+    theme(legend.position = 'bottom',
+          axis.text = element_text(size = 18),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 18),
+        legend.title = element_text(size = 20),
+        strip.text = element_text(size = 20))
 
 ###################################
 ## save plot objects to merge later

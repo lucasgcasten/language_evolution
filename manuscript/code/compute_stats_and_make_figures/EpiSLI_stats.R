@@ -769,6 +769,7 @@ p_seq_class_comp <- binned_sfs_comp %>%
 broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_HARs, paired = T))
 broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_RAND, paired = T))
 broom::tidy(t.test(fstat_dat$f_HARs, fstat_dat$f_RAND, paired = T))
+broom::tidy(t.test(fstat_dat$f_HAQERs, fstat_dat$f_HAQERs_matched, paired = T))
 
 cl <- c("#762776", "#e04468", "#dcc699")
 p_fstat <- fstat_dat %>%  

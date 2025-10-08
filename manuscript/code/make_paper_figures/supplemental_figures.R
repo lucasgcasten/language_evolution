@@ -10,6 +10,7 @@ vl_enr <- read_csv('manuscript/supplemental_materials/stats/HAQER_vocal_learning
        mutate(type = 'Mammalian vocal learning enhancers')
 ca_enr <- read_csv("manuscript/supplemental_materials/stats/HAQER_chromatin_accessibility_evo_Li2023_enrichment_stats.csv")
 
+
 ## make figure panels
 ### birth head circumference GWAS enrichment
 p_bhc <- head_enr %>% 
@@ -146,4 +147,17 @@ ggsave(fig_supp,
        filename = 'manuscript/figures/paper_figures/supp_fig_HAQER_enrichment.png', 
        device = 'png', 
        units = 'in', width = 14, height = 21,
+       dpi = 300)
+
+#####################################
+## neanderthal, ancient, modern PGSs
+#####################################
+p_nean_merged <- read_rds("manuscript/figures/R_plot_objects/AADR_HAQER-CP-PGS_nean_dist_all_merged.rds") & 
+    scale_y_continuous(limits = c(-5,5)) &
+    plot_annotation(tag_levels = 'A') & 
+    theme(plot.tag = element_text(size = 24, face = 'bold'))
+ggsave(p_nean_merged,
+       filename = 'manuscript/figures/paper_figures/supp_fig_AADR_ES-PGS_boxplots.png', 
+       device = 'png', 
+       units = 'in', width = 14, height = 6,
        dpi = 300)
