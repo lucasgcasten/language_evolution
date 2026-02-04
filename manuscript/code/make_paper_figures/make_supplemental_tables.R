@@ -107,7 +107,7 @@ tb <- data.frame(table = str_c("SupplementaryTable", 1:18),
                                  'Enrichment of pre/postnatal scQTLs in HAQERs',
                                  'Enrichment of birth head circumference GWAS loci in HAQERs',
                                  'Enrichment of mammalian vocal learning enhancer regions in HAQERs',
-                                 "Results from hominin-gained TFBS analysis in relation to EpiSLI core language (F1)",
+                                 "Results from hominin-gained TFBS analysis in relation to EpiSLI F1",
                                  "Enrichment results of TF families with both hominin-gained TF motif integrity and positive motif integrity-language associations",
                                  "EpiSLI whole genome sequencing coverage statistics",
                                  'Enrichment of human-specific and conserved cCREs in HAQERs'

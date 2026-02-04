@@ -248,7 +248,7 @@ p_es_pgs_ht <- es_pgs_res_table %>%
                          )) %>%
   ggplot(aes(x = factor, y = annotation_name_clean, fill = annotation_beta)) +
   geom_tile() +
-  scale_fill_gradient2(low = 'blue', mid = 'white', high = 'chocolate', midpoint = 0, name = 'Annotation beta:') +
+  scale_fill_gradient2(low = 'blue', mid = 'white', high = 'chocolate', midpoint = 0, name = 'ES-PGS beta:') +
   xlab(NULL) +
   ylab("ES-PGS model") +
   geom_text(aes(label = sig), size = 11, check_overlap = TRUE) +
@@ -290,7 +290,7 @@ p_es_pgs_forest <- es_pgs_res %>%
     scale_shape_manual(values = c(1, 16)) +
     geom_hline(yintercept = 0, color = 'red', linetype = 'dashed', size = 1.075) +
     xlab('ES-PGS model') +
-    ylab('ES-PGS effect on core language (F1)') +
+    ylab('ES-PGS effect on sentence rep. (F1)') +
     scale_color_manual(values = c('grey75', 'black')) +
     theme_classic() +  
     theme(axis.text = element_text(size = 18),
@@ -329,7 +329,7 @@ p_es_pgs_factors_forest <- es_pgs_res %>%
                            p.value_model_comparison < .05 ~ 'p-val < 0.05',
                            TRUE ~ 'NS'),
            sig = factor(sig, levels = c('FDR < 0.01', 'p-val < 0.05', 'NS'))) %>%
-    mutate(factor = case_when(factor == 'F1' ~ 'Core language\n(F1)',
+    mutate(factor = case_when(factor == 'F1' ~ 'Sentence rep.\n(F1)',
                               factor == 'F2' ~ 'Receptive language\n(F2)',
                               factor == 'F3' ~ 'Nonverbal IQ\n(F3)',
                               factor == 'F4' ~ 'Early language\n(F4)',
@@ -384,7 +384,7 @@ p_es_pgs_factors_forest_haq <- es_pgs_res %>%
                            p.value_model_comparison < .05 ~ 'p-val < 0.05',
                            TRUE ~ 'NS'),
            sig = factor(sig, levels = c('FDR < 0.01', 'p-val < 0.05', 'NS'))) %>%
-    mutate(factor = case_when(factor == 'F1' ~ 'Core language\n(F1)',
+    mutate(factor = case_when(factor == 'F1' ~ 'Sentence rep.\n(F1)',
                               factor == 'F2' ~ 'Receptive language\n(F2)',
                               factor == 'F3' ~ 'Nonverbal IQ\n(F3)',
                               factor == 'F4' ~ 'Early language\n(F4)',
@@ -525,7 +525,7 @@ p_f1 <- wd %>%
     geom_point(size = 0.75) +
     geom_smooth(method = 'lm', size = 2, color = 'black') +
     xlab('HAQER CP-PGS') +
-    ylab('Core language (F1)') +
+    ylab('Sentence repetition (F1)') +
     geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
@@ -538,7 +538,7 @@ p_f1_bg <- wd %>%
     geom_point(size = 0.75) +
     geom_smooth(method = 'lm', size = 2, color = 'black') +
     xlab('Background CP-PGS') +
-    ylab('Core language (F1)') +
+    ylab('Sentence repetition (F1)') +
     geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
@@ -551,7 +551,7 @@ p_f1_matched <- wd %>%
     geom_point(size = 0.75, color = 'grey75') +
     geom_smooth(method = 'lm', size = 2, color = 'grey60') +
     xlab('Matched CP-PGS') +
-    ylab('Core language (F1)') +
+    ylab('Sentence repetition (F1)') +
     geom_text(aes(x = -1, y = 2.85, label = lab), size = 5.25, check_overlap = TRUE) +
     theme_classic() +  
     theme(axis.text = element_text(size = 12),
@@ -626,7 +626,7 @@ plot_a %>%
 ## table with human readable names
 table_a <- tribble(
   ~factor_name, ~interpretation, 
-  'F1', 'Core language',
+  'F1', 'Sentence repetition',
   'F2', 'Receptive language', 
   'F3', 'Nonverbal IQ', 
   'F4', 'Early language', 

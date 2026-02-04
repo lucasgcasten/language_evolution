@@ -17,7 +17,7 @@ p_f3 <- read_rds('manuscript/figures/R_plot_objects/EpiSLI_factor3_HAQER-CP-PGS.
 ###############################
 ## merge figures to make fig 1
 tmp <- tribble(~Factor, ~Description, 
-  'F1', 'Core language',
+  'F1', 'Sentence repetition',
   'F2', 'Receptive language', 
   'F3', 'Nonverbal IQ', 
   'F4', 'Early language', 
